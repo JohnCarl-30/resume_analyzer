@@ -7,7 +7,9 @@
   ],
   "scripts": {
     "dev:api": "pnpm --filter @resume-analyzer/api dev",
+    "dev:web": "pnpm --filter @resume-analyzer/web dev",
     "build:api": "pnpm --filter @resume-analyzer/api build",
+    "build:web": "pnpm --filter @resume-analyzer/web build",
     "typecheck": "pnpm --filter @resume-analyzer/api typecheck"
   }
 }

@@ -1,14 +1,6 @@
-import { z } from "zod";
-
 import { HttpError } from "../utils/http-error.js";
 import { inMemoryResumeRepository } from "../repositories/in-memory-resume.repository.js";
-
-const createResumeSchema = z.object({
-  fileName: z.string().min(1),
-  storageKey: z.string().min(1),
-  candidateName: z.string().min(1),
-  status: z.enum(["uploaded", "processing", "analyzed"]).default("uploaded"),
-});
+import { createResumeSchema } from "../schemas/resume.schema.js";
 
 export const resumeService = {
   async listResumes() {
