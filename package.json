@@ -1,0 +1,13 @@
+{
+  "name": "resume-analyzer",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "pnpm --filter @resume-analyzer/api dev",
+    "build:api": "pnpm --filter @resume-analyzer/api build",
+    "typecheck": "pnpm --filter @resume-analyzer/api typecheck"
+  }
+}
