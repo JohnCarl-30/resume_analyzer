@@ -1,8 +1,9 @@
 node_modules
-apps/*/node_modules
-apps/web/.next
+apps/api/node_modules
+apps/web/node_modules
+dist
 apps/api/dist
+apps/web/.next
 .git
-.github
-.codex
+.env*
 coverage

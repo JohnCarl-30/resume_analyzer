@@ -1,3 +1,5 @@
+"use client";
+
 import { TemplateCard } from "../components/template-card";
 import { useTemplateSelection } from "../view-models/use-template-selection";
 
