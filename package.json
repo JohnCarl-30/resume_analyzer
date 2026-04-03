@@ -6,10 +6,11 @@
     "apps/*"
   ],
   "scripts": {
-    "dev:api": "pnpm --filter @resume-analyzer/api dev",
-    "dev:web": "pnpm --filter @resume-analyzer/web dev",
-    "build:api": "pnpm --filter @resume-analyzer/api build",
-    "build:web": "pnpm --filter @resume-analyzer/web build",
-    "typecheck": "pnpm --filter @resume-analyzer/api typecheck"
+    "dev": "corepack pnpm --parallel --filter @resume-analyzer/api --filter @resume-analyzer/web dev",
+    "dev:api": "corepack pnpm --filter @resume-analyzer/api dev",
+    "dev:web": "corepack pnpm --filter @resume-analyzer/web dev",
+    "build:api": "corepack pnpm --filter @resume-analyzer/api build",
+    "build:web": "corepack pnpm --filter @resume-analyzer/web build",
+    "typecheck": "corepack pnpm --filter @resume-analyzer/api typecheck"
   }
 }
