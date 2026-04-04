@@ -4,6 +4,12 @@ import type { ChangeEvent, DragEvent } from "react";
 import { useId, useRef, useState } from "react";
 
 import { sampleTemplates } from "@/features/templates/model/template";
+import { useResumeEditor } from "../../editor/view-models/use-resume-editor";
+import { PersonalInfoEditor } from "../../editor/components/editors/personal-info-editor";
+import { ExperienceEditor } from "../../editor/components/editors/experience-editor";
+import { EducationEditor } from "../../editor/components/editors/education-editor";
+import { LeadershipEditor } from "../../editor/components/editors/leadership-editor";
+import { AwardsEditor } from "../../editor/components/editors/awards-editor";
 
 type WizardStep = 1 | 2 | 3;
 type ViewMode = "wizard" | "workspace";
@@ -327,6 +333,25 @@ function AnalysisWorkspace({
   resumeFileName: string;
   onBack: () => void;
 }) {
+  const {
+    form,
+    activeSectionId,
+    setActiveSectionId,
+    updatePersonalInfo,
+    updateEducation,
+    addEducation,
+    removeEducation,
+    updateExperience,
+    addExperience,
+    removeExperience,
+    updateLeadership,
+    addLeadership,
+    removeLeadership,
+    updateAwards,
+    addAward,
+    removeAward,
+  } = useResumeEditor();
+
   function sectionIcon(icon: (typeof workspaceSections)[number]["icon"]) {
     if (icon === "personal") {
       return <UserCircleIcon />;
@@ -349,6 +374,158 @@ function AnalysisWorkspace({
     }
 
     return <SparklesIcon />;
+  }
+
+  function renderEditor() {
+    if (activeSectionId === "personal") {
+      return (
+        <PersonalInfoEditor
+          data={form.personalInfo}
+          onChange={updatePersonalInfo}
+          onBack={() => setActiveSectionId(null)}
+        />
+      );
+    }
+
+    if (activeSectionId === "experience") {
+      return (
+        <ExperienceEditor
+          entries={form.experience}
+          onAdd={addExperience}
+          onUpdate={updateExperience}
+          onRemove={removeExperience}
+          onBack={() => setActiveSectionId(null)}
+        />
+      );
+    }
+
+    if (activeSectionId === "education") {
+      return (
+        <EducationEditor
+          entries={form.education}
+          onAdd={addEducation}
+          onUpdate={updateEducation}
+          onRemove={removeEducation}
+          onBack={() => setActiveSectionId(null)}
+        />
+      );
+    }
+
+    if (activeSectionId === "leadership") {
+      return (
+        <LeadershipEditor
+          entries={form.leadership}
+          onAdd={addLeadership}
+          onUpdate={updateLeadership}
+          onRemove={removeLeadership}
+          onBack={() => setActiveSectionId(null)}
+        />
+      );
+    }
+
+    if (activeSectionId === "awards") {
+      return (
+        <AwardsEditor
+          entries={form.awards}
+          onAdd={addAward}
+          onUpdate={updateAwards}
+          onRemove={removeAward}
+          onBack={() => setActiveSectionId(null)}
+        />
+      );
+    }
+
+    return (
+      <div className="flex flex-col h-full">
+        <div className="border-b border-[color:var(--page-line)] px-6 py-5">
+          <h2 className="text-2xl font-semibold tracking-tight text-[color:var(--page-text)]">
+            Resume Sections
+          </h2>
+          <p className="mt-2 text-base text-[color:var(--page-muted)]">Click any section to edit</p>
+          <div className="mt-4 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-3 text-sm text-[color:var(--page-muted)]">
+            Template:{" "}
+            <span className="font-medium text-[color:var(--page-text)]">
+              {selectedTemplateName}
+            </span>
+            <br />
+            Source:{" "}
+            <span className="font-medium text-[color:var(--page-text)]">{resumeFileName}</span>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+          {workspaceSections.map((section, index) => (
+            <div
+              key={section.id}
+              className={`${index === 0 ? "" : "border-t border-[color:var(--page-line)]"} px-2 py-4`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setActiveSectionId(section.id)}
+                    className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[color:var(--page-muted)] transition hover:bg-[color:var(--brand-soft)] hover:text-[color:var(--brand)]"
+                    aria-label={section.expanded ? "Collapse section" : "Expand section"}
+                  >
+                    {section.expanded ? <ChevronDownIcon /> : <ChevronRightIcon />}
+                  </button>
+                  <span className="text-[color:var(--page-muted)]">{sectionIcon(section.icon)}</span>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSectionId(section.id)}
+                    className="text-[1.05rem] font-medium text-[color:var(--page-text)] hover:text-[color:var(--brand)] transition"
+                  >
+                    {section.label}
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {section.id === "personal" ? (
+                    <button
+                      type="button"
+                      onClick={() => setActiveSectionId(section.id)}
+                      className="text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)]"
+                      aria-label="Edit section"
+                    >
+                      <PencilIcon />
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSectionId(section.id)}
+                        className="text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)]"
+                        aria-label="Add item"
+                      >
+                        <PlusIcon />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSectionId(section.id)}
+                        className="text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+                        aria-label="Open section"
+                      >
+                        <ChevronRightIcon />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t border-[color:var(--page-line)] px-4 py-4 mt-auto">
+          <button
+            type="button"
+            className="inline-flex w-full items-center justify-center gap-3 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] px-4 py-3.5 text-lg font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
+          >
+            <PlusIcon />
+            Add Section
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -394,7 +571,7 @@ function AnalysisWorkspace({
               className="inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-4 py-2.5 text-sm font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)]"
             >
               <GridIcon />
-              Jake Ryan
+              {form.personalInfo.fullName.split(" ")[0]} {form.personalInfo.fullName.split(" ")[1] || ""}
             </button>
 
             <button
@@ -409,79 +586,9 @@ function AnalysisWorkspace({
       </header>
 
       <div className="grid min-h-0 flex-1 lg:grid-cols-[22rem_minmax(0,1fr)]">
-        <aside className="border-b border-[color:var(--page-line)] bg-[#f8faff] p-4 lg:border-b-0 lg:border-r lg:p-6">
-          <div className="rounded-[22px] border border-[color:var(--page-line)] bg-white shadow-[0_14px_34px_rgba(59,75,138,0.08)]">
-            <div className="border-b border-[color:var(--page-line)] px-6 py-5">
-              <h2 className="text-2xl font-semibold tracking-tight text-[color:var(--page-text)]">Resume Sections</h2>
-              <p className="mt-2 text-base text-[color:var(--page-muted)]">Click any section to edit</p>
-              <div className="mt-4 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-3 text-sm text-[color:var(--page-muted)]">
-                Template: <span className="font-medium text-[color:var(--page-text)]">{selectedTemplateName}</span>
-                <br />
-                Source: <span className="font-medium text-[color:var(--page-text)]">{resumeFileName}</span>
-              </div>
-            </div>
-
-            <div className="px-4 py-3">
-              {workspaceSections.map((section, index) => (
-                <div
-                  key={section.id}
-                  className={`${index === 0 ? "" : "border-t border-[color:var(--page-line)]"} px-2 py-4`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[color:var(--page-muted)] transition hover:bg-[color:var(--brand-soft)] hover:text-[color:var(--brand)]"
-                        aria-label={section.expanded ? "Collapse section" : "Expand section"}
-                      >
-                        {section.expanded ? <ChevronDownIcon /> : <ChevronRightIcon />}
-                      </button>
-                      <span className="text-[color:var(--page-muted)]">{sectionIcon(section.icon)}</span>
-                      <span className="text-[1.05rem] font-medium text-[color:var(--page-text)]">{section.label}</span>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      {section.id === "personal" ? (
-                        <button
-                          type="button"
-                          className="text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)]"
-                          aria-label="Edit section"
-                        >
-                          <PencilIcon />
-                        </button>
-                      ) : (
-                        <>
-                          <button
-                            type="button"
-                            className="text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)]"
-                            aria-label="Add item"
-                          >
-                            <PlusIcon />
-                          </button>
-                          <button
-                            type="button"
-                            className="text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
-                            aria-label="Open section"
-                          >
-                            <ChevronRightIcon />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="border-t border-[color:var(--page-line)] px-4 py-4">
-              <button
-                type="button"
-                className="inline-flex w-full items-center justify-center gap-3 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] px-4 py-3.5 text-lg font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
-              >
-                <PlusIcon />
-                Add Section
-              </button>
-            </div>
+        <aside className="border-b border-[color:var(--page-line)] bg-[#f8faff] lg:border-b-0 lg:border-r">
+          <div className="h-full rounded-none border-none bg-white shadow-none lg:rounded-[22px] lg:m-4 lg:border lg:border-[color:var(--page-line)] lg:shadow-[0_14px_34px_rgba(59,75,138,0.08)] overflow-hidden">
+            {renderEditor()}
           </div>
         </aside>
 
@@ -495,126 +602,96 @@ function AnalysisWorkspace({
               <div className="mx-auto w-full max-w-[72rem] rounded-[18px] bg-white px-6 py-8 text-[#161616] shadow-[0_20px_40px_rgba(0,0,0,0.18)] sm:px-10">
                 <header className="border-b border-black pb-4 text-center">
                   <h1 className="font-serif text-[2.2rem] font-bold tracking-tight sm:text-[3rem]">
-                    BEA ANGELI C. VICENTE
+                    {form.personalInfo.fullName}
                   </h1>
                   <p className="mt-2 text-base text-[#303030]">
-                    +639260295375 | beavicente1113@gmail.com
+                    {form.personalInfo.phone} | {form.personalInfo.email}
                   </p>
                 </header>
 
                 <div className="space-y-10 pt-8 font-serif text-[1.05rem] leading-8">
-                  <section>
-                    <div className="border-b border-black pb-2">
-                      <h2 className="text-[1.2rem]">Education</h2>
-                    </div>
-
-                    <div className="space-y-4 pt-4">
-                      <div className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
-                        <div>
-                          <p className="font-bold">Bulacan State University</p>
-                          <p className="italic">Bachelor of Library and Information Science</p>
-                        </div>
-                        <div className="text-right">
-                          <p>Guinhawa, Malolos, Bulacan</p>
-                          <p className="italic">Jan 2023 — Present</p>
-                        </div>
+                  {form.education.length > 0 && (
+                    <section>
+                      <div className="border-b border-black pb-2">
+                        <h2 className="text-[1.2rem]">Education</h2>
                       </div>
 
-                      <div className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
-                        <div>
-                          <p className="font-bold">Marcelo H. Del Pilar National High School</p>
-                          <p className="italic">Science, Technology, Engineering, and Mathematics</p>
-                        </div>
-                        <div className="text-right">
-                          <p>Bagong Bayan, Malolos, Bulacan</p>
-                          <p className="italic">Jan 2021 — Jan 2023</p>
-                        </div>
+                      <div className="space-y-4 pt-4">
+                        {form.education.map((edu) => (
+                          <div key={edu.id} className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
+                            <div>
+                              <p className="font-bold">{edu.institution}</p>
+                              <p className="italic">{edu.degree}</p>
+                            </div>
+                            <div className="text-right">
+                              <p>{edu.location}</p>
+                              <p className="italic">{edu.dateRange}</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
+                    </section>
+                  )}
 
-                      <div className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
-                        <div>
-                          <p className="font-bold">Marcelo H. Del Pilar National High School</p>
-                          <p className="italic">Special Program in Journalism</p>
-                        </div>
-                        <div className="text-right">
-                          <p>Bagong Bayan, Malolos, Bulacan</p>
-                          <p className="italic">Jan 2017 — Jan 2021</p>
-                        </div>
+                  {form.experience.length > 0 && (
+                    <section>
+                      <div className="border-b border-black pb-2">
+                        <h2 className="text-[1.2rem]">Experience</h2>
                       </div>
-
-                      <div className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
-                        <div>
-                          <p className="font-bold">Longos Elementary School</p>
-                        </div>
-                        <div className="text-right">
-                          <p>Hangga Road, Malolos, Bulacan</p>
-                          <p className="italic">Jan 2010 — Jan 2017</p>
-                        </div>
+                      <div className="space-y-6 pt-4">
+                        {form.experience.map((exp) => (
+                          <div key={exp.id}>
+                            <div className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
+                              <div>
+                                <p className="font-bold">{exp.role}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="italic">{exp.dateRange}</p>
+                              </div>
+                            </div>
+                            <p className="text-right">{exp.location}</p>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  </section>
+                    </section>
+                  )}
 
-                  <section>
-                    <div className="border-b border-black pb-2">
-                      <h2 className="text-[1.2rem]">Experience</h2>
-                    </div>
-                    <div className="pt-4">
-                      <div className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
-                        <div>
-                          <p className="font-bold">Business Entrepreneur</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="italic">Jan 2022 — Jan 2023</p>
-                        </div>
+                  {form.leadership.length > 0 && (
+                    <section>
+                      <div className="border-b border-black pb-2">
+                        <h2 className="text-[1.2rem]">Leadership Experience</h2>
                       </div>
-                      <p className="text-right">Bagong Bayan, City of Malolos, Bulacan</p>
-                    </div>
-                  </section>
-
-                  <section>
-                    <div className="border-b border-black pb-2">
-                      <h2 className="text-[1.2rem]">Leadership Experience</h2>
-                    </div>
-                    <div className="space-y-4 pt-4">
-                      <div className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
-                        <div>
-                          <p className="font-bold">Member</p>
-                          <p className="italic">Brigade of Library Information Science Students Organization</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="italic">Jan 2023 — Present</p>
-                          <p>Bulacan State University</p>
-                        </div>
+                      <div className="space-y-4 pt-4">
+                        {form.leadership.map((item) => (
+                          <div key={item.id} className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
+                            <div>
+                              <p className="font-bold">{item.role}</p>
+                              <p className="italic">{item.organization}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="italic">{item.dateRange}</p>
+                              <p>{item.location}</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
+                    </section>
+                  )}
 
-                      <div className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
-                        <div>
-                          <p className="font-bold">Member, Emcee</p>
-                          <p className="italic">CICT – Local Student Council</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="italic">Jan 2023 — Present</p>
-                          <p>Bulacan State University</p>
-                        </div>
+                  {form.awards.length > 0 && (
+                    <section>
+                      <div className="border-b border-black pb-2">
+                        <h2 className="text-[1.2rem]">Awards &amp; Honors</h2>
                       </div>
-
-                      <div className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
-                        <div>
-                          <p className="font-bold">Member</p>
-                          <p className="italic">YES - O MHPNHS - SHS Environmental Campaign Committee</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="italic">Jan 2022 — Jan 2023</p>
-                        </div>
+                      <div className="pt-4">
+                        <ul className="list-disc pl-5">
+                          {form.awards.map((award, i) => (
+                            <li key={i}>{award}</li>
+                          ))}
+                        </ul>
                       </div>
-                    </div>
-                  </section>
-
-                  <section>
-                    <div className="border-b border-black pb-2">
-                      <h2 className="text-[1.2rem]">Awards &amp; Honors</h2>
-                    </div>
-                  </section>
+                    </section>
+                  )}
                 </div>
               </div>
             </div>
