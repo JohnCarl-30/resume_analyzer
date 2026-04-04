@@ -28,7 +28,6 @@ export function DeepFocusWizard() {
   const selectedTemplate =
     sampleTemplates.find((template) => template.id === selectedTemplateId) ?? sampleTemplates[0];
   const canContinueFromRole = targetRole.trim().length > 0;
-  console.log("DeepFocusWizard Render:", { step, targetRole: `'${targetRole}'`, canContinueFromRole });
   const canContinueFromUpload = Boolean(resumeFile) && jobDescription.trim().length > 0;
   
   const stepOverview = [
