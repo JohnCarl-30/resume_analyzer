@@ -107,18 +107,9 @@ export function DeepFocusWizard() {
   const backLabel = step === 3 ? "Back to Upload" : "Back";
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[color:var(--page-bg)] text-[color:var(--page-text)]">
-      <div
-        aria-hidden
-        className="absolute inset-0 opacity-70 [background-image:radial-gradient(circle_at_1px_1px,rgba(79,107,255,0.14)_1px,transparent_0)] [background-size:24px_24px]"
-      />
-      <div
-        aria-hidden
-        className="absolute inset-x-0 top-0 h-48 bg-[radial-gradient(circle_at_top,rgba(79,107,255,0.16),transparent_68%)]"
-      />
-
-      <div className="relative flex min-h-screen w-full px-2 py-2 sm:px-4 sm:py-4">
-        <div className="flex min-h-[calc(100svh-1rem)] w-full flex-col overflow-hidden rounded-[22px] border-[4px] border-[color:var(--brand)] bg-[color:var(--page-surface)] shadow-[var(--shadow-lg)] sm:min-h-[calc(100svh-2rem)] sm:rounded-[28px]">
+    <main className="relative min-h-screen bg-[color:var(--page-bg)] text-[color:var(--page-text)]">
+      <div className="relative flex min-h-screen w-full">
+        <div className="flex w-full flex-col overflow-hidden bg-[color:var(--page-surface)]">
           {viewMode === "workspace" ? (
             <AnalysisWorkspace
               targetRole={targetRole}

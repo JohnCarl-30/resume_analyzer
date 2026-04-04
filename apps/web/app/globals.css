@@ -2,28 +2,26 @@
 
 :root {
   color-scheme: light;
-  --page-bg: #f6f8ff;
-  --page-bg-strong: #edf1ff;
+  --page-bg: #ffffff;
+  --page-bg-strong: #f4f6f9;
   --page-surface: #ffffff;
-  --page-line: #e4eaf7;
-  --page-line-strong: #d5def4;
-  --page-text: #1f2b46;
-  --page-muted: #7c89a3;
-  --brand: #4f6bff;
-  --brand-strong: #3450ff;
-  --brand-soft: #edf1ff;
-  --success: #49bb63;
-  --shadow-lg: 0 28px 80px rgba(59, 75, 138, 0.14);
-  --shadow-md: 0 18px 50px rgba(59, 75, 138, 0.1);
-  --font-display: "Avenir Next", "Segoe UI", sans-serif;
-  --font-body: "Avenir Next", "Segoe UI", sans-serif;
-  --font-mono: "SFMono-Regular", "SF Mono", Menlo, monospace;
+  --page-line: #e2e8f0;
+  --page-line-strong: #cbd5e1;
+  --page-text: #0f172a;
+  --page-muted: #64748b;
+  --brand: #2563eb;
+  --brand-strong: #1d4ed8;
+  --brand-soft: #eff6ff;
+  --success: #10b981;
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --font-display: "Inter", "Avenir Next", "Segoe UI", sans-serif;
+  --font-body: "Inter", "Avenir Next", "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", "SF Mono", Menlo, monospace;
 }
 
 html {
-  background:
-    radial-gradient(circle at top center, rgba(92, 114, 255, 0.1), transparent 30%),
-    linear-gradient(180deg, #f8faff 0%, #eef3ff 100%);
+  background: white;
 }
 
 body {

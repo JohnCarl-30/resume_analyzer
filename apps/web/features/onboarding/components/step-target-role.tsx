@@ -40,7 +40,7 @@ export function StepTargetRole({
             {stepOverview.map((stepItem) => (
               <div
                 key={stepItem.id}
-                className="rounded-[20px] border border-[color:var(--page-line)] bg-[#fbfcff] px-4 py-4 shadow-[0_8px_22px_rgba(59,75,138,0.05)]"
+                className="rounded-[20px] border border-[color:var(--page-line)] bg-[color:var(--page-bg-strong)] px-4 py-4 shadow-[0_8px_22px_rgba(0,0,0,0.03)]"
               >
                 <p className="font-mono text-sm font-semibold text-[color:var(--brand)]">
                   {stepItem.id}
@@ -70,7 +70,7 @@ export function StepTargetRole({
             </div>
 
             <label
-              className="mt-7 flex items-center gap-3 rounded-[16px] border border-[color:var(--page-line)] bg-[#f8faff] px-4 py-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition focus-within:border-[color:var(--brand)] focus-within:bg-white"
+              className="mt-7 flex items-center gap-3 rounded-[16px] border border-[color:var(--page-line)] bg-[color:var(--page-bg-strong)] px-4 py-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition focus-within:border-[color:var(--brand)] focus-within:bg-white"
               htmlFor="target-role"
             >
               <span className="text-[color:var(--page-muted)]">

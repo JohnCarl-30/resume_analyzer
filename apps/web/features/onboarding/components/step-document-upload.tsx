@@ -69,7 +69,7 @@ export function StepDocumentUpload({
                 className={`flex min-h-[18rem] cursor-pointer flex-col items-center justify-center rounded-[20px] border-2 border-dashed px-6 py-8 text-center transition ${
                   isDragActive
                     ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)]"
-                    : "border-[color:var(--page-line-strong)] bg-[#fbfcff]"
+                    : "border-[color:var(--page-line-strong)] bg-[color:var(--page-bg-strong)]"
                 }`}
               >
                 <input
