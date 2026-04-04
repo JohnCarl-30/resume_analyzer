@@ -10,50 +10,13 @@ type ViewMode = "wizard" | "workspace";
 
 const maxFileSize = 10 * 1024 * 1024;
 const supportedExtensions = [".pdf", ".doc", ".docx"];
-const analysisFindings = [
-  {
-    id: "missing-keyword",
-    title: "Missing Keyword: Kubernetes",
-    body: "The target job description mentions Kubernetes 3 times. It is absent from your skills and experience.",
-    action: "Suggest phrasing",
-    tone: "critical" as const,
-    original: "",
-    revised: "",
-  },
-  {
-    id: "weak-action-verb",
-    title: "Weak Action Verb",
-    body: "Replace passive phrasing with stronger verbs to show ownership and engineering impact.",
-    action: "Impact",
-    tone: "impact" as const,
-    original: "Worked on the backend API...",
-    revised: "Architected the backend API...",
-  },
-  {
-    id: "missing-metric",
-    title: "Missing Quantifiable Metric",
-    body: "You mention developing RESTful APIs, but lack metrics. Add scale, throughput, or user impact where possible.",
-    action: "Impact",
-    tone: "impact" as const,
-    original: "",
-    revised: "",
-  },
-  {
-    id: "date-format",
-    title: "Inconsistent Date Formatting",
-    body: "Ensure dates are aligned consistently to the right edge to improve scanability for ATS systems.",
-    action: "Format",
-    tone: "format" as const,
-    original: "",
-    revised: "",
-  },
-] as const;
-
-const workspaceNavItems = [
-  { id: "preview", label: "Preview" },
-  { id: "overview", label: "Overview" },
-  { id: "notes", label: "Notes" },
-  { id: "layout", label: "Layout" },
+const workspaceSections = [
+  { id: "personal", label: "Personal Info", icon: "personal" as const, expanded: false },
+  { id: "education", label: "Education", icon: "education" as const, expanded: true },
+  { id: "experience", label: "Experience", icon: "experience" as const, expanded: true },
+  { id: "leadership", label: "Leadership", icon: "leadership" as const, expanded: true },
+  { id: "awards", label: "Awards", icon: "awards" as const, expanded: true },
+  { id: "skills", label: "Skills", icon: "skills" as const, expanded: true },
 ] as const;
 
 function formatFileSize(size: number) {
@@ -254,6 +217,95 @@ function PencilIcon() {
   );
 }
 
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-4 w-4">
+      <circle cx="10" cy="10" r="6.75" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M10 6.6v3.8l2.5 1.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-4 w-4">
+      <path d="M10 4.25v11.5M4.25 10h11.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ChevronDownIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-4 w-4">
+      <path d="M5.5 7.75L10 12.25l4.5-4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-4 w-4">
+      <path d="M7.75 5.5L12.25 10l-4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function UserCircleIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
+      <circle cx="10" cy="6.6" r="2.3" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M5.2 15.4a5.5 5.5 0 019.6 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function GraduationCapIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
+      <path d="M2.5 8.2L10 4.7l7.5 3.5L10 11.7 2.5 8.2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M5.5 9.6v2.6c0 .9 2 1.9 4.5 1.9s4.5-1 4.5-1.9V9.6" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function BriefcaseOutlineIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
+      <path d="M7 5.5V4.4A1.4 1.4 0 018.4 3h3.2A1.4 1.4 0 0113 4.4v1.1" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="3" y="5.5" width="14" height="10.5" rx="2" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function UsersIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
+      <circle cx="7" cy="7.3" r="2.1" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="13.2" cy="6.7" r="1.8" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M3.7 15.4a4 4 0 016.6 0M10.7 14.5a3.4 3.4 0 015.3 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function TrophyIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
+      <path d="M6 4h8v2.7A4 4 0 0110 10.7 4 4 0 016 6.7V4z" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M8.2 10.5v2.1L6.6 15h6.8l-1.6-2.4v-2.1" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M6 5H4.5A1.5 1.5 0 003 6.5 2.8 2.8 0 005.8 9H6M14 5h1.5A1.5 1.5 0 0117 6.5 2.8 2.8 0 0114.2 9H14" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function SparklesIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
+      <path d="M10 3.2l1.4 3.4 3.4 1.4-3.4 1.4L10 13l-1.4-3.6L5.2 8l3.4-1.4L10 3.2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M15.6 13.2l.7 1.8 1.9.7-1.9.8-.7 1.8-.8-1.8-1.8-.8 1.8-.7.8-1.8z" fill="currentColor" />
+    </svg>
+  );
+}
+
 function BrandMark() {
   return (
     <div className="flex h-5 w-5 items-end gap-[2px] text-[color:var(--page-text)]" aria-hidden>
@@ -275,129 +327,292 @@ function AnalysisWorkspace({
   resumeFileName: string;
   onBack: () => void;
 }) {
-  return (
-    <div className="flex h-full min-h-[calc(100svh-1rem)] flex-col sm:min-h-[calc(100svh-2rem)]">
-      <div className="grid flex-1 lg:grid-cols-[4.5rem_minmax(0,1fr)_27rem]">
-        <nav className="flex items-center justify-between border-b border-[color:var(--page-line)] bg-[#132844] px-3 py-3 text-white lg:flex-col lg:items-center lg:border-b-0 lg:border-r lg:px-0 lg:py-6">
-          <div className="flex gap-3 lg:flex-col lg:gap-4">
-            {workspaceNavItems.map((item, index) => {
-              const icon =
-                index === 0 ? (
-                  <EyeIcon />
-                ) : index === 1 ? (
-                  <GridIcon />
-                ) : index === 2 ? (
-                  <FileIcon />
-                ) : (
-                  <PanelsIcon />
-                );
+  function sectionIcon(icon: (typeof workspaceSections)[number]["icon"]) {
+    if (icon === "personal") {
+      return <UserCircleIcon />;
+    }
 
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`flex h-11 w-11 items-center justify-center rounded-[12px] transition ${
-                    index === 0 ? "bg-white/10 text-white" : "text-white/72 hover:bg-white/8 hover:text-white"
-                  }`}
-                  aria-label={item.label}
-                >
-                  {icon}
-                </button>
-              );
-            })}
+    if (icon === "education") {
+      return <GraduationCapIcon />;
+    }
+
+    if (icon === "experience") {
+      return <BriefcaseOutlineIcon />;
+    }
+
+    if (icon === "leadership") {
+      return <UsersIcon />;
+    }
+
+    if (icon === "awards") {
+      return <TrophyIcon />;
+    }
+
+    return <SparklesIcon />;
+  }
+
+  return (
+    <div className="flex h-full min-h-0 flex-1 flex-col bg-[color:var(--page-surface)] text-[color:var(--page-text)]">
+      <header className="border-b border-[color:var(--page-line)] bg-white px-5 py-4 sm:px-6">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex items-center gap-2 text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+            >
+              <ArrowLeftIcon />
+              Back
+            </button>
+            <span className="hidden h-6 w-px bg-[color:var(--page-line)] sm:block" />
+            <div className="inline-flex items-center gap-2 text-xl font-semibold text-[color:var(--page-text)]">
+              Untitled Resume
+              <span className="text-[color:var(--page-muted)]">
+                <PencilIcon />
+              </span>
+            </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex h-11 w-11 items-center justify-center rounded-[12px] text-white/72 transition hover:bg-white/8 hover:text-white"
-            aria-label="Back to templates"
-          >
-            <SettingsIcon />
-          </button>
-        </nav>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-2.5 text-sm text-[color:var(--page-muted)]">
+              <span className="text-emerald-500">
+                <ClockIcon />
+              </span>
+              Saved 426s ago
+            </div>
 
-        <section className="min-h-0 border-b border-[color:var(--page-line)] bg-[#eef3fb] lg:border-b-0 lg:border-r lg:border-[color:var(--page-line)]">
-          <div className="relative flex h-full flex-col px-4 py-5 sm:px-6 lg:px-7">
-            <div className="pointer-events-none absolute left-1/2 top-7 z-10 w-[11.5rem] -translate-x-1/2 rounded-[10px] border border-[color:var(--page-line)] bg-white/95 px-3 py-2 shadow-[0_16px_28px_rgba(59,75,138,0.12)] backdrop-blur">
-              <div className="flex items-center justify-between text-[color:var(--page-muted)]">
-                <SearchIcon />
-                <span className="text-sm font-semibold text-[color:var(--page-text)]">100%</span>
-                <SearchIcon />
-                <span className="h-4 w-px bg-[color:var(--page-line)]" />
-                <DownloadIcon />
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-[14px] bg-[color:var(--brand)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(79,107,255,0.22)] transition hover:bg-[color:var(--brand-strong)]"
+            >
+              <EyeIcon />
+              Tailor to Job
+            </button>
+
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-4 py-2.5 text-sm font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)]"
+            >
+              <GridIcon />
+              Jake Ryan
+            </button>
+
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-5 py-2.5 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
+            >
+              <DownloadIcon />
+              Download PDF
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="grid min-h-0 flex-1 lg:grid-cols-[22rem_minmax(0,1fr)]">
+        <aside className="border-b border-[color:var(--page-line)] bg-[#f8faff] p-4 lg:border-b-0 lg:border-r lg:p-6">
+          <div className="rounded-[22px] border border-[color:var(--page-line)] bg-white shadow-[0_14px_34px_rgba(59,75,138,0.08)]">
+            <div className="border-b border-[color:var(--page-line)] px-6 py-5">
+              <h2 className="text-2xl font-semibold tracking-tight text-[color:var(--page-text)]">Resume Sections</h2>
+              <p className="mt-2 text-base text-[color:var(--page-muted)]">Click any section to edit</p>
+              <div className="mt-4 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-3 text-sm text-[color:var(--page-muted)]">
+                Template: <span className="font-medium text-[color:var(--page-text)]">{selectedTemplateName}</span>
+                <br />
+                Source: <span className="font-medium text-[color:var(--page-text)]">{resumeFileName}</span>
               </div>
             </div>
 
-            <div className="flex-1 overflow-auto pt-10">
-              <div className="mx-auto w-full max-w-[40rem] rounded-[4px] border border-[#dde4f1] bg-white px-7 py-8 shadow-[0_20px_50px_rgba(59,75,138,0.12)] sm:px-10">
-                <header className="border-b border-[#d9e1ee] pb-5 text-center">
-                  <h1 className="text-[2.15rem] font-extrabold tracking-tight text-[#1a2741]">
-                    ALEXANDER CHEN
+            <div className="px-4 py-3">
+              {workspaceSections.map((section, index) => (
+                <div
+                  key={section.id}
+                  className={`${index === 0 ? "" : "border-t border-[color:var(--page-line)]"} px-2 py-4`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[color:var(--page-muted)] transition hover:bg-[color:var(--brand-soft)] hover:text-[color:var(--brand)]"
+                        aria-label={section.expanded ? "Collapse section" : "Expand section"}
+                      >
+                        {section.expanded ? <ChevronDownIcon /> : <ChevronRightIcon />}
+                      </button>
+                      <span className="text-[color:var(--page-muted)]">{sectionIcon(section.icon)}</span>
+                      <span className="text-[1.05rem] font-medium text-[color:var(--page-text)]">{section.label}</span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      {section.id === "personal" ? (
+                        <button
+                          type="button"
+                          className="text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)]"
+                          aria-label="Edit section"
+                        >
+                          <PencilIcon />
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)]"
+                            aria-label="Add item"
+                          >
+                            <PlusIcon />
+                          </button>
+                          <button
+                            type="button"
+                            className="text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+                            aria-label="Open section"
+                          >
+                            <ChevronRightIcon />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t border-[color:var(--page-line)] px-4 py-4">
+              <button
+                type="button"
+                className="inline-flex w-full items-center justify-center gap-3 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] px-4 py-3.5 text-lg font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
+              >
+                <PlusIcon />
+                Add Section
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <section className="min-h-0 bg-[#f3f6ff] p-4 lg:p-5">
+          <div className="flex h-full flex-col overflow-hidden rounded-[24px] border border-[color:var(--page-line)] bg-white shadow-[0_20px_44px_rgba(59,75,138,0.1)]">
+            <div className="border-b border-[color:var(--page-line)] bg-[#f7f9ff] px-5 py-3 text-center text-sm font-medium text-[color:var(--page-muted)]">
+              Preview is approximate. Download PDF for exact layout.
+            </div>
+
+            <div className="flex-1 overflow-auto bg-[#edf2ff] p-3 sm:p-5">
+              <div className="mx-auto w-full max-w-[72rem] rounded-[18px] bg-white px-6 py-8 text-[#161616] shadow-[0_20px_40px_rgba(0,0,0,0.18)] sm:px-10">
+                <header className="border-b border-black pb-4 text-center">
+                  <h1 className="font-serif text-[2.2rem] font-bold tracking-tight sm:text-[3rem]">
+                    BEA ANGELI C. VICENTE
                   </h1>
-                  <p className="mt-3 text-[0.92rem] text-[#7987a0]">
-                    alex.chen@email.com • (555) 123-4567 • linkedin.com/in/alexc • San Francisco, CA
+                  <p className="mt-2 text-base text-[#303030]">
+                    +639260295375 | beavicente1113@gmail.com
                   </p>
                 </header>
 
-                <div className="space-y-10 pt-8 text-[#27344d]">
+                <div className="space-y-10 pt-8 font-serif text-[1.05rem] leading-8">
                   <section>
-                    <div className="border-b border-[#e4eaf5] pb-3">
-                      <h2 className="text-[1.05rem] font-extrabold tracking-[0.08em] text-[#27344d]">
-                        PROFESSIONAL EXPERIENCE
-                      </h2>
+                    <div className="border-b border-black pb-2">
+                      <h2 className="text-[1.2rem]">Education</h2>
                     </div>
 
-                    <div className="space-y-8 pt-5 text-[0.98rem] leading-7">
-                      <div>
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <h3 className="text-[1.05rem] font-bold">Senior Software Engineer</h3>
-                            <p className="text-[#6a7893] italic">TechCorp Solutions • San Francisco, CA</p>
-                          </div>
-                          <p className="text-sm font-semibold text-[#97a3b8]">2020 - Present</p>
+                    <div className="space-y-4 pt-4">
+                      <div className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
+                        <div>
+                          <p className="font-bold">Bulacan State University</p>
+                          <p className="italic">Bachelor of Library and Information Science</p>
                         </div>
-                        <ul className="mt-3 space-y-2">
-                          <li>• Led the migration of legacy monolithic architecture to microservices, resulting in a 40% reduction in deployment times.</li>
-                          <li className="rounded-[2px] border border-[#8fb0ff] bg-[#dbe6ff] px-2 py-1 text-[#22324c]">
-                            • Worked on the backend API using Node.js and Express to serve data to the frontend team.
-                          </li>
-                          <li>• Implemented automated CI/CD pipelines using GitHub Actions, improving code quality and team velocity.</li>
-                          <li>• Mentored 3 junior engineers and conducted weekly code reviews to ensure adherence to best practices.</li>
-                        </ul>
+                        <div className="text-right">
+                          <p>Guinhawa, Malolos, Bulacan</p>
+                          <p className="italic">Jan 2023 — Present</p>
+                        </div>
                       </div>
 
-                      <div>
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <h3 className="text-[1.05rem] font-bold">Software Developer</h3>
-                            <p className="text-[#6a7893] italic">DataFlow Inc. • Seattle, WA</p>
-                          </div>
-                          <p className="text-sm font-semibold text-[#97a3b8]">2017 - 2020</p>
+                      <div className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
+                        <div>
+                          <p className="font-bold">Marcelo H. Del Pilar National High School</p>
+                          <p className="italic">Science, Technology, Engineering, and Mathematics</p>
                         </div>
-                        <ul className="mt-3 space-y-2">
-                          <li className="rounded-[2px] border border-[#8fb0ff] bg-[#dbe6ff] px-2 py-1 text-[#22324c]">
-                            • Developed scalable RESTful APIs using Python and Django for internal tools.
-                          </li>
-                          <li>• Collaborated with product managers to define feature requirements and technical specifications.</li>
-                          <li>• Optimized database queries in PostgreSQL, reducing average response time by 25%.</li>
-                        </ul>
+                        <div className="text-right">
+                          <p>Bagong Bayan, Malolos, Bulacan</p>
+                          <p className="italic">Jan 2021 — Jan 2023</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
+                        <div>
+                          <p className="font-bold">Marcelo H. Del Pilar National High School</p>
+                          <p className="italic">Special Program in Journalism</p>
+                        </div>
+                        <div className="text-right">
+                          <p>Bagong Bayan, Malolos, Bulacan</p>
+                          <p className="italic">Jan 2017 — Jan 2021</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
+                        <div>
+                          <p className="font-bold">Longos Elementary School</p>
+                        </div>
+                        <div className="text-right">
+                          <p>Hangga Road, Malolos, Bulacan</p>
+                          <p className="italic">Jan 2010 — Jan 2017</p>
+                        </div>
                       </div>
                     </div>
                   </section>
 
                   <section>
-                    <div className="border-b border-[#e4eaf5] pb-3">
-                      <h2 className="text-[1.05rem] font-extrabold tracking-[0.08em] text-[#27344d]">
-                        TECHNICAL SKILLS
-                      </h2>
+                    <div className="border-b border-black pb-2">
+                      <h2 className="text-[1.2rem]">Experience</h2>
                     </div>
-                    <div className="pt-5 text-[0.98rem] leading-7">
-                      <p><strong>Languages:</strong> JavaScript, TypeScript, Python, Java, SQL</p>
-                      <p><strong>Frameworks/Libraries:</strong> React, Node.js, Express, Django</p>
-                      <p className="inline-block rounded-[2px] border border-[#f2b4b6] bg-[#ffe3e3] px-2 py-1 text-[#5f3640]">
-                        <strong>Tools &amp; Infrastructure:</strong> Git, Docker, AWS (EC2, S3), Jenkins
-                      </p>
+                    <div className="pt-4">
+                      <div className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
+                        <div>
+                          <p className="font-bold">Business Entrepreneur</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="italic">Jan 2022 — Jan 2023</p>
+                        </div>
+                      </div>
+                      <p className="text-right">Bagong Bayan, City of Malolos, Bulacan</p>
+                    </div>
+                  </section>
+
+                  <section>
+                    <div className="border-b border-black pb-2">
+                      <h2 className="text-[1.2rem]">Leadership Experience</h2>
+                    </div>
+                    <div className="space-y-4 pt-4">
+                      <div className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
+                        <div>
+                          <p className="font-bold">Member</p>
+                          <p className="italic">Brigade of Library Information Science Students Organization</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="italic">Jan 2023 — Present</p>
+                          <p>Bulacan State University</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
+                        <div>
+                          <p className="font-bold">Member, Emcee</p>
+                          <p className="italic">CICT – Local Student Council</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="italic">Jan 2023 — Present</p>
+                          <p>Bulacan State University</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-[minmax(0,1fr)_15rem] gap-4">
+                        <div>
+                          <p className="font-bold">Member</p>
+                          <p className="italic">YES - O MHPNHS - SHS Environmental Campaign Committee</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="italic">Jan 2022 — Jan 2023</p>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section>
+                    <div className="border-b border-black pb-2">
+                      <h2 className="text-[1.2rem]">Awards &amp; Honors</h2>
                     </div>
                   </section>
                 </div>
@@ -405,146 +620,7 @@ function AnalysisWorkspace({
             </div>
           </div>
         </section>
-
-        <aside className="min-h-0 bg-white">
-          <div className="flex h-full flex-col overflow-auto px-5 py-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--page-muted)]">
-                  Target Role
-                </p>
-                <div className="mt-2 flex items-center gap-2">
-                  <h2 className="text-[1.95rem] font-bold tracking-tight text-[color:var(--page-text)]">
-                    {targetRole || "Senior Backend Engineer"}
-                  </h2>
-                  <span className="text-[color:var(--page-muted)]">
-                    <PencilIcon />
-                  </span>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                className="rounded-[12px] border border-[color:var(--page-line)] bg-white px-4 py-2.5 text-sm font-semibold text-[color:var(--page-text)] shadow-[0_8px_20px_rgba(59,75,138,0.06)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
-              >
-                Export PDF
-              </button>
-            </div>
-
-            <div className="mt-6 rounded-[16px] border border-[color:var(--page-line)] bg-[#fbfcff] px-4 py-4">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[color:var(--page-muted)]">
-                    Match Score
-                  </p>
-                  <p className="mt-2 text-5xl font-bold tracking-tight text-[color:var(--page-text)]">
-                    68
-                    <span className="ml-1 text-2xl font-semibold text-[color:var(--page-muted)]">/100</span>
-                  </p>
-                </div>
-                <div className="w-full max-w-[12rem]">
-                  <div className="h-2 rounded-full bg-[#e7edfa]">
-                    <div className="h-2 w-[68%] rounded-full bg-[color:var(--brand)]" />
-                  </div>
-                  <div className="mt-2 flex items-center justify-between text-xs font-semibold tracking-[0.08em] text-[color:var(--page-muted)]">
-                    <span>Poor</span>
-                    <span>Excellent</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 flex items-center gap-6 border-b border-[color:var(--page-line)] text-sm font-semibold text-[color:var(--page-muted)]">
-              <button type="button" className="border-b-2 border-[color:var(--page-text)] pb-3 text-[color:var(--page-text)]">
-                All Feedback (5)
-              </button>
-              <button type="button" className="pb-3">Critical (2)</button>
-              <button type="button" className="pb-3">Formatting (1)</button>
-            </div>
-
-            <div className="mt-5 space-y-4">
-              {analysisFindings.map((finding) => {
-                const toneStyles =
-                  finding.tone === "critical"
-                    ? {
-                        border: "border-[#ffd9db]",
-                        stripe: "bg-[#ff4f59]",
-                        badge: "bg-[#ffe6e8] text-[#f25a63]",
-                      }
-                    : finding.tone === "impact"
-                      ? {
-                          border: "border-[#ffe1bf]",
-                          stripe: "bg-[#ffb547]",
-                          badge: "bg-[#fff1da] text-[#d78b18]",
-                        }
-                      : {
-                          border: "border-[#dce2ec]",
-                          stripe: "bg-[#b6bfce]",
-                          badge: "bg-[#eef2f7] text-[#8290a6]",
-                        };
-
-                return (
-                  <article
-                    key={finding.id}
-                    className={`grid grid-cols-[4px_minmax(0,1fr)] overflow-hidden rounded-[16px] border bg-white shadow-[0_10px_22px_rgba(59,75,138,0.05)] ${toneStyles.border}`}
-                  >
-                    <div className={toneStyles.stripe} />
-                    <div className="space-y-4 px-4 py-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h3 className="text-lg font-bold text-[color:var(--page-text)]">
-                            {finding.title}
-                          </h3>
-                          <p className="mt-2 text-sm leading-6 text-[color:var(--page-muted)]">
-                            {finding.body}
-                          </p>
-                        </div>
-                        <span className={`rounded-full px-2 py-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] ${toneStyles.badge}`}>
-                          {finding.action}
-                        </span>
-                      </div>
-
-                      {finding.original || finding.revised ? (
-                        <div className="rounded-[12px] bg-[#f7f9fc] px-3 py-3 text-sm">
-                          {finding.original ? (
-                            <p className="text-[#92a0b8] line-through">{finding.original}</p>
-                          ) : null}
-                          {finding.revised ? (
-                            <p className="mt-1 font-medium text-[color:var(--brand)]">{finding.revised}</p>
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-
-            <div className="mt-6 rounded-[16px] border border-[color:var(--page-line)] bg-[#fbfcff] px-4 py-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[color:var(--page-muted)]">
-                Active export
-              </p>
-              <p className="mt-2 text-base font-semibold text-[color:var(--page-text)]">
-                {selectedTemplateName}
-              </p>
-              <p className="mt-1 text-sm leading-6 text-[color:var(--page-muted)]">
-                Source file: {resumeFileName}
-              </p>
-            </div>
-          </div>
-        </aside>
       </div>
-
-      <footer className="flex items-center justify-between gap-4 border-t border-[color:var(--page-line)] bg-white px-5 py-4 sm:px-6">
-        <p className="text-sm text-[color:var(--page-muted)]">Last saved: 2 mins ago</p>
-        <button
-          type="button"
-          className="inline-flex items-center justify-center gap-2 rounded-[12px] bg-[#132844] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(19,40,68,0.18)] transition hover:bg-[#1a3559]"
-        >
-          Apply All Changes
-          <span aria-hidden>✦</span>
-        </button>
-      </footer>
     </div>
   );
 }
