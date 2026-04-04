@@ -3,7 +3,7 @@ import { UploadIcon, ArrowRightIcon } from "./wizard-icons";
 
 interface StepDocumentUploadProps {
   resumeInputId: string;
-  resumeInputRef: React.RefObject<HTMLInputElement>;
+  resumeInputRef: React.RefObject<HTMLInputElement | null>;
   isDragActive: boolean;
   setIsDragActive: (active: boolean) => void;
   handleDrop: (event: React.DragEvent<HTMLLabelElement>) => void;
