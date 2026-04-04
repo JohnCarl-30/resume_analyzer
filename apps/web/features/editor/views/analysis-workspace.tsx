@@ -238,15 +238,6 @@ export function AnalysisWorkspace({
       <header className="border-b border-[color:var(--page-line)] bg-white px-5 py-4 sm:px-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-wrap items-center gap-4 text-sm">
-            <button
-              type="button"
-              onClick={onBack}
-              className="inline-flex items-center gap-2 text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
-            >
-              <ArrowLeftIcon />
-              Back
-            </button>
-            <span className="hidden h-6 w-px bg-[color:var(--page-line)] sm:block" />
             <div className="inline-flex items-center gap-2 text-xl font-semibold text-[color:var(--page-text)]">
               Untitled Resume
               <span className="text-[color:var(--page-muted)]">
@@ -295,8 +286,8 @@ export function AnalysisWorkspace({
           {renderEditor()}
         </aside>
 
-        <section className="flex-1 overflow-y-auto bg-[color:var(--page-bg)] p-12">
-          <div className="mx-auto aspect-[1/1.414] w-full max-w-4xl bg-white shadow-[0_24px_48px_rgba(0,0,0,0.06)] px-16 py-16">
+        <section className="flex-1 overflow-y-auto bg-[color:var(--page-bg-strong)] p-6 sm:p-8 lg:p-12">
+          <div className="mx-auto aspect-[1/1.414] w-full max-w-5xl bg-white shadow-[var(--shadow-md)] px-8 py-10 sm:px-12 sm:py-14 lg:px-16 lg:py-16">
             <div className="h-full space-y-10">
               <header className="space-y-4 border-b border-[color:var(--page-line)] pb-8">
                 <h1 className="text-4xl font-bold tracking-tight text-[color:var(--page-text)] uppercase text-center">

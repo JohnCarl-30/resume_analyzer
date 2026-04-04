@@ -120,15 +120,18 @@ export function DeepFocusWizard() {
           ) : (
             <>
               <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-[color:var(--page-line)] px-4 py-4 sm:px-6">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  disabled={step === 1}
-                  className="inline-flex items-center gap-2 justify-self-start rounded-full px-2 py-1 text-sm font-medium text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)] disabled:cursor-default disabled:opacity-60 disabled:hover:text-[color:var(--page-muted)]"
-                >
-                  <ArrowLeftIcon />
-                  {backLabel}
-                </button>
+                <div className="justify-self-start">
+                  {step > 1 && (
+                    <button
+                      type="button"
+                      onClick={handleBack}
+                      className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-sm font-medium text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+                    >
+                      <ArrowLeftIcon />
+                      {backLabel}
+                    </button>
+                  )}
+                </div>
 
                 <div className="flex items-center gap-2 justify-self-center text-sm font-semibold text-[color:var(--page-text)]">
                   <BrandMark />

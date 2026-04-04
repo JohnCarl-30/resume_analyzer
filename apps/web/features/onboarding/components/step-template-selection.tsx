@@ -69,7 +69,7 @@ export function StepTemplateSelection({
             })}
           </div>
 
-          <aside className="rounded-[20px] border border-[color:var(--page-line)] bg-[#fbfcff] p-5 shadow-[0_10px_26px_rgba(59,75,138,0.05)]">
+          <aside className="rounded-[20px] border border-[color:var(--page-line)] bg-[color:var(--page-bg-strong)] p-5 shadow-[0_10px_26px_rgba(0,0,0,0.03)]">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]">
               Selection
             </p>
