@@ -12,7 +12,11 @@ import { formatFileSize, isSupportedFile, maxFileSize } from "../utils/wizard-ut
 type WizardStep = 1 | 2 | 3;
 type ViewMode = "wizard" | "workspace";
 
-export function DeepFocusWizard() {
+interface DeepFocusWizardProps {
+  onExit?: () => void;
+}
+
+export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
   const resumeInputId = useId();
   const resumeInputRef = useRef<HTMLInputElement>(null);
 
@@ -120,14 +124,21 @@ export function DeepFocusWizard() {
           ) : (
             <>
               <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-[color:var(--page-line)] px-4 py-4 sm:px-6">
-                <div className="justify-self-start">
+                <div className="justify-self-start flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={onExit}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--page-line)] text-[color:var(--page-muted)] transition hover:bg-[color:var(--page-bg-strong)] hover:text-[color:var(--page-text)]"
+                    aria-label="Exit to dashboard"
+                  >
+                    <ArrowLeftIcon />
+                  </button>
                   {step > 1 && (
                     <button
                       type="button"
                       onClick={handleBack}
                       className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-sm font-medium text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
                     >
-                      <ArrowLeftIcon />
                       {backLabel}
                     </button>
                   )}
