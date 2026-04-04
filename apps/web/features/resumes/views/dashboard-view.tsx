@@ -5,6 +5,12 @@ import { PlusIcon, SparklesIcon, BriefcaseOutlineIcon, ClockIcon, ArrowRightIcon
 import { ResumeStatusBadge } from "../components/resume-status-badge";
 import { useResumeDashboard } from "../view-models/use-resume-dashboard";
 
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
 export function DashboardView({ onNewAnalysis }: { onNewAnalysis: () => void }) {
   const { resumes } = useResumeDashboard();
   
@@ -91,7 +97,7 @@ export function DashboardView({ onNewAnalysis }: { onNewAnalysis: () => void }) 
               <div className="mt-6 flex items-center justify-between border-t border-[color:var(--page-line)] pt-4">
                 <div className="flex items-center gap-2 text-xs text-[color:var(--page-muted)]">
                   <ClockIcon />
-                  {new Date(resume.uploadedAt).toLocaleDateString()}
+                  {dateFormatter.format(new Date(resume.uploadedAt))}
                 </div>
                 <button className="flex items-center gap-2 text-sm font-bold text-[color:var(--page-text)] opacity-0 transition group-hover:opacity-100">
                   Open
