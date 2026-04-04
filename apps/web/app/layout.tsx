@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Resume Analyzer",
-  description: "Review resume intake, job fit, and template selection in one workspace.",
+  title: "Deep Focus | Resume Analyzer",
+  description: "Guide users through role targeting, document upload, and resume template selection.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

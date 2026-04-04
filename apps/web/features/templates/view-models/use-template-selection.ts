@@ -3,7 +3,7 @@ import type { ResumeTemplate } from "../model/template";
 import { sampleTemplates } from "../model/template";
 
 export function useTemplateSelection() {
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("modern");
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(sampleTemplates[0]?.id ?? "");
 
   const templates: ResumeTemplate[] = sampleTemplates;
 
