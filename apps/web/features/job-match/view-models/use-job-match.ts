@@ -2,7 +2,7 @@ import { sampleJobMatch } from "../model/job-match";
 
 export function useJobMatch() {
   return {
-    heading: "Target role alignment",
+    heading: "Compare the active candidate against the target role",
     snapshot: sampleJobMatch,
   };
 }

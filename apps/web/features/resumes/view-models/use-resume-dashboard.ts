@@ -2,9 +2,9 @@ import { sampleResumes } from "../model/resume";
 
 export function useResumeDashboard() {
   return {
-    title: "Resume ingestion and analysis",
+    title: "Review incoming resumes as they move through intake",
     description:
-      "Track uploads, parsing, and analysis states before you wire the real API.",
+      "Uploads, parsing state, and handoff readiness stay visible here while the live API is still being wired.",
     resumes: sampleResumes,
   };
 }

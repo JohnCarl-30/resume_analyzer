@@ -9,47 +9,54 @@ interface TemplateCardProps {
 export function TemplateCard({ template, isSelected, onSelect }: TemplateCardProps) {
   return (
     <button
+      type="button"
       onClick={() => onSelect(template.id)}
-      className={`group relative flex w-full flex-col overflow-hidden text-left transition-all duration-300 focus:outline-none ${
+      aria-pressed={isSelected}
+      className={`group relative flex w-full flex-col overflow-hidden rounded-[28px] border text-left transition duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--app-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
         isSelected
-          ? "ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-950 scale-[1.02]"
-          : "hover:scale-[1.01] hover:bg-slate-800/50"
-      } rounded-2xl border ${
-        isSelected ? "border-cyan-500/50 bg-slate-900 shadow-xl shadow-cyan-900/20" : "border-slate-800 bg-slate-950/80"
+          ? "translate-y-[-4px] border-[rgba(152,229,195,0.42)] bg-white/[0.06] shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+          : "border-white/10 bg-white/[0.025] hover:translate-y-[-2px] hover:border-white/20 hover:bg-white/[0.05]"
       }`}
     >
-      <div className={`h-32 w-full flex items-center justify-center ${template.thumbnailClass}`}>
-        <div className="h-[80%] w-[60%] rounded bg-slate-900/40 shadow-sm border border-white/5 backdrop-blur-sm flex flex-col p-2 space-y-2">
-          {/* Wireframe representation of a resume */}
-          <div className="h-1.5 w-1/3 bg-white/20 rounded-full" />
-          <div className="h-1 w-full bg-white/10 rounded-full" />
-          <div className="h-1 w-4/5 bg-white/10 rounded-full" />
-          <div className="h-1 w-full bg-white/10 rounded-full" />
-          <div className="mt-2 h-1 w-1/4 bg-white/20 rounded-full" />
-          <div className="h-1 w-full bg-white/10 rounded-full" />
+      <div
+        className={`relative flex h-40 w-full items-center justify-center overflow-hidden ${template.thumbnailClass}`}
+      >
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0))]" />
+        <div className="relative flex h-[76%] w-[62%] flex-col gap-2 rounded-[18px] border border-white/10 bg-[#0d1011]/70 p-3 shadow-[0_18px_48px_rgba(0,0,0,0.26)] backdrop-blur-sm transition duration-300 group-hover:scale-[1.02]">
+          <div className="h-2 w-2/5 rounded-full bg-white/20" />
+          <div className="grid flex-1 grid-cols-[1.2fr_0.85fr] gap-3">
+            <div className="space-y-2">
+              <div className="h-1 w-full rounded-full bg-white/10" />
+              <div className="h-1 w-5/6 rounded-full bg-white/10" />
+              <div className="h-1 w-4/6 rounded-full bg-white/10" />
+              <div className="mt-4 h-1 w-full rounded-full bg-white/10" />
+              <div className="h-1 w-3/4 rounded-full bg-white/10" />
+              <div className="h-1 w-4/5 rounded-full bg-white/10" />
+            </div>
+            <div className="rounded-[14px] border border-white/10 bg-white/[0.05]" />
+          </div>
         </div>
       </div>
-      <div className="p-5">
+
+      <div className="space-y-3 px-5 py-5">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium text-slate-100">{template.name}</h3>
+          <h3 className="text-lg font-medium text-[color:var(--app-text)]">{template.name}</h3>
           {template.isPremium && (
-            <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-300 border border-amber-500/20">
+            <span className="rounded-full border border-[rgba(217,255,181,0.18)] bg-[rgba(217,255,181,0.08)] px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--app-accent-strong)]">
               PRO
             </span>
           )}
         </div>
-        <p className="mt-2 text-sm text-slate-400 leading-relaxed line-clamp-2">
-          {template.description}
-        </p>
+        <p className="text-sm leading-6 text-[color:var(--app-muted)]">{template.description}</p>
       </div>
 
       {isSelected && (
-        <div className="absolute top-3 right-3 rounded-full bg-cyan-500 text-slate-950 p-1 shadow-md">
+        <div className="absolute right-4 top-4 rounded-full bg-[color:var(--app-accent)] p-1 text-slate-950 shadow-md">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"
             fill="currentColor"
-            className="w-4 h-4"
+            className="h-4 w-4"
           >
             <path
               fillRule="evenodd"

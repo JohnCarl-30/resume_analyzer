@@ -5,16 +5,19 @@ import { useTemplateSelection } from "../view-models/use-template-selection";
 
 export function TemplateSelectionView() {
   const { heading, description, templates, selectedTemplateId, selectTemplate } = useTemplateSelection();
+  const selectedTemplate = templates.find((template) => template.id === selectedTemplateId);
 
   return (
-    <section className="rounded-3xl border border-slate-800 bg-slate-900/60 p-8 shadow-2xl shadow-slate-950/30">
-      <div className="space-y-3">
-        <p className="text-sm uppercase tracking-[0.3em] text-fuchsia-300">Templates</p>
-        <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">{heading}</h2>
-        <p className="max-w-2xl text-base text-slate-300 sm:text-lg">{description}</p>
+    <section className="px-5 py-6 sm:px-8 sm:py-8">
+      <div className="space-y-3 border-b border-[color:var(--app-line)] pb-6">
+        <p className="utility-label text-[color:var(--app-accent)]">Output templates</p>
+        <h2 className="font-display text-3xl tracking-tight sm:text-4xl">{heading}</h2>
+        <p className="max-w-3xl text-sm leading-6 text-[color:var(--app-muted)] sm:text-base">
+          {description}
+        </p>
       </div>
 
-      <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-5 pt-6 lg:grid-cols-3">
         {templates.map((template) => (
           <TemplateCard
             key={template.id}
@@ -23,6 +26,20 @@ export function TemplateSelectionView() {
             onSelect={selectTemplate}
           />
         ))}
+      </div>
+
+      <div className="mt-8 flex flex-col gap-4 border-t border-[color:var(--app-line)] pt-6 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-2">
+          <p className="utility-label text-[color:var(--app-accent)]">Selected for next export</p>
+          <h3 className="text-2xl text-[color:var(--app-text)]">{selectedTemplate?.name}</h3>
+          <p className="max-w-2xl text-sm leading-6 text-[color:var(--app-muted)]">
+            {selectedTemplate?.description}
+          </p>
+        </div>
+        <p className="max-w-md text-sm leading-6 text-[color:var(--app-muted)]">
+          Switch layouts at any point without affecting intake status or role scoring. The
+          presentation layer stays independent from the analysis pipeline.
+        </p>
       </div>
     </section>
   );

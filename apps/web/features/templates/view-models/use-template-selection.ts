@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { sampleTemplates, ResumeTemplate } from "../model/template";
+import type { ResumeTemplate } from "../model/template";
+import { sampleTemplates } from "../model/template";
 
 export function useTemplateSelection() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("modern");
@@ -11,8 +12,9 @@ export function useTemplateSelection() {
   };
 
   return {
-    heading: "Choose a Template",
-    description: "Start your resume with a professional design. You can always change it later.",
+    heading: "Pick the export layout without interrupting analysis",
+    description:
+      "Template choice stays separate from scoring so the final look can change without re-running the pipeline.",
     templates,
     selectedTemplateId,
     selectTemplate,

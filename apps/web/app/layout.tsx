@@ -5,7 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Resume Analyzer",
-  description: "Upload and analyze resumes.",
+  description: "Review resume intake, job fit, and template selection in one workspace.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
