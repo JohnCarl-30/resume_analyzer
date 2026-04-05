@@ -6,7 +6,10 @@ import { StepTargetRole } from "../components/step-target-role";
 import { StepDocumentUpload } from "../components/step-document-upload";
 import { StepTemplateSelection } from "../components/step-template-selection";
 import { AnalysisWorkspace } from "../../editor/views/analysis-workspace";
+import type { ResumeAnalysisResult } from "../../editor/model/resume-analysis";
+import { defaultResumeForm, serializeResumeForm } from "../../editor/model/resume-form";
 import { sampleTemplates } from "../../templates/model/template";
+import { createResumeAnalysis } from "../utils/analysis-api";
 import { formatFileSize, isSupportedFile, maxFileSize } from "../utils/wizard-utils";
 
 type WizardStep = 1 | 2 | 3;
@@ -28,6 +31,9 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [uploadError, setUploadError] = useState("");
   const [isDragActive, setIsDragActive] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<ResumeAnalysisResult | null>(null);
+  const [analysisError, setAnalysisError] = useState("");
+  const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
 
   const selectedTemplate =
     sampleTemplates.find((template) => template.id === selectedTemplateId) ?? sampleTemplates[0];
@@ -90,7 +96,7 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
       return;
     }
     if (step === 3) {
-      setViewMode("workspace");
+      void handleGenerateAnalysis();
     }
   }
 
@@ -108,6 +114,39 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
     resumeInputRef.current?.click();
   }
 
+  async function handleGenerateAnalysis() {
+    if (isGeneratingAnalysis) {
+      return;
+    }
+
+    setAnalysisError("");
+    setIsGeneratingAnalysis(true);
+
+    try {
+      const resumeSeedText = [
+        `Uploaded resume file: ${resumeFile?.name ?? "resume.pdf"}`,
+        `Selected template: ${selectedTemplate?.name ?? "Default template"}`,
+        `Target role: ${targetRole}`,
+        serializeResumeForm(defaultResumeForm),
+      ].join("\n");
+
+      const nextAnalysis = await createResumeAnalysis({
+        targetRole,
+        jobDescription,
+        resumeText: resumeSeedText,
+      });
+
+      setAnalysisResult(nextAnalysis);
+      setViewMode("workspace");
+    } catch (error) {
+      setAnalysisError(
+        error instanceof Error ? error.message : "Unable to generate analysis right now.",
+      );
+    } finally {
+      setIsGeneratingAnalysis(false);
+    }
+  }
+
   const backLabel = step === 3 ? "Back to Upload" : "Back";
 
   return (
@@ -119,6 +158,7 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
               targetRole={targetRole}
               selectedTemplateName={selectedTemplate?.name ?? "Selected template"}
               resumeFileName={resumeFile?.name ?? "resume.pdf"}
+              analysisResult={analysisResult}
               onBack={handleBack}
             />
           ) : (
@@ -188,6 +228,8 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
                     selectedTemplateId={selectedTemplateId}
                     setSelectedTemplateId={setSelectedTemplateId}
                     onNext={handleNext}
+                    isSubmitting={isGeneratingAnalysis}
+                    errorMessage={analysisError}
                   />
                 )}
               </div>

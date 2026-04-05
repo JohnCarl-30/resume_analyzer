@@ -7,12 +7,16 @@ interface StepTemplateSelectionProps {
   selectedTemplateId: string;
   setSelectedTemplateId: (id: string) => void;
   onNext: () => void;
+  isSubmitting?: boolean;
+  errorMessage?: string;
 }
 
 export function StepTemplateSelection({
   selectedTemplateId,
   setSelectedTemplateId,
   onNext,
+  isSubmitting = false,
+  errorMessage,
 }: StepTemplateSelectionProps) {
   return (
     <section key="step-3" className="section-reveal flex flex-1 flex-col px-5 py-8 sm:px-8 lg:px-10">
@@ -86,12 +90,20 @@ export function StepTemplateSelection({
 
       <div className="mt-auto border-t border-[color:var(--page-line)] pt-6">
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
+          {errorMessage ? (
+            <p className="mr-auto text-sm text-[color:#b42318]">{errorMessage}</p>
+          ) : (
+            <p className="mr-auto text-sm text-[color:var(--page-muted)]">
+              The analysis now runs through the Express backend before opening the workspace.
+            </p>
+          )}
           <button
             type="button"
             onClick={onNext}
-            className="inline-flex items-center justify-center gap-2 rounded-[12px] bg-[color:var(--brand)] px-8 py-3 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(79,107,255,0.22)] transition hover:bg-[color:var(--brand-strong)]"
+            disabled={isSubmitting}
+            className="inline-flex items-center justify-center gap-2 rounded-[12px] bg-[color:var(--brand)] px-8 py-3 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(79,107,255,0.22)] transition hover:bg-[color:var(--brand-strong)] disabled:cursor-wait disabled:opacity-70"
           >
-            Finish and Complete
+            {isSubmitting ? "Generating Analysis..." : "Generate Analysis"}
             <ArrowRightIcon />
           </button>
         </div>

@@ -1,4 +1,5 @@
 import React from "react";
+import type { ResumeAnalysisResult } from "../model/resume-analysis";
 import { useResumeEditor } from "../view-models/use-resume-editor";
 import { PersonalInfoEditor } from "../components/editors/personal-info-editor";
 import { ExperienceEditor } from "../components/editors/experience-editor";
@@ -27,6 +28,7 @@ interface AnalysisWorkspaceProps {
   targetRole: string;
   selectedTemplateName: string;
   resumeFileName: string;
+  analysisResult: ResumeAnalysisResult | null;
   onBack: () => void;
 }
 
@@ -42,6 +44,7 @@ export function AnalysisWorkspace({
   targetRole,
   selectedTemplateName,
   resumeFileName,
+  analysisResult,
   onBack,
 }: AnalysisWorkspaceProps) {
   const {
@@ -287,6 +290,91 @@ export function AnalysisWorkspace({
         </aside>
 
         <section className="flex-1 overflow-y-auto bg-[color:var(--page-bg-strong)] p-6 sm:p-8 lg:p-12">
+          {analysisResult ? (
+            <div className="mx-auto mb-6 grid w-full max-w-5xl gap-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
+              <div className="rounded-[18px] border border-[color:var(--page-line)] bg-white p-5 shadow-[0_10px_24px_rgba(26,32,61,0.06)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]">
+                  Match Score
+                </p>
+                <p className="mt-3 text-5xl font-semibold tracking-tight text-[color:var(--page-text)]">
+                  {analysisResult.score}
+                </p>
+                <p className="mt-2 text-sm text-[color:var(--page-muted)]">
+                  Targeting {analysisResult.targetRole}
+                </p>
+                <p className="mt-5 text-xs text-[color:var(--page-muted)]">
+                  Generated {new Date(analysisResult.generatedAt).toLocaleString()}
+                </p>
+              </div>
+
+              <div className="rounded-[18px] border border-[color:var(--page-line)] bg-white p-5 shadow-[0_10px_24px_rgba(26,32,61,0.06)]">
+                <div className="grid gap-5 lg:grid-cols-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]">
+                      Matched
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {analysisResult.matchedKeywords.length > 0 ? (
+                        analysisResult.matchedKeywords.map((keyword) => (
+                          <span
+                            key={keyword}
+                            className="rounded-full bg-[color:var(--brand-soft)] px-3 py-1 text-xs font-medium text-[color:var(--brand)]"
+                          >
+                            {keyword}
+                          </span>
+                        ))
+                      ) : (
+                        <p className="text-sm text-[color:var(--page-muted)]">No keyword matches yet.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]">
+                      Missing
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {analysisResult.missingKeywords.length > 0 ? (
+                        analysisResult.missingKeywords.map((keyword) => (
+                          <span
+                            key={keyword}
+                            className="rounded-full border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-3 py-1 text-xs font-medium text-[color:var(--page-text)]"
+                          >
+                            {keyword}
+                          </span>
+                        ))
+                      ) : (
+                        <p className="text-sm text-[color:var(--page-muted)]">No missing keywords detected.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]">
+                      Suggested Edits
+                    </p>
+                    <div className="mt-3 space-y-3">
+                      {analysisResult.suggestions.length > 0 ? (
+                        analysisResult.suggestions.map((suggestion) => (
+                          <div key={suggestion.id} className="rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] p-3">
+                            <p className="text-sm font-semibold text-[color:var(--page-text)]">
+                              {suggestion.title}
+                            </p>
+                            <p className="mt-1 text-sm leading-6 text-[color:var(--page-muted)]">
+                              {suggestion.detail}
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-[color:var(--page-muted)]">No immediate edits suggested.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           <div className="mx-auto aspect-[1/1.414] w-full max-w-5xl bg-white shadow-[var(--shadow-md)] px-8 py-10 sm:px-12 sm:py-14 lg:px-16 lg:py-16">
             <div className="h-full space-y-10">
               <header className="space-y-4 border-b border-[color:var(--page-line)] pb-8">
