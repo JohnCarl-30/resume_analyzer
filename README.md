@@ -67,6 +67,7 @@ The backend lives in `apps/api` and is responsible for:
 | --- | --- | --- |
 | `GET` | `/health` | Health check |
 | `POST` | `/api/analysis` | Run a starter resume-vs-job analysis |
+| `POST` | `/api/analysis/upload` | Upload a PDF or DOCX resume, extract text, and analyze it |
 | `POST` | `/api/uploads/sign` | Create a presigned upload URL |
 | `POST` | `/api/resumes` | Save uploaded resume metadata |
 | `GET` | `/api/resumes` | List resumes |
@@ -125,7 +126,7 @@ corepack pnpm dev:web
 
 ### 5. Try the Express backend
 
-Once `corepack pnpm dev:api` is running, you can hit the new analysis endpoint:
+Once `corepack pnpm dev:api` is running, you can hit the JSON analysis endpoint:
 
 ```bash
 curl -X POST http://localhost:4000/api/analysis \
@@ -143,6 +144,21 @@ It returns a starter analysis payload with:
 - matched keywords
 - missing keywords
 - practical writing suggestions
+
+You can also upload an actual resume file for parsing:
+
+```bash
+curl -X POST http://localhost:4000/api/analysis/upload \
+  -F "targetRole=Senior Backend Engineer" \
+  -F "jobDescription=We are hiring a Senior Backend Engineer with strong Node.js, Express, PostgreSQL, Docker, AWS, CI/CD, and leadership experience." \
+  -F "resume=@./resume.docx;type=application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+```
+
+This route:
+
+- accepts `multipart/form-data`
+- parses PDF and DOCX resumes on the backend
+- extracts text before running the same analysis logic
 
 ## Available Scripts
 
@@ -163,6 +179,7 @@ It returns a starter analysis payload with:
 - The frontend expects `NEXT_PUBLIC_API_BASE_URL` to point to the running API.
 - Uploaded files go directly from the browser to R2 after the API signs the upload request.
 - The analysis endpoint is intentionally heuristic-first so you can wire the frontend now and swap in OpenAI or a queue worker later without changing the route shape.
+- The upload analysis route parses PDF text with `unpdf` and DOCX text with `mammoth` before scoring.
 
 ## Backend Walkthrough
 

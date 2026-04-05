@@ -1,5 +1,10 @@
 import type { ResumeAnalysis, AnalysisSuggestion } from "../types/analysis.js";
-import { createAnalysisSchema } from "../schemas/analysis.schema.js";
+import {
+  createAnalysisSchema,
+  createUploadedAnalysisSchema,
+} from "../schemas/analysis.schema.js";
+import { HttpError } from "../utils/http-error.js";
+import { resumeParserService } from "./resume-parser.service.js";
 
 const trackedKeywords = [
   "typescript",
@@ -109,6 +114,41 @@ export const analysisService = {
       missingKeywords: uniqueSorted(missingKeywords),
       suggestions,
       generatedAt: new Date().toISOString(),
+    };
+  },
+
+  async createAnalysisFromUpload(input: {
+    targetRole: unknown;
+    jobDescription: unknown;
+    resumeFile?: Express.Multer.File;
+  }): Promise<ResumeAnalysis> {
+    const payload = createUploadedAnalysisSchema.parse({
+      targetRole: input.targetRole,
+      jobDescription: input.jobDescription,
+    });
+
+    if (!input.resumeFile) {
+      throw new HttpError(400, "Please upload a PDF or DOCX resume.");
+    }
+
+    const extracted = await resumeParserService.extractText(input.resumeFile);
+
+    if (extracted.text.length < 30) {
+      throw new HttpError(
+        400,
+        "We could not extract enough text from this file. Try a clearer PDF or DOCX resume.",
+      );
+    }
+
+    const analysis = await this.createAnalysis({
+      ...payload,
+      resumeText: extracted.text,
+    });
+
+    return {
+      ...analysis,
+      sourceFileName: input.resumeFile.originalname,
+      extractedCharacterCount: extracted.text.length,
     };
   },
 };

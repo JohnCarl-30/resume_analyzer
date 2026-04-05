@@ -7,4 +7,14 @@ export const analysisController = {
     const analysis = await analysisService.createAnalysis(req.body);
     res.status(201).json({ data: analysis });
   },
+
+  async createFromUpload(req: Request, res: Response) {
+    const analysis = await analysisService.createAnalysisFromUpload({
+      targetRole: req.body.targetRole,
+      jobDescription: req.body.jobDescription,
+      resumeFile: req.file,
+    });
+
+    res.status(201).json({ data: analysis });
+  },
 };

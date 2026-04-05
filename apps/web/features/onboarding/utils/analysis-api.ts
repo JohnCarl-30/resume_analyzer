@@ -4,7 +4,7 @@ import type { ResumeAnalysisResult } from "../../editor/model/resume-analysis";
 interface CreateResumeAnalysisInput {
   targetRole: string;
   jobDescription: string;
-  resumeText: string;
+  resumeFile: File;
 }
 
 interface ApiEnvelope<T> {
@@ -15,12 +15,14 @@ interface ApiEnvelope<T> {
 export async function createResumeAnalysis(
   input: CreateResumeAnalysisInput,
 ): Promise<ResumeAnalysisResult> {
-  const response = await fetch(buildApiUrl("/api/analysis"), {
+  const formData = new FormData();
+  formData.set("targetRole", input.targetRole);
+  formData.set("jobDescription", input.jobDescription);
+  formData.set("resume", input.resumeFile);
+
+  const response = await fetch(buildApiUrl("/api/analysis/upload"), {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(input),
+    body: formData,
   });
 
   const payload = (await response.json().catch(() => null)) as ApiEnvelope<ResumeAnalysisResult> | null;

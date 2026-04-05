@@ -7,7 +7,6 @@ import { StepDocumentUpload } from "../components/step-document-upload";
 import { StepTemplateSelection } from "../components/step-template-selection";
 import { AnalysisWorkspace } from "../../editor/views/analysis-workspace";
 import type { ResumeAnalysisResult } from "../../editor/model/resume-analysis";
-import { defaultResumeForm, serializeResumeForm } from "../../editor/model/resume-form";
 import { sampleTemplates } from "../../templates/model/template";
 import { createResumeAnalysis } from "../utils/analysis-api";
 import { formatFileSize, isSupportedFile, maxFileSize } from "../utils/wizard-utils";
@@ -123,17 +122,14 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
     setIsGeneratingAnalysis(true);
 
     try {
-      const resumeSeedText = [
-        `Uploaded resume file: ${resumeFile?.name ?? "resume.pdf"}`,
-        `Selected template: ${selectedTemplate?.name ?? "Default template"}`,
-        `Target role: ${targetRole}`,
-        serializeResumeForm(defaultResumeForm),
-      ].join("\n");
+      if (!resumeFile) {
+        throw new Error("Please upload a PDF or DOCX resume first.");
+      }
 
       const nextAnalysis = await createResumeAnalysis({
         targetRole,
         jobDescription,
-        resumeText: resumeSeedText,
+        resumeFile,
       });
 
       setAnalysisResult(nextAnalysis);

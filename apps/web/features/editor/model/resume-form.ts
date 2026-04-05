@@ -35,39 +35,6 @@ export interface ResumeForm {
   awards: string[];
 }
 
-export function serializeResumeForm(form: ResumeForm) {
-  const educationText = form.education
-    .map((entry) => `${entry.institution} - ${entry.degree} - ${entry.location} - ${entry.dateRange}`)
-    .join("\n");
-
-  const experienceText = form.experience
-    .map((entry) => `${entry.role} - ${entry.location} - ${entry.dateRange}`)
-    .join("\n");
-
-  const leadershipText = form.leadership
-    .map(
-      (entry) =>
-        `${entry.role} - ${entry.organization} - ${entry.location} - ${entry.dateRange}`,
-    )
-    .join("\n");
-
-  return [
-    `Name: ${form.personalInfo.fullName}`,
-    `Phone: ${form.personalInfo.phone}`,
-    `Email: ${form.personalInfo.email}`,
-    "Education:",
-    educationText,
-    "Experience:",
-    experienceText,
-    "Leadership:",
-    leadershipText,
-    "Awards:",
-    form.awards.join("\n"),
-  ]
-    .filter(Boolean)
-    .join("\n");
-}
-
 export const defaultResumeForm: ResumeForm = {
   personalInfo: {
     fullName: "BEA ANGELI C. VICENTE",

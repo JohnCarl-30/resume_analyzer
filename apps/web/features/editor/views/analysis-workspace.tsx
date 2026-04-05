@@ -302,9 +302,19 @@ export function AnalysisWorkspace({
                 <p className="mt-2 text-sm text-[color:var(--page-muted)]">
                   Targeting {analysisResult.targetRole}
                 </p>
+                {analysisResult.sourceFileName ? (
+                  <p className="mt-2 text-sm text-[color:var(--page-muted)]">
+                    Parsed from {analysisResult.sourceFileName}
+                  </p>
+                ) : null}
                 <p className="mt-5 text-xs text-[color:var(--page-muted)]">
                   Generated {new Date(analysisResult.generatedAt).toLocaleString()}
                 </p>
+                {analysisResult.extractedCharacterCount ? (
+                  <p className="mt-1 text-xs text-[color:var(--page-muted)]">
+                    {analysisResult.extractedCharacterCount.toLocaleString()} characters extracted
+                  </p>
+                ) : null}
               </div>
 
               <div className="rounded-[18px] border border-[color:var(--page-line)] bg-white p-5 shadow-[0_10px_24px_rgba(26,32,61,0.06)]">

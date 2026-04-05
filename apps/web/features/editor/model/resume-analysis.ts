@@ -17,4 +17,6 @@ export interface ResumeAnalysisResult {
   missingKeywords: string[];
   suggestions: AnalysisSuggestion[];
   generatedAt: string;
+  sourceFileName?: string;
+  extractedCharacterCount?: number;
 }

@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { MulterError } from "multer";
 import { ZodError } from "zod";
 
 import { HttpError } from "../utils/http-error.js";
@@ -19,6 +20,15 @@ export function errorHandler(
   if (error instanceof HttpError) {
     return res.status(error.statusCode).json({
       error: error.message,
+    });
+  }
+
+  if (error instanceof MulterError) {
+    return res.status(400).json({
+      error:
+        error.code === "LIMIT_FILE_SIZE"
+          ? "Resume must be 10 MB or smaller."
+          : error.message,
     });
   }
 

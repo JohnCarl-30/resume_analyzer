@@ -76,7 +76,7 @@ export function StepDocumentUpload({
                   id={resumeInputId}
                   ref={resumeInputRef}
                   type="file"
-                  accept=".pdf,.doc,.docx"
+                  accept=".pdf,.docx"
                   className="sr-only"
                   onChange={handleFileChange}
                 />
