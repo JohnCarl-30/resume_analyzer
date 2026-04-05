@@ -66,6 +66,7 @@ The backend lives in `apps/api` and is responsible for:
 | Method | Route | Purpose |
 | --- | --- | --- |
 | `GET` | `/health` | Health check |
+| `POST` | `/api/analysis` | Run a starter resume-vs-job analysis |
 | `POST` | `/api/uploads/sign` | Create a presigned upload URL |
 | `POST` | `/api/resumes` | Save uploaded resume metadata |
 | `GET` | `/api/resumes` | List resumes |
@@ -122,6 +123,27 @@ corepack pnpm dev:api
 corepack pnpm dev:web
 ```
 
+### 5. Try the Express backend
+
+Once `corepack pnpm dev:api` is running, you can hit the new analysis endpoint:
+
+```bash
+curl -X POST http://localhost:4000/api/analysis \
+  -H "Content-Type: application/json" \
+  -d '{
+    "targetRole": "Senior Backend Engineer",
+    "jobDescription": "We are hiring a Senior Backend Engineer with strong Node.js, Express, PostgreSQL, Docker, AWS, CI/CD, and leadership experience.",
+    "resumeText": "Backend engineer with Node.js, Express, PostgreSQL, Docker, and AWS experience. Led API work and improved deployment times by 35%."
+  }'
+```
+
+It returns a starter analysis payload with:
+
+- a heuristic match score
+- matched keywords
+- missing keywords
+- practical writing suggestions
+
 ## Available Scripts
 
 | Command | Description |
@@ -140,6 +162,25 @@ corepack pnpm dev:web
 - The API uses Zod to fail fast when required environment variables are missing.
 - The frontend expects `NEXT_PUBLIC_API_BASE_URL` to point to the running API.
 - Uploaded files go directly from the browser to R2 after the API signs the upload request.
+- The analysis endpoint is intentionally heuristic-first so you can wire the frontend now and swap in OpenAI or a queue worker later without changing the route shape.
+
+## Backend Walkthrough
+
+The Express backend in `apps/api` is split into small layers so each file has one job:
+
+- `src/server.ts`: starts the HTTP server
+- `src/app.ts`: creates the Express app, middleware, and top-level routes
+- `src/routes/*.routes.ts`: maps URLs and HTTP verbs
+- `src/controllers/*.controller.ts`: reads the request and shapes the HTTP response
+- `src/services/*.service.ts`: holds business logic
+- `src/schemas/*.schema.ts`: validates input with Zod
+
+Why Express here:
+
+- it is simple to read if you are still learning backend flow
+- it adds very little framework magic, so request flow is easier to trace
+- it fits well for a small monorepo where the frontend and API evolve together
+- it is easy to replace internals later, like moving from in-memory logic to a database or queue
 
 ## Troubleshooting
 
