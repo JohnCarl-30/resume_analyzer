@@ -1,5 +1,6 @@
 import React from "react";
 import type { ResumeAnalysisResult } from "../model/resume-analysis";
+import type { ResumeForm } from "../model/resume-form";
 import { useResumeEditor } from "../view-models/use-resume-editor";
 import { PersonalInfoEditor } from "../components/editors/personal-info-editor";
 import { ExperienceEditor } from "../components/editors/experience-editor";
@@ -29,6 +30,7 @@ interface AnalysisWorkspaceProps {
   selectedTemplateName: string;
   resumeFileName: string;
   analysisResult: ResumeAnalysisResult | null;
+  initialForm?: ResumeForm;
   onBack: () => void;
 }
 
@@ -45,6 +47,7 @@ export function AnalysisWorkspace({
   selectedTemplateName,
   resumeFileName,
   analysisResult,
+  initialForm,
   onBack,
 }: AnalysisWorkspaceProps) {
   const {
@@ -64,7 +67,7 @@ export function AnalysisWorkspace({
     updateAwards,
     addAward,
     removeAward,
-  } = useResumeEditor();
+  } = useResumeEditor(initialForm);
 
   function sectionIcon(icon: (typeof workspaceSections)[number]["icon"]) {
     if (icon === "personal") {
@@ -299,12 +302,21 @@ export function AnalysisWorkspace({
                 <p className="mt-3 text-5xl font-semibold tracking-tight text-[color:var(--page-text)]">
                   {analysisResult.score}
                 </p>
-                <p className="mt-2 text-sm text-[color:var(--page-muted)]">
-                  Targeting {analysisResult.targetRole}
-                </p>
-                {analysisResult.sourceFileName ? (
                   <p className="mt-2 text-sm text-[color:var(--page-muted)]">
-                    Parsed from {analysisResult.sourceFileName}
+                    Targeting {analysisResult.targetRole}
+                  </p>
+                  {analysisResult.extractionProvider === "openai" ? (
+                    <p className="mt-2 text-sm font-medium text-[color:var(--brand)]">
+                      OpenAI structured extraction applied
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-sm text-[color:var(--page-muted)]">
+                      Parser-only mode
+                    </p>
+                  )}
+                  {analysisResult.sourceFileName ? (
+                    <p className="mt-2 text-sm text-[color:var(--page-muted)]">
+                      Parsed from {analysisResult.sourceFileName}
                   </p>
                 ) : null}
                 <p className="mt-5 text-xs text-[color:var(--page-muted)]">
@@ -380,6 +392,32 @@ export function AnalysisWorkspace({
                       )}
                     </div>
                   </div>
+
+                  {analysisResult.extractedProfile ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]">
+                        Extracted Snapshot
+                      </p>
+                      <div className="mt-3 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] p-3">
+                        <p className="text-sm font-semibold text-[color:var(--page-text)]">
+                          {analysisResult.extractedProfile.fullName || "Unnamed Candidate"}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-[color:var(--page-muted)]">
+                          {analysisResult.extractedProfile.summary || "No summary extracted."}
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {analysisResult.extractedProfile.skills.slice(0, 6).map((skill) => (
+                            <span
+                              key={skill}
+                              className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[color:var(--page-text)]"
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>

@@ -95,6 +95,8 @@ cp apps/web/.env.example apps/web/.env.local
 ```env
 PORT=4000
 APP_ORIGIN=http://localhost:3000
+OPENAI_API_KEY=
+OPENAI_EXTRACTION_MODEL=gpt-5.4-mini
 DATABASE_URL=postgres://user:password@host/database?sslmode=require
 R2_ACCOUNT_ID=your-cloudflare-account-id
 R2_BUCKET_NAME=resume-analyzer
@@ -159,6 +161,7 @@ This route:
 - accepts `multipart/form-data`
 - parses PDF and DOCX resumes on the backend
 - extracts text before running the same analysis logic
+- optionally enriches the parsed text with OpenAI structured extraction when `OPENAI_API_KEY` is set
 
 ## Available Scripts
 

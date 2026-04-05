@@ -4,6 +4,7 @@ import {
   createUploadedAnalysisSchema,
 } from "../schemas/analysis.schema.js";
 import { HttpError } from "../utils/http-error.js";
+import { openAiResumeExtractionService } from "./openai-resume-extraction.service.js";
 import { resumeParserService } from "./resume-parser.service.js";
 
 const trackedKeywords = [
@@ -145,10 +146,17 @@ export const analysisService = {
       resumeText: extracted.text,
     });
 
+    const extractedProfile = await openAiResumeExtractionService.extractProfile({
+      resumeText: extracted.text,
+      targetRole: payload.targetRole,
+    });
+
     return {
       ...analysis,
       sourceFileName: input.resumeFile.originalname,
       extractedCharacterCount: extracted.text.length,
+      extractedProfile,
+      extractionProvider: extractedProfile ? "openai" : "parser",
     };
   },
 };

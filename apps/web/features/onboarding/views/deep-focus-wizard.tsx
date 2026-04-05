@@ -7,6 +7,7 @@ import { StepDocumentUpload } from "../components/step-document-upload";
 import { StepTemplateSelection } from "../components/step-template-selection";
 import { AnalysisWorkspace } from "../../editor/views/analysis-workspace";
 import type { ResumeAnalysisResult } from "../../editor/model/resume-analysis";
+import { resumeFormFromExtractedProfile } from "../../editor/model/resume-form";
 import { sampleTemplates } from "../../templates/model/template";
 import { createResumeAnalysis } from "../utils/analysis-api";
 import { formatFileSize, isSupportedFile, maxFileSize } from "../utils/wizard-utils";
@@ -38,6 +39,9 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
     sampleTemplates.find((template) => template.id === selectedTemplateId) ?? sampleTemplates[0];
   const canContinueFromRole = targetRole.trim().length > 0;
   const canContinueFromUpload = Boolean(resumeFile) && jobDescription.trim().length > 0;
+  const initialWorkspaceForm = resumeFormFromExtractedProfile(
+    analysisResult?.extractedProfile,
+  );
   
   const stepOverview = [
     {
@@ -155,6 +159,7 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
               selectedTemplateName={selectedTemplate?.name ?? "Selected template"}
               resumeFileName={resumeFile?.name ?? "resume.pdf"}
               analysisResult={analysisResult}
+              initialForm={initialWorkspaceForm}
               onBack={handleBack}
             />
           ) : (

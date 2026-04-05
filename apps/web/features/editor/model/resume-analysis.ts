@@ -2,6 +2,8 @@ export type AnalysisSeverity = "low" | "medium" | "high";
 
 export type AnalysisCategory = "keywords" | "writing" | "impact";
 
+import type { ExtractedResumeProfile } from "./resume-extraction";
+
 export interface AnalysisSuggestion {
   id: string;
   title: string;
@@ -19,4 +21,6 @@ export interface ResumeAnalysisResult {
   generatedAt: string;
   sourceFileName?: string;
   extractedCharacterCount?: number;
+  extractedProfile?: ExtractedResumeProfile | null;
+  extractionProvider?: "parser" | "openai";
 }

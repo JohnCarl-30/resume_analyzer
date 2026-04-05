@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { ResumeForm, defaultResumeForm } from "../model/resume-form";
 
-export function useResumeEditor() {
-  const [form, setForm] = useState<ResumeForm>(defaultResumeForm);
+export function useResumeEditor(initialForm: ResumeForm = defaultResumeForm) {
+  const [form, setForm] = useState<ResumeForm>(initialForm);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
 
   const updatePersonalInfo = (data: Partial<ResumeForm["personalInfo"]>) => {

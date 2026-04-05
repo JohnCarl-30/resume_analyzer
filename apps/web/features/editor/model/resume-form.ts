@@ -1,3 +1,5 @@
+import type { ExtractedResumeProfile } from "./resume-extraction";
+
 export interface PersonalInfo {
   fullName: string;
   phone: string;
@@ -33,6 +35,55 @@ export interface ResumeForm {
   experience: ExperienceEntry[];
   leadership: LeadershipEntry[];
   awards: string[];
+}
+
+export const emptyResumeForm: ResumeForm = {
+  personalInfo: {
+    fullName: "",
+    phone: "",
+    email: "",
+  },
+  education: [],
+  experience: [],
+  leadership: [],
+  awards: [],
+};
+
+export function resumeFormFromExtractedProfile(
+  extractedProfile: ExtractedResumeProfile | null | undefined,
+) {
+  if (!extractedProfile) {
+    return defaultResumeForm;
+  }
+
+  return {
+    personalInfo: {
+      fullName: extractedProfile.fullName,
+      phone: extractedProfile.phone,
+      email: extractedProfile.email,
+    },
+    education: extractedProfile.education.map((entry, index) => ({
+      id: `edu_ai_${index + 1}`,
+      institution: entry.institution,
+      degree: entry.degree,
+      location: entry.location,
+      dateRange: entry.dateRange,
+    })),
+    experience: extractedProfile.experience.map((entry, index) => ({
+      id: `exp_ai_${index + 1}`,
+      role: entry.role,
+      location: entry.location,
+      dateRange: entry.dateRange,
+    })),
+    leadership: extractedProfile.leadership.map((entry, index) => ({
+      id: `lead_ai_${index + 1}`,
+      role: entry.role,
+      organization: entry.organization,
+      location: entry.location,
+      dateRange: entry.dateRange,
+    })),
+    awards: extractedProfile.awards,
+  };
 }
 
 export const defaultResumeForm: ResumeForm = {
