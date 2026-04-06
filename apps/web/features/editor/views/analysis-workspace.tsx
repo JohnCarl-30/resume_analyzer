@@ -576,6 +576,29 @@ export function AnalysisWorkspace({
     anchor.click();
   }
 
+  async function handleTailorToJob() {
+    if (!analysisResult?.id) return;
+
+    setUpdateError("");
+    setIsUpdatingAnalysis(true);
+
+    try {
+      const { updateResumeAnalysis } = await import("../../onboarding/utils/analysis-api");
+      const updated = await updateResumeAnalysis(analysisResult.id, {
+        jobDescription: newJobDescription,
+        targetRole,
+      });
+
+      onAnalysisUpdate?.(updated);
+      onJobDescriptionChange?.(newJobDescription);
+      closeModal();
+    } catch (error) {
+      setUpdateError(error instanceof Error ? error.message : "Failed to re-analyze resume.");
+    } finally {
+      setIsUpdatingAnalysis(false);
+    }
+  }
+
   function renderSuggestionCard(suggestion: ResumeAnalysisResult["suggestions"][number]) {
     const accentClass =
       suggestion.severity === "high"
@@ -1236,6 +1259,61 @@ export function AnalysisWorkspace({
                     >
                       Save Changes
                     </button>
+                  </div>
+                </div>
+              </>
+            ) : modalView === "tailor" ? (
+              <>
+                <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-6 py-5 sm:px-8">
+                  <div className="space-y-1">
+                    <h2 className="text-[2rem] font-semibold tracking-tight text-[color:var(--page-text)]">
+                      Tailor to Job
+                    </h2>
+                    <p className="text-lg text-[color:var(--page-muted)]">
+                      Paste a specific job description to re-calculate your match score.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="inline-flex h-12 w-12 items-center justify-center rounded-[16px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+                    aria-label="Close tailor modal"
+                  >
+                    <CloseIcon />
+                  </button>
+                </div>
+
+                <div className="px-6 py-8 sm:px-8">
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <label className="text-sm font-semibold tracking-wide text-[color:var(--page-text)]">
+                        Job Description
+                      </label>
+                      <textarea
+                        value={newJobDescription}
+                        onChange={(e) => setNewJobDescription(e.target.value)}
+                        placeholder="Paste the full job description here..."
+                        className="min-h-[400px] w-full resize-none rounded-[24px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-6 py-5 text-lg leading-8 text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)]"
+                      />
+                    </div>
+
+                    {updateError && (
+                      <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-600">
+                        {updateError}
+                      </p>
+                    )}
+
+                    <div className="flex justify-end pt-4">
+                      <button
+                        type="button"
+                        disabled={isUpdatingAnalysis || newJobDescription.length < 30}
+                        onClick={handleTailorToJob}
+                        className="inline-flex h-16 items-center justify-center gap-3 rounded-[18px] bg-[color:var(--brand)] px-10 text-xl font-semibold text-white shadow-[0_12px_32px_rgba(37,99,235,0.25)] transition hover:bg-[color:var(--brand-strong)] hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
+                      >
+                        {isUpdatingAnalysis ? "Analyzing..." : "Update Analysis"}
+                        <SparklesIcon />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </>
