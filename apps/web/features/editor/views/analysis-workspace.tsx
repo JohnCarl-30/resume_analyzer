@@ -273,19 +273,15 @@ export function AnalysisWorkspace({
   const [isUpdatingAnalysis, setIsUpdatingAnalysis] = useState(false);
   const [newJobDescription, setNewJobDescription] = useState(analysisResult?.jobDescription ?? "");
   const [updateError, setUpdateError] = useState("");
+  const [previewMode, setPreviewMode] = useState<"uploaded" | "structured" | "parsed" | "empty">(
+    resumePreviewUrl ? "uploaded" : analysisResult?.extractedProfile ? "structured" : "parsed",
+  );
 
   const resumeTitle =
     form.personalInfo.fullName.trim() ||
     analysisResult?.extractedProfile?.fullName.trim() ||
     humanizeFileName(resumeFileName) ||
     "Uploaded Resume";
-  const previewMode = resumePreviewUrl
-    ? "uploaded"
-    : analysisResult?.extractedProfile
-      ? "structured"
-      : analysisResult?.parsedResumeText
-        ? "parsed"
-        : "empty";
   const hasStructuredPreview = previewMode === "structured";
   const canZoomDocument = previewMode !== "uploaded";
   const feedbackSummary = {
@@ -348,6 +344,7 @@ export function AnalysisWorkspace({
 
   function handleSelectTemplate(templateId: ResumeTemplateVariant) {
     onTemplateChange?.(templateId);
+    setPreviewMode("structured");
     setModalView(null);
   }
 
@@ -775,7 +772,38 @@ export function AnalysisWorkspace({
           <div className="grid h-full gap-6 p-6 xl:grid-cols-[minmax(0,1fr)_22rem] xl:p-8">
             <div className="relative min-h-0 overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-[linear-gradient(180deg,#f4f7fc_0%,#eef3fb_100%)]">
               <div className="pointer-events-none absolute left-1/2 top-5 z-20 -translate-x-1/2">
-                <div className="pointer-events-auto inline-flex items-center gap-3 rounded-[16px] border border-[color:var(--page-line)] bg-white px-4 py-3 shadow-[0_14px_30px_rgba(26,32,61,0.1)]">
+                <div className="pointer-events-auto inline-flex items-center gap-2 rounded-[16px] border border-[color:var(--page-line)] bg-white px-2.5 py-2.5 shadow-[0_14px_30px_rgba(26,32,61,0.1)]">
+                  <div className="flex items-center gap-1 rounded-[12px] bg-slate-50 p-1">
+                    {resumePreviewUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewMode("uploaded")}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-[9px] transition ${
+                          previewMode === "uploaded"
+                            ? "bg-white text-[color:var(--brand)] shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
+                            : "text-[color:var(--page-muted)] hover:text-[color:var(--page-text)]"
+                        }`}
+                      >
+                        <FileIcon />
+                        Original
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMode("structured")}
+                      className={`inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-[9px] transition ${
+                        previewMode === "structured"
+                          ? "bg-white text-[color:var(--brand)] shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
+                          : "text-[color:var(--page-muted)] hover:text-[color:var(--page-text)]"
+                      }`}
+                    >
+                      <SparklesIcon />
+                      AI Template
+                    </button>
+                  </div>
+
+                  <div className="mx-1 h-8 w-px bg-[color:var(--page-line)]" />
+
                   <button
                     type="button"
                     onClick={() => adjustPreviewZoom(-10)}
@@ -813,10 +841,10 @@ export function AnalysisWorkspace({
               <div className="h-full overflow-auto px-5 pb-10 pt-24 sm:px-8">
                 <div className="mx-auto mb-4 max-w-[860px] rounded-[18px] border border-[color:var(--page-line)] bg-white/75 px-4 py-3 text-center text-sm text-[color:var(--page-muted)] backdrop-blur-sm">
                   {previewMode === "uploaded"
-                    ? "Previewing the uploaded PDF directly."
+                    ? "Viewing your original uploaded resume. Use the 'AI Template' toggle to see enhanced layouts."
                     : previewMode === "parsed"
-                      ? "Showing a parser-based text preview because a direct file render is not available."
-                      : "Showing a structured resume preview from the extracted content."}
+                      ? "Showing a draft preview from the parsed text."
+                      : "Previewing your content in the selected AI layout. Changes here reflect in your exported PDF."}
                 </div>
                 {renderDocumentPreview()}
               </div>
