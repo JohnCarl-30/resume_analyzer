@@ -290,11 +290,10 @@ export function AnalysisWorkspace({
   const canZoomDocument = previewMode !== "uploaded";
   const feedbackSummary = {
     total: analysisResult?.suggestions.length ?? 0,
-    critical: analysisResult?.suggestions.filter((suggestion) => suggestion.severity === "high")
-      .length ?? 0,
-    opportunity:
-      analysisResult?.suggestions.filter((suggestion) => suggestion.category === "impact").length ??
+    critical:
+      analysisResult?.suggestions.filter((suggestion) => suggestion.severity === "high").length ??
       0,
+    metrics: analysisResult?.metricsFound ?? 0,
   };
 
   const editorSections = [
@@ -892,53 +891,15 @@ export function AnalysisWorkspace({
                     </div>
                     <div className="rounded-[16px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-3 py-3">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--page-muted)]">
-                        Impact
+                        Metrics
                       </p>
                       <p className="mt-2 text-2xl font-semibold text-[color:var(--page-text)]">
-                        {feedbackSummary.opportunity}
+                        {feedbackSummary.metrics}
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]">
-                      Matched
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {analysisResult.matchedKeywords.length > 0 ? (
-                        analysisResult.matchedKeywords.map((keyword) => (
-                          <span
-                            key={keyword}
-                            className="rounded-full bg-[color:var(--brand-soft)] px-3 py-1.5 text-xs font-medium text-[color:var(--brand)]"
-                          >
-                            {keyword}
-                          </span>
-                        ))
-                      ) : (
-                        <p className="text-sm text-[color:var(--page-muted)]">No keyword matches yet.</p>
-                      )}
-                    </div>
-                  </div>
 
-                  <div className="mt-5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]">
-                      Missing
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {analysisResult.missingKeywords.length > 0 ? (
-                        analysisResult.missingKeywords.map((keyword) => (
-                          <span
-                            key={keyword}
-                            className="rounded-full border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-3 py-1.5 text-xs font-medium text-[color:var(--page-text)]"
-                          >
-                            {keyword}
-                          </span>
-                        ))
-                      ) : (
-                        <p className="text-sm text-[color:var(--page-muted)]">No missing keywords detected.</p>
-                      )}
-                    </div>
-                  </div>
 
                   <div className="mt-6 space-y-4">
                     <div className="flex items-center justify-between gap-3">

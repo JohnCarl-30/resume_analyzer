@@ -75,6 +75,7 @@ export const analysisService = {
     return {
       targetRole: jdExtraction.targetRoleTitle || payload.targetRole,
       score,
+      metricsFound: impactResult.metricsFound,
       matchedKeywords: keywordResult.matchedKeywords,
       missingKeywords: keywordResult.missingKeywords,
       suggestions: allSuggestions,

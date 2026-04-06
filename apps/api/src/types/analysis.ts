@@ -18,6 +18,7 @@ export interface ResumeAnalysis {
   jobDescription?: string;
   selectedTemplateId?: string;
   score: number;
+  metricsFound?: number;
   matchedKeywords: string[];
   missingKeywords: string[];
   suggestions: AnalysisSuggestion[];

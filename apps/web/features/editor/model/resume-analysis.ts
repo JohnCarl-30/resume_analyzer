@@ -19,6 +19,7 @@ export interface ResumeAnalysisResult {
   selectedTemplateId?: string;
   parsedResumeText?: string;
   score: number;
+  metricsFound: number;
   matchedKeywords: string[];
   missingKeywords: string[];
   suggestions: AnalysisSuggestion[];
