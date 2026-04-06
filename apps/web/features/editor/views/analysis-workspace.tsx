@@ -706,7 +706,8 @@ export function AnalysisWorkspace({
 
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-4 py-2.5 text-sm font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)]"
+              onClick={() => setModalView("templates")}
+              className="group inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-4 py-2.5 text-sm font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg-soft)] active:scale-[0.98]"
             >
               <GridIcon />
               {humanizeFileName(resumeFileName)}
