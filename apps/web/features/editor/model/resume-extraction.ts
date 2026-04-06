@@ -9,6 +9,7 @@ export interface ExtractedExperienceEntry {
   role: string;
   location: string;
   dateRange: string;
+  bullets: string[];
 }
 
 export interface ExtractedLeadershipEntry {
@@ -16,6 +17,16 @@ export interface ExtractedLeadershipEntry {
   organization: string;
   location: string;
   dateRange: string;
+  bullets: string[];
+}
+
+export interface ExtractedProjectEntry {
+  name: string;
+  technologies: string;
+  link: string;
+  startDate: string;
+  endDate: string;
+  bullets: string[];
 }
 
 export interface ExtractedResumeProfile {
@@ -27,5 +38,7 @@ export interface ExtractedResumeProfile {
   education: ExtractedEducationEntry[];
   experience: ExtractedExperienceEntry[];
   leadership: ExtractedLeadershipEntry[];
+  projects: ExtractedProjectEntry[];
   awards: string[];
 }
+

@@ -87,6 +87,7 @@ export function resumeFormFromExtractedProfile(
       role: entry.role,
       location: entry.location,
       dateRange: entry.dateRange,
+      bullets: entry.bullets || [],
     })),
     leadership: extractedProfile.leadership.map((entry, index) => ({
       id: `lead_ai_${index + 1}`,
@@ -94,11 +95,22 @@ export function resumeFormFromExtractedProfile(
       organization: entry.organization,
       location: entry.location,
       dateRange: entry.dateRange,
+      bullets: entry.bullets || [],
     })),
     awards: extractedProfile.awards,
-    projects: [],
+    projects: extractedProfile.projects.map((entry, index) => ({
+      id: `proj_ai_${index + 1}`,
+      name: entry.name,
+      technologies: entry.technologies,
+      link: entry.link,
+      startDate: entry.startDate,
+      endDate: entry.endDate,
+      current: false,
+      bullets: entry.bullets || [],
+    })),
   };
 }
+
 
 export const defaultResumeForm: ResumeForm = {
   personalInfo: {
