@@ -226,6 +226,29 @@ export function TemplatePreview({ variant }: TemplatePreviewProps) {
   );
 }
 export function TemplateRealPreview({ variantId }: { variantId: string }) {
+  // Use high-quality static screenshots for the primary premium templates
+  const imageMap: Record<string, string> = {
+    "harvard-classic": "/templates/harvard-classic.png",
+    "modern-sans": "/templates/modern-sans.png",
+    "ruby-accent": "/templates/ruby-accent.png",
+  };
+
+  const imageUrl = imageMap[variantId];
+
+  if (imageUrl) {
+    return (
+      <div className="relative h-full w-full overflow-hidden flex items-center justify-center p-2">
+        <div className="h-full w-full bg-white shadow-lg rounded-sm overflow-hidden border border-black/5">
+          <img 
+            src={imageUrl} 
+            alt={`Preview of ${variantId}`}
+            className="h-full w-full object-cover object-top"
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative h-full w-full overflow-hidden pointer-events-none select-none flex items-center justify-center">
       <div 
