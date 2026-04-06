@@ -2,15 +2,32 @@ import type { ResumeTemplateVariant } from "../model/template";
 import { ResumeRenderer } from "../../editor/components/resume-renderer";
 import { defaultResumeForm } from "../../editor/model/resume-form";
 
+const previewPageWidth = 1000;
+const previewPageHeight = 1414;
+const previewScale = 0.24;
+
 interface TemplatePreviewProps {
   variant: ResumeTemplateVariant;
 }
 
 export function TemplatePreview({ variant }: TemplatePreviewProps) {
   return (
-    <div className="relative h-full w-full overflow-hidden flex items-center justify-center">
-      <div className="absolute origin-top transform-gpu" style={{ width: "1000px", height: "1414px", transform: "scale(0.24)" }}>
-        <div className="h-full w-full bg-white shadow-2xl rounded-sm overflow-hidden">
+    <div className="flex h-full w-full items-center justify-center overflow-hidden">
+      <div
+        className="relative shrink-0 overflow-hidden rounded-sm shadow-2xl"
+        style={{
+          width: `${previewPageWidth * previewScale}px`,
+          height: `${previewPageHeight * previewScale}px`,
+        }}
+      >
+        <div
+          className="origin-top-left transform-gpu bg-white"
+          style={{
+            width: `${previewPageWidth}px`,
+            height: `${previewPageHeight}px`,
+            transform: `scale(${previewScale})`,
+          }}
+        >
           <ResumeRenderer form={defaultResumeForm} variantId={variant} />
         </div>
       </div>
@@ -43,14 +60,20 @@ export function TemplateRealPreview({ variantId }: { variantId: ResumeTemplateVa
   return (
     <div className="relative h-full w-full overflow-hidden pointer-events-none select-none flex items-center justify-center">
       <div
-        className="absolute origin-top transform-gpu"
+        className="relative shrink-0 overflow-hidden rounded-sm shadow-2xl"
         style={{
-          width: "1000px",
-          height: "1414px",
-          transform: "scale(0.24)",
+          width: `${previewPageWidth * previewScale}px`,
+          height: `${previewPageHeight * previewScale}px`,
         }}
       >
-        <div className="h-full w-full bg-white shadow-2xl rounded-sm overflow-hidden">
+        <div
+          className="origin-top-left transform-gpu bg-white"
+          style={{
+            width: `${previewPageWidth}px`,
+            height: `${previewPageHeight}px`,
+            transform: `scale(${previewScale})`,
+          }}
+        >
           <ResumeRenderer form={defaultResumeForm} variantId={variantId} />
         </div>
       </div>
