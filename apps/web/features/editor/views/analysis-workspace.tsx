@@ -693,8 +693,18 @@ export function AnalysisWorkspace({
     );
   }
 
+  const openTailorModal = () => setModalView("tailor");
+
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col bg-[color:var(--page-surface)] text-[color:var(--page-text)]">
+    <div className="relative flex h-full min-h-0 flex-1 flex-col bg-[color:var(--page-surface)] text-[color:var(--page-text)]">
+      {isUpdatingAnalysis && (
+        <div className="absolute inset-0 z-[60] flex items-center justify-center bg-white/70 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-[color:var(--brand)] border-t-transparent"></div>
+            <p className="text-lg font-medium text-[color:var(--page-text)]">Tailoring analysis to new job...</p>
+          </div>
+        </div>
+      )}
       <header className="border-b border-[color:var(--page-line)] bg-white px-5 py-4 sm:px-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-wrap items-center gap-4 text-sm">
@@ -728,6 +738,7 @@ export function AnalysisWorkspace({
 
             <button
               type="button"
+              onClick={openTailorModal}
               className="inline-flex items-center gap-2 rounded-[14px] bg-[color:var(--brand)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(79,107,255,0.22)] transition hover:bg-[color:var(--brand-strong)]"
             >
               <EyeIcon />
