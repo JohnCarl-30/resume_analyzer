@@ -8,10 +8,20 @@ export const analysisController = {
     res.status(201).json({ data: analysis });
   },
 
+  async getById(req: Request, res: Response) {
+    const analysisId = Array.isArray(req.params.analysisId)
+      ? req.params.analysisId[0]
+      : req.params.analysisId;
+
+    const analysis = await analysisService.getAnalysisById(analysisId);
+    res.json({ data: analysis });
+  },
+
   async createFromUpload(req: Request, res: Response) {
     const analysis = await analysisService.createAnalysisFromUpload({
       targetRole: req.body.targetRole,
       jobDescription: req.body.jobDescription,
+      selectedTemplateId: req.body.selectedTemplateId,
       resumeFile: req.file,
     });
 

@@ -13,7 +13,10 @@ export interface AnalysisSuggestion {
 }
 
 export interface ResumeAnalysis {
+  id?: string;
   targetRole: string;
+  jobDescription?: string;
+  selectedTemplateId?: string;
   score: number;
   matchedKeywords: string[];
   missingKeywords: string[];

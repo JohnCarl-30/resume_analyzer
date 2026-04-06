@@ -6,6 +6,10 @@ import {
 import { HttpError } from "../utils/http-error.js";
 import { openAiResumeExtractionService } from "./openai-resume-extraction.service.js";
 import { resumeParserService } from "./resume-parser.service.js";
+import type { PersistedResumeAnalysis } from "../repositories/analysis.repository.js";
+import { db } from "../db/client.js";
+import { inMemoryAnalysisRepository } from "../repositories/in-memory-analysis.repository.js";
+import { postgresAnalysisRepository } from "../repositories/postgres-analysis.repository.js";
 
 const trackedKeywords = [
   "typescript",
@@ -44,6 +48,10 @@ function normalizeText(value: string) {
 function uniqueSorted(values: Iterable<string>) {
   return Array.from(new Set(values)).sort((left, right) => left.localeCompare(right));
 }
+
+const analysisRepository = db.isConfigured
+  ? postgresAnalysisRepository
+  : inMemoryAnalysisRepository;
 
 export const analysisService = {
   async createAnalysis(input: unknown): Promise<ResumeAnalysis> {
@@ -121,11 +129,13 @@ export const analysisService = {
   async createAnalysisFromUpload(input: {
     targetRole: unknown;
     jobDescription: unknown;
+    selectedTemplateId: unknown;
     resumeFile?: Express.Multer.File;
-  }): Promise<ResumeAnalysis> {
+  }): Promise<PersistedResumeAnalysis> {
     const payload = createUploadedAnalysisSchema.parse({
       targetRole: input.targetRole,
       jobDescription: input.jobDescription,
+      selectedTemplateId: input.selectedTemplateId,
     });
 
     if (!input.resumeFile) {
@@ -151,12 +161,25 @@ export const analysisService = {
       targetRole: payload.targetRole,
     });
 
-    return {
+    return analysisRepository.create({
       ...analysis,
+      jobDescription: payload.jobDescription,
+      selectedTemplateId: payload.selectedTemplateId,
+      parsedResumeText: extracted.text,
       sourceFileName: input.resumeFile.originalname,
       extractedCharacterCount: extracted.text.length,
       extractedProfile,
       extractionProvider: extractedProfile ? "openai" : "parser",
-    };
+    });
+  },
+
+  async getAnalysisById(analysisId: string): Promise<PersistedResumeAnalysis> {
+    const analysis = await analysisRepository.findById(analysisId);
+
+    if (!analysis) {
+      throw new HttpError(404, "Saved analysis not found.");
+    }
+
+    return analysis;
   },
 };

@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useState, useId, useRef, type ChangeEvent, type DragEvent } from "react";
+import React, {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+} from "react";
 import { ArrowLeftIcon, BrandMark } from "../components/wizard-icons";
 import { StepTargetRole } from "../components/step-target-role";
 import { StepDocumentUpload } from "../components/step-document-upload";
@@ -9,7 +16,7 @@ import { AnalysisWorkspace } from "../../editor/views/analysis-workspace";
 import type { ResumeAnalysisResult } from "../../editor/model/resume-analysis";
 import { resumeFormFromExtractedProfile } from "../../editor/model/resume-form";
 import { sampleTemplates } from "../../templates/model/template";
-import { createResumeAnalysis } from "../utils/analysis-api";
+import { createResumeAnalysis, getResumeAnalysis } from "../utils/analysis-api";
 import { formatFileSize, isSupportedFile, maxFileSize } from "../utils/wizard-utils";
 
 type WizardStep = 1 | 2 | 3;
@@ -22,18 +29,22 @@ interface DeepFocusWizardProps {
 export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
   const resumeInputId = useId();
   const resumeInputRef = useRef<HTMLInputElement>(null);
+  const restoredAnalysisIdRef = useRef<string | null>(null);
+  const defaultTemplateId = sampleTemplates[0]?.id ?? "";
 
   const [step, setStep] = useState<WizardStep>(1);
   const [viewMode, setViewMode] = useState<ViewMode>("wizard");
   const [targetRole, setTargetRole] = useState("");
   const [jobDescription, setJobDescription] = useState("");
-  const [selectedTemplateId, setSelectedTemplateId] = useState(sampleTemplates[0]?.id ?? "");
+  const [selectedTemplateId, setSelectedTemplateId] = useState(defaultTemplateId);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [uploadError, setUploadError] = useState("");
   const [isDragActive, setIsDragActive] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<ResumeAnalysisResult | null>(null);
   const [analysisError, setAnalysisError] = useState("");
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
+  const [isRestoringAnalysis, setIsRestoringAnalysis] = useState(false);
+  const [analysisIdFromUrl, setAnalysisIdFromUrl] = useState<string | null>(null);
 
   const selectedTemplate =
     sampleTemplates.find((template) => template.id === selectedTemplateId) ?? sampleTemplates[0];
@@ -42,7 +53,7 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
   const initialWorkspaceForm = resumeFormFromExtractedProfile(
     analysisResult?.extractedProfile,
   );
-  
+
   const stepOverview = [
     {
       id: "01",
@@ -60,6 +71,32 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
       description: "Select the final layout once the matching context is already set.",
     },
   ] as const;
+
+  function replaceAnalysisParam(analysisId: string | null) {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const nextParams = new URLSearchParams(window.location.search);
+
+    if (analysisId) {
+      nextParams.set("analysis", analysisId);
+    } else {
+      nextParams.delete("analysis");
+    }
+
+    const nextUrl = nextParams.toString()
+      ? `${window.location.pathname}?${nextParams.toString()}`
+      : window.location.pathname;
+
+    window.history.replaceState({}, "", nextUrl);
+    setAnalysisIdFromUrl(analysisId);
+  }
+
+  function handleExitToDashboard() {
+    replaceAnalysisParam(null);
+    onExit?.();
+  }
 
   function handleValidatedFile(fileList: FileList | null) {
     const candidateFile = fileList?.[0];
@@ -133,10 +170,14 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
       const nextAnalysis = await createResumeAnalysis({
         targetRole,
         jobDescription,
+        selectedTemplateId,
         resumeFile,
       });
 
+      restoredAnalysisIdRef.current = nextAnalysis.id ?? null;
       setAnalysisResult(nextAnalysis);
+      setSelectedTemplateId(nextAnalysis.selectedTemplateId ?? selectedTemplateId);
+      replaceAnalysisParam(nextAnalysis.id ?? null);
       setViewMode("workspace");
     } catch (error) {
       setAnalysisError(
@@ -146,6 +187,71 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
       setIsGeneratingAnalysis(false);
     }
   }
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const syncAnalysisId = () => {
+      setAnalysisIdFromUrl(new URLSearchParams(window.location.search).get("analysis"));
+    };
+
+    syncAnalysisId();
+    window.addEventListener("popstate", syncAnalysisId);
+
+    return () => {
+      window.removeEventListener("popstate", syncAnalysisId);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!analysisIdFromUrl || restoredAnalysisIdRef.current === analysisIdFromUrl) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    setIsRestoringAnalysis(true);
+    setAnalysisError("");
+
+    void getResumeAnalysis(analysisIdFromUrl)
+      .then((savedAnalysis) => {
+        if (isCancelled) {
+          return;
+        }
+
+        restoredAnalysisIdRef.current = analysisIdFromUrl;
+        setAnalysisResult(savedAnalysis);
+        setTargetRole(savedAnalysis.targetRole);
+        setJobDescription(savedAnalysis.jobDescription ?? "");
+        setSelectedTemplateId(savedAnalysis.selectedTemplateId ?? defaultTemplateId);
+        setViewMode("workspace");
+        setStep(3);
+      })
+      .catch((error) => {
+        if (isCancelled) {
+          return;
+        }
+
+        replaceAnalysisParam(null);
+        setAnalysisResult(null);
+        setViewMode("wizard");
+        setStep(3);
+        setAnalysisError(
+          error instanceof Error ? error.message : "Unable to load the saved analysis right now.",
+        );
+      })
+      .finally(() => {
+        if (!isCancelled) {
+          setIsRestoringAnalysis(false);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [analysisIdFromUrl, defaultTemplateId]);
 
   const backLabel = step === 3 ? "Back to Upload" : "Back";
 
@@ -157,7 +263,9 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
             <AnalysisWorkspace
               targetRole={targetRole}
               selectedTemplateName={selectedTemplate?.name ?? "Selected template"}
-              resumeFileName={resumeFile?.name ?? "resume.pdf"}
+              resumeFileName={
+                analysisResult?.sourceFileName ?? resumeFile?.name ?? "resume.pdf"
+              }
               analysisResult={analysisResult}
               initialForm={initialWorkspaceForm}
               onBack={handleBack}
@@ -168,7 +276,7 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
                 <div className="justify-self-start flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={onExit}
+                    onClick={handleExitToDashboard}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--page-line)] text-[color:var(--page-muted)] transition hover:bg-[color:var(--page-bg-strong)] hover:text-[color:var(--page-text)]"
                     aria-label="Exit to dashboard"
                   >
@@ -196,7 +304,22 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
               </header>
 
               <div className="flex flex-1 flex-col">
-                {step === 1 && (
+                {analysisIdFromUrl && isRestoringAnalysis ? (
+                  <div className="flex flex-1 items-center justify-center px-6 py-16">
+                    <div className="max-w-md space-y-3 text-center">
+                      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[color:var(--brand)]">
+                        Restoring
+                      </p>
+                      <h2 className="text-3xl font-semibold tracking-tight text-[color:var(--page-text)]">
+                        Loading your saved analysis
+                      </h2>
+                      <p className="text-base text-[color:var(--page-muted)]">
+                        We&apos;re pulling the last generated result from the API so you can keep
+                        working after a refresh.
+                      </p>
+                    </div>
+                  </div>
+                ) : step === 1 ? (
                   <StepTargetRole
                     targetRole={targetRole}
                     setTargetRole={setTargetRole}
@@ -204,8 +327,8 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
                     canContinue={canContinueFromRole}
                     stepOverview={stepOverview}
                   />
-                )}
-                {step === 2 && (
+                ) : null}
+                {step === 2 ? (
                   <StepDocumentUpload
                     resumeInputId={resumeInputId}
                     resumeInputRef={resumeInputRef}
@@ -223,8 +346,8 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
                     onNext={handleNext}
                     canContinue={canContinueFromUpload}
                   />
-                )}
-                {step === 3 && (
+                ) : null}
+                {step === 3 ? (
                   <StepTemplateSelection
                     selectedTemplateId={selectedTemplateId}
                     setSelectedTemplateId={setSelectedTemplateId}
@@ -232,7 +355,7 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
                     isSubmitting={isGeneratingAnalysis}
                     errorMessage={analysisError}
                   />
-                )}
+                ) : null}
               </div>
             </>
           )}

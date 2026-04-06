@@ -29,6 +29,7 @@ const analysisUpload = multer({
 });
 
 analysisRouter.post("/", asyncHandler(analysisController.create));
+analysisRouter.get("/:analysisId", asyncHandler(analysisController.getById));
 analysisRouter.post(
   "/upload",
   analysisUpload.single("resume"),

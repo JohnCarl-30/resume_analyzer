@@ -6,7 +6,8 @@ export const createAnalysisSchema = z.object({
   resumeText: z.string().trim().min(30),
 });
 
-export const createUploadedAnalysisSchema = createAnalysisSchema.pick({
-  targetRole: true,
-  jobDescription: true,
+export const createUploadedAnalysisSchema = z.object({
+  targetRole: z.string().trim().min(2),
+  jobDescription: z.string().trim().min(30),
+  selectedTemplateId: z.string().trim().min(1),
 });

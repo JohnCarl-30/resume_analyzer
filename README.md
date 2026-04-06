@@ -152,6 +152,7 @@ You can also upload an actual resume file for parsing:
 ```bash
 curl -X POST http://localhost:4000/api/analysis/upload \
   -F "targetRole=Senior Backend Engineer" \
+  -F "selectedTemplateId=minimalist-grid" \
   -F "jobDescription=We are hiring a Senior Backend Engineer with strong Node.js, Express, PostgreSQL, Docker, AWS, CI/CD, and leadership experience." \
   -F "resume=@./resume.docx;type=application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 ```
@@ -162,6 +163,16 @@ This route:
 - parses PDF and DOCX resumes on the backend
 - extracts text before running the same analysis logic
 - optionally enriches the parsed text with OpenAI structured extraction when `OPENAI_API_KEY` is set
+- saves the parsed text and analysis result to Postgres when `DATABASE_URL` is configured
+- returns an analysis `id` that the web app uses to restore the workspace after refresh
+
+You can reload a saved analysis directly:
+
+```bash
+curl http://localhost:4000/api/analysis/<analysis-id>
+```
+
+Without `DATABASE_URL`, the API falls back to in-memory storage, so refresh persistence only lasts while the API process is still running.
 
 ## Available Scripts
 
