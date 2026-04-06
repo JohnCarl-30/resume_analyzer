@@ -35,6 +35,8 @@ async function ensureSchema() {
           job_description text NOT NULL,
           parsed_resume_text text NOT NULL,
           source_file_name text,
+          source_file_content_type text,
+          source_file_data_base64 text,
           extracted_character_count integer,
           extraction_provider text,
           score integer NOT NULL,
@@ -46,6 +48,18 @@ async function ensureSchema() {
           created_at timestamptz NOT NULL DEFAULT now()
         )
       `)
+      .then(() =>
+        drizzleClient.execute(sql`
+          ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
+          ADD COLUMN IF NOT EXISTS source_file_content_type text
+        `),
+      )
+      .then(() =>
+        drizzleClient.execute(sql`
+          ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
+          ADD COLUMN IF NOT EXISTS source_file_data_base64 text
+        `),
+      )
       .then(() => undefined);
   }
 

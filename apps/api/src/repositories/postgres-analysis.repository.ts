@@ -5,6 +5,7 @@ import { resumeAnalysesTable } from "../db/schema.js";
 import type {
   AnalysisRepository,
   CreatePersistedAnalysisRecord,
+  PersistedAnalysisSourceFile,
   PersistedResumeAnalysis,
 } from "./analysis.repository.js";
 
@@ -23,6 +24,7 @@ function mapRowToAnalysis(
     suggestions: row.suggestions,
     generatedAt: row.generatedAt,
     sourceFileName: row.sourceFileName ?? undefined,
+    sourceFileContentType: row.sourceFileContentType ?? undefined,
     extractedCharacterCount: row.extractedCharacterCount ?? undefined,
     extractedProfile: row.extractedProfile ?? null,
     extractionProvider: row.extractionProvider ?? undefined,
@@ -51,6 +53,8 @@ class PostgresAnalysisRepository implements AnalysisRepository {
       suggestions: input.suggestions,
       generatedAt: input.generatedAt,
       sourceFileName: input.sourceFileName ?? null,
+      sourceFileContentType: input.sourceFileContentType ?? null,
+      sourceFileDataBase64: input.sourceFileDataBase64 ?? null,
       extractedCharacterCount: input.extractedCharacterCount ?? null,
       extractedProfile: input.extractedProfile ?? null,
       extractionProvider: input.extractionProvider ?? null,
@@ -58,7 +62,21 @@ class PostgresAnalysisRepository implements AnalysisRepository {
 
     return {
       id: analysisId,
-      ...input,
+      targetRole: input.targetRole,
+      selectedTemplateId: input.selectedTemplateId,
+      jobDescription: input.jobDescription,
+      parsedResumeText: input.parsedResumeText,
+      score: input.score,
+      metricsFound: input.metricsFound,
+      matchedKeywords: input.matchedKeywords,
+      missingKeywords: input.missingKeywords,
+      suggestions: input.suggestions,
+      generatedAt: input.generatedAt,
+      sourceFileName: input.sourceFileName,
+      sourceFileContentType: input.sourceFileContentType,
+      extractedCharacterCount: input.extractedCharacterCount,
+      extractedProfile: input.extractedProfile,
+      extractionProvider: input.extractionProvider,
     };
   }
 
@@ -98,6 +116,7 @@ class PostgresAnalysisRepository implements AnalysisRepository {
         suggestions: record.suggestions,
         generatedAt: record.generatedAt,
         sourceFileName: record.sourceFileName ?? null,
+        sourceFileContentType: record.sourceFileContentType ?? null,
         extractedCharacterCount: record.extractedCharacterCount ?? null,
         extractedProfile: record.extractedProfile ?? null,
         extractionProvider: record.extractionProvider ?? null,
@@ -105,6 +124,38 @@ class PostgresAnalysisRepository implements AnalysisRepository {
       .where(eq(resumeAnalysesTable.id, id));
 
     return record;
+  }
+
+  async findSourceFileById(id: string): Promise<PersistedAnalysisSourceFile | null> {
+    if (!db.client) {
+      return null;
+    }
+
+    await db.ensureSchema();
+
+    const [record] = await db.client
+      .select({
+        sourceFileName: resumeAnalysesTable.sourceFileName,
+        sourceFileContentType: resumeAnalysesTable.sourceFileContentType,
+        sourceFileDataBase64: resumeAnalysesTable.sourceFileDataBase64,
+      })
+      .from(resumeAnalysesTable)
+      .where(eq(resumeAnalysesTable.id, id))
+      .limit(1);
+
+    if (
+      !record?.sourceFileName ||
+      !record.sourceFileContentType ||
+      !record.sourceFileDataBase64
+    ) {
+      return null;
+    }
+
+    return {
+      fileName: record.sourceFileName,
+      contentType: record.sourceFileContentType,
+      dataBase64: record.sourceFileDataBase64,
+    };
   }
 }
 

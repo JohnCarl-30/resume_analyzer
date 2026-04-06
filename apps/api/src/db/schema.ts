@@ -17,6 +17,8 @@ export const resumeAnalysesTable = pgTable(databaseTables.resumeAnalyses, {
   jobDescription: text("job_description").notNull(),
   parsedResumeText: text("parsed_resume_text").notNull(),
   sourceFileName: text("source_file_name"),
+  sourceFileContentType: text("source_file_content_type"),
+  sourceFileDataBase64: text("source_file_data_base64"),
   extractedCharacterCount: integer("extracted_character_count"),
   extractionProvider: text("extraction_provider").$type<"parser" | "openai" | null>(),
   score: integer("score").notNull(),

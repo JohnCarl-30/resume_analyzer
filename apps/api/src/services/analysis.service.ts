@@ -124,6 +124,8 @@ export const analysisService = {
       selectedTemplateId: payload.selectedTemplateId,
       parsedResumeText: extracted.text,
       sourceFileName: input.resumeFile.originalname,
+      sourceFileContentType: input.resumeFile.mimetype,
+      sourceFileDataBase64: input.resumeFile.buffer.toString("base64"),
       extractedCharacterCount: extracted.text.length,
       extractedProfile,
       extractionProvider: extractedProfile ? "openai" : "parser",
@@ -138,6 +140,16 @@ export const analysisService = {
     }
 
     return analysis;
+  },
+
+  async getAnalysisSourceFile(analysisId: string) {
+    const sourceFile = await analysisRepository.findSourceFileById(analysisId);
+
+    if (!sourceFile) {
+      throw new HttpError(404, "Saved source file not found.");
+    }
+
+    return sourceFile;
   },
 
   async updateAnalysis(

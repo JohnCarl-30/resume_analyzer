@@ -23,7 +23,11 @@ import {
   sampleTemplates,
   type ResumeTemplateVariant,
 } from "../../templates/model/template";
-import { createResumeAnalysis, getResumeAnalysis } from "../utils/analysis-api";
+import {
+  createResumeAnalysis,
+  getResumeAnalysis,
+  getResumeAnalysisSourceUrl,
+} from "../utils/analysis-api";
 import { formatFileSize, isSupportedFile, maxFileSize } from "../utils/wizard-utils";
 
 type WizardStep = 1 | 2 | 3;
@@ -53,6 +57,7 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   const [isRestoringAnalysis, setIsRestoringAnalysis] = useState(false);
   const [analysisIdFromUrl, setAnalysisIdFromUrl] = useState<string | null>(null);
+  const [resumeSourceUrl, setResumeSourceUrl] = useState<string | null>(null);
   const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
 
   const selectedTemplate =
@@ -205,18 +210,36 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
   }
 
   useEffect(() => {
-    if (!resumeFile || resumeFile.type !== "application/pdf") {
+    if (!resumeFile) {
+      return;
+    }
+
+    const nextSourceUrl = URL.createObjectURL(resumeFile);
+    setResumeSourceUrl(nextSourceUrl);
+    setResumePreviewUrl(resumeFile.type === "application/pdf" ? nextSourceUrl : null);
+
+    return () => {
+      URL.revokeObjectURL(nextSourceUrl);
+    };
+  }, [resumeFile]);
+
+  useEffect(() => {
+    if (resumeFile) {
+      return;
+    }
+
+    if (!analysisResult?.id || !analysisResult.sourceFileContentType) {
+      setResumeSourceUrl(null);
       setResumePreviewUrl(null);
       return;
     }
 
-    const nextPreviewUrl = URL.createObjectURL(resumeFile);
-    setResumePreviewUrl(nextPreviewUrl);
-
-    return () => {
-      URL.revokeObjectURL(nextPreviewUrl);
-    };
-  }, [resumeFile]);
+    const nextSourceUrl = getResumeAnalysisSourceUrl(analysisResult.id);
+    setResumeSourceUrl(nextSourceUrl);
+    setResumePreviewUrl(
+      analysisResult.sourceFileContentType === "application/pdf" ? nextSourceUrl : null,
+    );
+  }, [analysisResult, resumeFile]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -301,6 +324,7 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
               resumeFileName={
                 analysisResult?.sourceFileName ?? resumeFile?.name ?? "resume.pdf"
               }
+              resumeSourceUrl={resumeSourceUrl}
               resumePreviewUrl={resumePreviewUrl}
               analysisResult={analysisResult}
               initialForm={initialWorkspaceForm}

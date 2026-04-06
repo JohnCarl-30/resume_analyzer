@@ -24,6 +24,7 @@ export interface ResumeAnalysis {
   suggestions: AnalysisSuggestion[];
   generatedAt: string;
   sourceFileName?: string;
+  sourceFileContentType?: string;
   extractedCharacterCount?: number;
   extractedProfile?: ExtractedResumeProfile | null;
   extractionProvider?: "parser" | "openai";

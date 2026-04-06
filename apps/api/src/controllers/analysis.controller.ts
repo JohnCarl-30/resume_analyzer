@@ -36,4 +36,19 @@ export const analysisController = {
 
     res.status(201).json({ data: analysis });
   },
+
+  async getSourceFile(req: Request, res: Response) {
+    const analysisId = Array.isArray(req.params.analysisId)
+      ? req.params.analysisId[0]
+      : req.params.analysisId;
+
+    const sourceFile = await analysisService.getAnalysisSourceFile(analysisId);
+
+    res.setHeader("Content-Type", sourceFile.contentType);
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${encodeURIComponent(sourceFile.fileName)}"`,
+    );
+    res.send(Buffer.from(sourceFile.dataBase64, "base64"));
+  },
 };

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { ResumeAnalysisResult } from "../model/resume-analysis";
 import type { ResumeForm } from "../model/resume-form";
 import { sampleTemplates, type ResumeTemplateVariant } from "../../templates/model/template";
@@ -43,6 +43,7 @@ interface AnalysisWorkspaceProps {
   targetRole: string;
   selectedTemplateId: ResumeTemplateVariant;
   resumeFileName: string;
+  resumeSourceUrl?: string | null;
   resumePreviewUrl?: string | null;
   analysisResult: ResumeAnalysisResult | null;
   initialForm?: ResumeForm;
@@ -239,6 +240,7 @@ export function AnalysisWorkspace({
   targetRole,
   selectedTemplateId,
   resumeFileName,
+  resumeSourceUrl,
   resumePreviewUrl,
   analysisResult,
   initialForm,
@@ -305,6 +307,23 @@ export function AnalysisWorkspace({
         ]
       : []),
   ];
+
+  useEffect(() => {
+    if (!resumePreviewUrl && previewMode === "uploaded") {
+      setPreviewMode(
+        analysisResult?.extractedProfile
+          ? "structured"
+          : analysisResult?.parsedResumeText
+            ? "parsed"
+            : "empty",
+      );
+      return;
+    }
+
+    if (resumePreviewUrl && (previewMode === "parsed" || previewMode === "empty")) {
+      setPreviewMode("uploaded");
+    }
+  }, [analysisResult?.extractedProfile, analysisResult?.parsedResumeText, previewMode, resumePreviewUrl]);
 
   function sectionIcon(icon: (typeof editorSections)[number]["icon"]) {
     if (icon === "personal") return <UserCircleIcon />;
@@ -565,9 +584,9 @@ export function AnalysisWorkspace({
   }
 
   function handleDownloadSource() {
-    if (!resumePreviewUrl) return;
+    if (!resumeSourceUrl) return;
     const anchor = document.createElement("a");
-    anchor.href = resumePreviewUrl;
+    anchor.href = resumeSourceUrl;
     anchor.download = resumeFileName;
     anchor.click();
   }
@@ -753,11 +772,11 @@ export function AnalysisWorkspace({
             <button
               type="button"
               onClick={handleDownloadSource}
-              disabled={!resumePreviewUrl}
+              disabled={!resumeSourceUrl}
               className="inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-5 py-2.5 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[color:var(--page-line)] disabled:hover:text-[color:var(--page-text)]"
             >
               <DownloadIcon />
-              {resumePreviewUrl ? "Download Source" : "Export PDF"}
+              {resumeSourceUrl ? "Download Source" : "Export PDF"}
             </button>
           </div>
         </div>
@@ -829,7 +848,7 @@ export function AnalysisWorkspace({
                   <button
                     type="button"
                     onClick={handleDownloadSource}
-                    disabled={!resumePreviewUrl}
+                    disabled={!resumeSourceUrl}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--page-line)] text-[color:var(--page-muted)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label="Download source file"
                   >
@@ -868,7 +887,7 @@ export function AnalysisWorkspace({
                 <button
                   type="button"
                   onClick={handleDownloadSource}
-                  disabled={!resumePreviewUrl}
+                  disabled={!resumeSourceUrl}
                   className="inline-flex shrink-0 items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-4 py-2.5 text-sm font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <DownloadIcon />

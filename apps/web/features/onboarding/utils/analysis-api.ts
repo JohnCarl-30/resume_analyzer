@@ -89,6 +89,10 @@ export async function getResumeAnalysis(analysisId: string): Promise<ResumeAnaly
 
   return payload.data;
 }
+
+export function getResumeAnalysisSourceUrl(analysisId: string) {
+  return buildApiUrl(`/api/analysis/${analysisId}/source`);
+}
 export async function updateResumeAnalysis(
   analysisId: string,
   input: { jobDescription: string; targetRole?: string },
