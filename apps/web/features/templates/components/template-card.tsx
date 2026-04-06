@@ -1,3 +1,4 @@
+import { TemplatePreview } from "./template-preview";
 import type { ResumeTemplate } from "../model/template";
 
 interface TemplateCardProps {
@@ -19,23 +20,9 @@ export function TemplateCard({ template, isSelected, onSelect }: TemplateCardPro
       }`}
     >
       <div
-        className={`relative flex h-40 w-full items-center justify-center overflow-hidden ${template.thumbnailClass}`}
+        className={`relative flex h-40 w-full items-center justify-center overflow-hidden p-4 ${template.thumbnailClass}`}
       >
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0))]" />
-        <div className="relative flex h-[76%] w-[62%] flex-col gap-2 rounded-[18px] border border-white/10 bg-[#0d1011]/70 p-3 shadow-[0_18px_48px_rgba(0,0,0,0.26)] backdrop-blur-sm transition duration-300 group-hover:scale-[1.02]">
-          <div className="h-2 w-2/5 rounded-full bg-white/20" />
-          <div className="grid flex-1 grid-cols-[1.2fr_0.85fr] gap-3">
-            <div className="space-y-2">
-              <div className="h-1 w-full rounded-full bg-white/10" />
-              <div className="h-1 w-5/6 rounded-full bg-white/10" />
-              <div className="h-1 w-4/6 rounded-full bg-white/10" />
-              <div className="mt-4 h-1 w-full rounded-full bg-white/10" />
-              <div className="h-1 w-3/4 rounded-full bg-white/10" />
-              <div className="h-1 w-4/5 rounded-full bg-white/10" />
-            </div>
-            <div className="rounded-[14px] border border-white/10 bg-white/[0.05]" />
-          </div>
-        </div>
+        <TemplatePreview variant={template.previewVariant} />
       </div>
 
       <div className="space-y-3 px-5 py-5">

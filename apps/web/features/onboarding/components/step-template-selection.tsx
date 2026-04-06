@@ -77,9 +77,28 @@ export function StepTemplateSelection({
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]">
               Selection
             </p>
-            <div className="mt-5 space-y-4">
+            <div className="mt-5 space-y-6">
+              {(() => {
+                const selectedTemplate = sampleTemplates.find((t) => t.id === selectedTemplateId);
+                if (!selectedTemplate) return null;
+
+                return (
+                  <div className="space-y-4">
+                    <div className={`aspect-[1/1.2] rounded-[16px] border border-[color:var(--page-line)] p-4 shadow-inner ${selectedTemplate.thumbnailClass}`}>
+                      <TemplatePreview variant={selectedTemplate.previewVariant} />
+                    </div>
+                    <div className="px-1 text-center">
+                      <h4 className="font-bold text-[color:var(--page-text)]">{selectedTemplate.name}</h4>
+                      <p className="mt-1 text-xs text-[color:var(--page-muted)] uppercase tracking-widest font-black italic">
+                        {selectedTemplate.atsLabel}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
+              
               <div className="rounded-[16px] border border-[color:var(--page-line)] bg-white p-4">
-                <p className="text-sm font-semibold text-[color:var(--page-text)] text-center italic">
+                <p className="text-sm font-semibold text-[color:var(--page-text)] text-center italic leading-relaxed opacity-60">
                   &quot;The layout will be adapted to your unique content structure while keeping these design tokens.&quot;
                 </p>
               </div>
