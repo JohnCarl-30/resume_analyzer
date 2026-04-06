@@ -58,11 +58,18 @@ export function StepTemplateSelection({
                   <div className="space-y-2 px-4 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-lg font-semibold text-[color:var(--page-text)]">
-                          {template.name}
-                        </p>
-                        <div className="mt-1 flex items-center gap-2 text-sm text-[color:var(--page-muted)]">
-                          <span className="h-2 w-2 rounded-full bg-[color:var(--success)]" />
+                        <div className="flex items-center gap-2">
+                          <p className="text-lg font-bold text-[color:var(--page-text)]">
+                            {template.name}
+                          </p>
+                          {template.isPremium && (
+                            <span className="inline-flex rounded-full bg-[color:var(--brand)] px-2 py-0.5 text-[0.6rem] font-black tracking-widest text-white uppercase transform scale-90 origin-left">
+                              PRO
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1 flex items-center gap-2 text-xs font-medium text-[color:var(--page-muted)]">
+                          <span className={`h-2 w-2 rounded-full ${isSelected ? "bg-[color:var(--brand)]" : "bg-[color:var(--page-line-strong)]"}`} />
                           {template.atsLabel ?? "ATS-Friendly"}
                         </div>
                       </div>
@@ -73,33 +80,46 @@ export function StepTemplateSelection({
             })}
           </div>
 
-          <aside className="rounded-[20px] border border-[color:var(--page-line)] bg-[color:var(--page-bg-strong)] p-5 shadow-[0_10px_26px_rgba(0,0,0,0.03)]">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]">
-              Selection
+          <aside className="rounded-[24px] border border-[color:var(--page-line)] bg-[color:var(--page-bg-strong)] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
+            <p className="text-[0.7rem] font-black uppercase tracking-[0.25em] text-[color:var(--brand)]">
+              Current Selection
             </p>
-            <div className="mt-5 space-y-6">
+            <div className="mt-6 space-y-8">
               {(() => {
                 const selectedTemplate = sampleTemplates.find((t) => t.id === selectedTemplateId);
                 if (!selectedTemplate) return null;
 
                 return (
-                  <div className="space-y-4">
-                    <div className={`aspect-[1/1.2] rounded-[16px] border border-[color:var(--page-line)] p-4 shadow-inner ${selectedTemplate.thumbnailClass}`}>
+                  <div className="space-y-6">
+                    <div className={`aspect-[1/1.25] rounded-[20px] border border-[color:var(--page-line)] p-5 shadow-[0_12px_36px_rgba(0,0,0,0.08)] bg-white ${selectedTemplate.thumbnailClass} transition-all duration-500`}>
                       <TemplatePreview variant={selectedTemplate.previewVariant} />
                     </div>
-                    <div className="px-1 text-center">
-                      <h4 className="font-bold text-[color:var(--page-text)]">{selectedTemplate.name}</h4>
-                      <p className="mt-1 text-xs text-[color:var(--page-muted)] uppercase tracking-widest font-black italic">
-                        {selectedTemplate.atsLabel}
+                    <div className="px-1 text-center sm:text-left">
+                      <div className="flex items-center gap-2 mb-1 justify-center sm:justify-start">
+                        <h4 className="text-xl font-bold text-[color:var(--page-text)] tracking-tight">
+                          {selectedTemplate.name}
+                        </h4>
+                        {selectedTemplate.isPremium && (
+                          <span className="rounded-full bg-[color:var(--brand-soft)] px-2 py-0.5 text-[0.6rem] font-bold text-[color:var(--brand)] uppercase">
+                            Premium
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm leading-relaxed text-[color:var(--page-muted)] mb-4">
+                        {selectedTemplate.description}
                       </p>
+                      <div className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[color:var(--brand)] border border-[color:var(--page-line)] shadow-sm">
+                        <div className="h-1.5 w-1.5 rounded-full bg-[color:var(--brand)] animate-pulse" />
+                        {selectedTemplate.atsLabel}
+                      </div>
                     </div>
                   </div>
                 );
               })()}
               
-              <div className="rounded-[16px] border border-[color:var(--page-line)] bg-white p-4">
-                <p className="text-sm font-semibold text-[color:var(--page-text)] text-center italic leading-relaxed opacity-60">
-                  &quot;The layout will be adapted to your unique content structure while keeping these design tokens.&quot;
+              <div className="rounded-[20px] border border-dashed border-[color:var(--page-line-strong)] bg-[color:var(--brand-soft)]/30 p-5">
+                <p className="text-xs font-medium text-[color:var(--page-text)] text-center leading-relaxed italic opacity-80 decoration-[color:var(--brand-soft)]">
+                  &quot;The layout dynamically adapts to your content while maintaining high-fidelity design tokens.&quot;
                 </p>
               </div>
             </div>
