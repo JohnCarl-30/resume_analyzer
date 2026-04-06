@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { ResumeAnalysisResult } from "../model/resume-analysis";
 import type { ResumeForm } from "../model/resume-form";
+import type { ResumeTemplateVariant } from "../../templates/model/template";
 import { useResumeEditor } from "../view-models/use-resume-editor";
 import { PersonalInfoEditor } from "../components/editors/personal-info-editor";
 import { ExperienceEditor } from "../components/editors/experience-editor";
@@ -37,7 +38,7 @@ import {
 
 interface AnalysisWorkspaceProps {
   targetRole: string;
-  selectedTemplateId: string;
+  selectedTemplateId: ResumeTemplateVariant;
   resumeFileName: string;
   analysisResult: ResumeAnalysisResult | null;
   initialForm?: ResumeForm;

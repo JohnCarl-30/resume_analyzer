@@ -15,7 +15,11 @@ import { StepTemplateSelection } from "../components/step-template-selection";
 import { AnalysisWorkspace } from "../../editor/views/analysis-workspace";
 import type { ResumeAnalysisResult } from "../../editor/model/resume-analysis";
 import { resumeFormFromExtractedProfile } from "../../editor/model/resume-form";
-import { sampleTemplates } from "../../templates/model/template";
+import {
+  isResumeTemplateVariant,
+  sampleTemplates,
+  type ResumeTemplateVariant,
+} from "../../templates/model/template";
 import { createResumeAnalysis, getResumeAnalysis } from "../utils/analysis-api";
 import { formatFileSize, isSupportedFile, maxFileSize } from "../utils/wizard-utils";
 
@@ -30,13 +34,14 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
   const resumeInputId = useId();
   const resumeInputRef = useRef<HTMLInputElement>(null);
   const restoredAnalysisIdRef = useRef<string | null>(null);
-  const defaultTemplateId = sampleTemplates[0]?.id ?? "";
+  const defaultTemplateId = sampleTemplates[0]?.id ?? "minimalist-grid";
 
   const [step, setStep] = useState<WizardStep>(1);
   const [viewMode, setViewMode] = useState<ViewMode>("wizard");
   const [targetRole, setTargetRole] = useState("");
   const [jobDescription, setJobDescription] = useState("");
-  const [selectedTemplateId, setSelectedTemplateId] = useState(defaultTemplateId);
+  const [selectedTemplateId, setSelectedTemplateId] =
+    useState<ResumeTemplateVariant>(defaultTemplateId);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [uploadError, setUploadError] = useState("");
   const [isDragActive, setIsDragActive] = useState(false);
@@ -48,8 +53,10 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
 
   const selectedTemplate =
     sampleTemplates.find((template) => template.id === selectedTemplateId) ?? sampleTemplates[0];
-  const canContinueFromRole = targetRole.trim().length > 0;
-  const canContinueFromUpload = Boolean(resumeFile) && jobDescription.trim().length > 0;
+  const trimmedTargetRole = targetRole.trim();
+  const trimmedJobDescription = jobDescription.trim();
+  const canContinueFromRole = trimmedTargetRole.length >= 2;
+  const canContinueFromUpload = Boolean(resumeFile) && trimmedJobDescription.length >= 30;
   const initialWorkspaceForm = resumeFormFromExtractedProfile(
     analysisResult?.extractedProfile,
   );
@@ -176,7 +183,12 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
 
       restoredAnalysisIdRef.current = nextAnalysis.id ?? null;
       setAnalysisResult(nextAnalysis);
-      setSelectedTemplateId(nextAnalysis.selectedTemplateId ?? selectedTemplateId);
+      setSelectedTemplateId(
+        nextAnalysis.selectedTemplateId &&
+          isResumeTemplateVariant(nextAnalysis.selectedTemplateId)
+          ? nextAnalysis.selectedTemplateId
+          : selectedTemplateId,
+      );
       replaceAnalysisParam(nextAnalysis.id ?? null);
       setViewMode("workspace");
     } catch (error) {
@@ -225,7 +237,12 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
         setAnalysisResult(savedAnalysis);
         setTargetRole(savedAnalysis.targetRole);
         setJobDescription(savedAnalysis.jobDescription ?? "");
-        setSelectedTemplateId(savedAnalysis.selectedTemplateId ?? defaultTemplateId);
+        setSelectedTemplateId(
+          savedAnalysis.selectedTemplateId &&
+            isResumeTemplateVariant(savedAnalysis.selectedTemplateId)
+            ? savedAnalysis.selectedTemplateId
+            : defaultTemplateId,
+        );
         setViewMode("workspace");
         setStep(3);
       })

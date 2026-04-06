@@ -4,7 +4,7 @@ import type { ResumeTemplate } from "../model/template";
 interface TemplateCardProps {
   template: ResumeTemplate;
   isSelected: boolean;
-  onSelect: (id: string) => void;
+  onSelect: (id: ResumeTemplate["id"]) => void;
 }
 
 export function TemplateCard({ template, isSelected, onSelect }: TemplateCardProps) {

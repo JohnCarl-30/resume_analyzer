@@ -20,6 +20,12 @@ export function StepTargetRole({
   canContinue,
   stepOverview,
 }: StepTargetRoleProps) {
+  const trimmedTargetRole = targetRole.trim();
+  const roleError =
+    trimmedTargetRole.length > 0 && trimmedTargetRole.length < 2
+      ? "Enter at least 2 characters for the target role."
+      : "";
+
   return (
     <section className="section-reveal flex flex-1 px-5 py-10 sm:px-8 lg:px-12 xl:px-14">
       <div className="grid w-full gap-10 xl:grid-cols-[minmax(0,1.1fr)_25rem] xl:items-center">
@@ -86,6 +92,8 @@ export function StepTargetRole({
                 className="w-full border-none bg-transparent text-[color:var(--page-text)] outline-none placeholder:text-[#b4bfd3]"
               />
             </label>
+
+            <p className="mt-3 min-h-6 text-sm text-[#e16f62]">{roleError}</p>
 
             <button
               type="button"

@@ -1,27 +1,41 @@
+export const resumeTemplateVariants = [
+  "minimalist-grid",
+  "harvard-classic",
+  "modern-sans",
+  "ruby-accent",
+] as const;
+
+export type ResumeTemplateVariant = (typeof resumeTemplateVariants)[number];
+
+export function isResumeTemplateVariant(value: string): value is ResumeTemplateVariant {
+  return resumeTemplateVariants.includes(value as ResumeTemplateVariant);
+}
+
 export interface ResumeTemplate {
-  id: string;
+  id: ResumeTemplateVariant;
   name: string;
   description: string;
   thumbnailClass: string;
   atsLabel?: string;
-  previewVariant:
-    | "minimalist-grid"
-    | "executive-clean"
-    | "standard-technical"
-    | "modern-hybrid"
-    | "academic-cv"
-    | "creative-single-column"
-    | "harvard-classic"
-    | "modern-sans"
-    | "ruby-accent";
+  previewVariant: ResumeTemplateVariant;
   isPremium?: boolean;
 }
 
 export const sampleTemplates: ResumeTemplate[] = [
   {
+    id: "minimalist-grid",
+    name: "Minimalist Grid",
+    description:
+      "Balanced two-column structure for general ATS-safe applications. Best when you want a versatile layout with fast scanning.",
+    thumbnailClass: "bg-gradient-to-br from-zinc-50 to-zinc-200",
+    atsLabel: "ATS-Friendly",
+    previewVariant: "minimalist-grid",
+  },
+  {
     id: "harvard-classic",
     name: "Harvard Classic",
-    description: "The gold standard for legal and financial careers. Features traditional serif typography, a centered header, and strict professional spacing.",
+    description:
+      "A formal serif layout with disciplined spacing and traditional hierarchy. Best for conservative, academic, and leadership-facing roles.",
     thumbnailClass: "bg-gradient-to-br from-slate-50 to-slate-200",
     atsLabel: "Full ATS-Optimized",
     previewVariant: "harvard-classic",
@@ -30,7 +44,8 @@ export const sampleTemplates: ResumeTemplate[] = [
   {
     id: "modern-sans",
     name: "Modern Sans",
-    description: "A bold, asymmetric layout designed for high-impact tech and creative roles. Uses clean sans-serif lines to maximize readability.",
+    description:
+      "A sharper, high-contrast layout for product, tech, and modern professional roles. Best when you want a cleaner, more contemporary tone.",
     thumbnailClass: "bg-gradient-to-br from-blue-50 to-blue-200",
     atsLabel: "ATS-Friendly",
     previewVariant: "modern-sans",
@@ -39,58 +54,11 @@ export const sampleTemplates: ResumeTemplate[] = [
   {
     id: "ruby-accent",
     name: "Ruby Accent",
-    description: "An elegant serif design with crimson highlights for emphasis. Ideal for leadership roles that require a touch of personality.",
+    description:
+      "An editorial serif resume with restrained accent treatment. Best when you want something expressive but still readable and professional.",
     thumbnailClass: "bg-gradient-to-br from-rose-50 to-rose-200",
-    atsLabel: "Modern Layout",
+    atsLabel: "ATS-Friendly",
     previewVariant: "ruby-accent",
     isPremium: true,
-  },
-  {
-    id: "minimalist-grid",
-    name: "Minimalist Grid",
-    description: "Balanced two-column resume with clean sections and quick scanning. Perfect for multi-role histories.",
-    thumbnailClass: "bg-gradient-to-br from-zinc-50 to-zinc-200",
-    atsLabel: "ATS-Friendly",
-    previewVariant: "minimalist-grid",
-  },
-  {
-    id: "executive-clean",
-    name: "Executive Clean",
-    description: "Soft editorial spacing with a high-clarity summary and achievements column.",
-    thumbnailClass: "bg-gradient-to-br from-cyan-50 to-cyan-200",
-    atsLabel: "ATS-Friendly",
-    previewVariant: "executive-clean",
-  },
-  {
-    id: "standard-technical",
-    name: "Standard Technical",
-    description: "Dense dark layout tuned for engineering history, stack depth, and project detail.",
-    thumbnailClass: "bg-gradient-to-br from-gray-500 to-gray-700",
-    atsLabel: "ATS-Friendly",
-    previewVariant: "standard-technical",
-  },
-  {
-    id: "modern-hybrid",
-    name: "Modern Hybrid",
-    description: "Traditional document proportions with a slightly more modern skills rhythm.",
-    thumbnailClass: "bg-gradient-to-br from-emerald-50 to-emerald-200",
-    atsLabel: "ATS-Friendly",
-    previewVariant: "modern-hybrid",
-  },
-  {
-    id: "academic-cv",
-    name: "Academic CV",
-    description: "Structured list-heavy format for research, teaching, and publication depth.",
-    thumbnailClass: "bg-gradient-to-br from-sky-50 to-sky-200",
-    atsLabel: "ATS-Friendly",
-    previewVariant: "academic-cv",
-  },
-  {
-    id: "creative-single-column",
-    name: "Creative Single-Column",
-    description: "High-contrast single-column presentation with a restrained portfolio tone.",
-    thumbnailClass: "bg-gradient-to-br from-orange-50 to-indigo-200",
-    atsLabel: "ATS-Friendly",
-    previewVariant: "creative-single-column",
   },
 ];

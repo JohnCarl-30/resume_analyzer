@@ -1,12 +1,17 @@
 import React from "react";
 import type { ResumeForm } from "../model/resume-form";
+import type { ResumeTemplateVariant } from "../../templates/model/template";
 
 interface ResumeRendererProps {
   form: ResumeForm;
-  variantId: string;
+  variantId: ResumeTemplateVariant;
 }
 
 export function ResumeRenderer({ form, variantId }: ResumeRendererProps) {
+  if (variantId === "minimalist-grid") {
+    return <MinimalistGridLayout form={form} />;
+  }
+
   if (variantId === "harvard-classic") {
     return <HarvardClassicLayout form={form} />;
   }
@@ -19,8 +24,7 @@ export function ResumeRenderer({ form, variantId }: ResumeRendererProps) {
     return <RubyAccentLayout form={form} />;
   }
 
-  // Fallback to default layout (currently based on the original workspace layout)
-  return <DefaultLayout form={form} />;
+  return <MinimalistGridLayout form={form} />;
 }
 
 function HarvardClassicLayout({ form }: { form: ResumeForm }) {
@@ -387,7 +391,7 @@ function RubyAccentLayout({ form }: { form: ResumeForm }) {
   );
 }
 
-function DefaultLayout({ form }: { form: ResumeForm }) {
+function MinimalistGridLayout({ form }: { form: ResumeForm }) {
   return (
     <div className="h-full space-y-10">
       <header className="space-y-4 border-b border-[color:var(--page-line)] pb-8">

@@ -1,11 +1,11 @@
 import React from "react";
-import { sampleTemplates } from "../../templates/model/template";
-import { TemplatePreview, TemplateRealPreview } from "../../templates/components/template-preview";
+import { sampleTemplates, type ResumeTemplate } from "../../templates/model/template";
+import { TemplateRealPreview } from "../../templates/components/template-preview";
 import { ArrowRightIcon } from "./wizard-icons";
 
 interface StepTemplateSelectionProps {
-  selectedTemplateId: string;
-  setSelectedTemplateId: (id: string) => void;
+  selectedTemplateId: ResumeTemplate["id"];
+  setSelectedTemplateId: (id: ResumeTemplate["id"]) => void;
   onNext: () => void;
   isSubmitting?: boolean;
   errorMessage?: string;
@@ -29,8 +29,8 @@ export function StepTemplateSelection({
             Select a Template
           </h1>
           <p className="max-w-[42rem] text-sm leading-6 text-[color:var(--page-muted)] sm:mx-auto">
-            Choose an ATS-optimized layout for your final resume. All templates pass
-            standard parser checks.
+            Choose from a smaller set of finished layouts so the preview and final resume
+            view stay consistent.
           </p>
         </div>
 

@@ -36,6 +36,12 @@ export function StepDocumentUpload({
   onNext,
   canContinue,
 }: StepDocumentUploadProps) {
+  const trimmedJobDescription = jobDescription.trim();
+  const jobDescriptionError =
+    trimmedJobDescription.length > 0 && trimmedJobDescription.length < 30
+      ? "Paste at least 30 characters from the job description."
+      : "";
+
   return (
     <section key="step-2" className="section-reveal flex flex-1 flex-col px-5 py-8 sm:px-8 lg:px-12">
       <div className="w-full">
@@ -158,8 +164,9 @@ export function StepDocumentUpload({
 
               <div className="mt-3 flex items-center justify-between text-sm text-[color:var(--page-muted)]">
                 <span>Role target: {targetRole || "Not set"}</span>
-                <span>{jobDescription.trim().length} characters</span>
+                <span>{trimmedJobDescription.length} characters</span>
               </div>
+              <p className="mt-2 min-h-6 text-sm text-[#e16f62]">{jobDescriptionError}</p>
             </div>
           </div>
 
