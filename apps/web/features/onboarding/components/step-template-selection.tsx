@@ -1,6 +1,6 @@
 import React from "react";
 import { sampleTemplates } from "../../templates/model/template";
-import { TemplatePreview } from "../../templates/components/template-preview";
+import { TemplatePreview, TemplateRealPreview } from "../../templates/components/template-preview";
 import { ArrowRightIcon } from "./wizard-icons";
 
 interface StepTemplateSelectionProps {
@@ -52,8 +52,8 @@ export function StepTemplateSelection({
                       : "border-[color:var(--page-line)] hover:-translate-y-0.5 hover:border-[color:var(--page-line-strong)]"
                   }`}
                 >
-                  <div className={`h-[13.5rem] border-b border-[color:var(--page-line)] p-4 ${template.thumbnailClass}`}>
-                    <TemplatePreview variant={template.previewVariant} />
+                  <div className={`h-[13.5rem] border-b border-[color:var(--page-line)] p-4 overflow-hidden ${template.thumbnailClass}`}>
+                    <TemplateRealPreview variantId={template.id} />
                   </div>
                   <div className="space-y-2 px-4 py-4">
                     <div className="flex items-start justify-between gap-3">
@@ -91,8 +91,8 @@ export function StepTemplateSelection({
 
                 return (
                   <div className="space-y-6">
-                    <div className={`aspect-[1/1.25] rounded-[20px] border border-[color:var(--page-line)] p-5 shadow-[0_12px_36px_rgba(0,0,0,0.08)] bg-white ${selectedTemplate.thumbnailClass} transition-all duration-500`}>
-                      <TemplatePreview variant={selectedTemplate.previewVariant} />
+                    <div className={`aspect-[1/1.25] rounded-[20px] border border-[color:var(--page-line)] p-5 shadow-[0_12px_36px_rgba(0,0,0,0.08)] bg-white overflow-hidden ${selectedTemplate.thumbnailClass} transition-all duration-500`}>
+                      <TemplateRealPreview variantId={selectedTemplate.id} />
                     </div>
                     <div className="px-1 text-center sm:text-left">
                       <div className="flex items-center gap-2 mb-1 justify-center sm:justify-start">

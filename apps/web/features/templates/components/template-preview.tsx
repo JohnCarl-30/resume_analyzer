@@ -1,5 +1,6 @@
-import React from "react";
 import { sampleTemplates } from "../model/template";
+import { ResumeRenderer } from "../../editor/components/resume-renderer";
+import { defaultResumeForm } from "../../editor/model/resume-form";
 
 interface TemplatePreviewProps {
   variant: (typeof sampleTemplates)[number]["previewVariant"];
@@ -220,6 +221,24 @@ export function TemplatePreview({ variant }: TemplatePreviewProps) {
           <div className="mx-auto h-1.5 w-14 rounded-full bg-white/35" />
         </div>
         <div className="h-4 w-12 rounded-full bg-[#ef8a69]" />
+      </div>
+    </div>
+  );
+}
+export function TemplateRealPreview({ variantId }: { variantId: string }) {
+  return (
+    <div className="relative h-full w-full overflow-hidden pointer-events-none select-none flex items-center justify-center">
+      <div 
+        className="absolute origin-top transform-gpu"
+        style={{
+          width: "1000px", // Base width for A4 proportion rendering
+          height: "1414px",
+          transform: "scale(0.24)", // Adjust scale to fit container (approx 240px width)
+        }}
+      >
+        <div className="h-full w-full bg-white shadow-2xl rounded-sm overflow-hidden">
+          <ResumeRenderer form={defaultResumeForm} variantId={variantId} />
+        </div>
       </div>
     </div>
   );

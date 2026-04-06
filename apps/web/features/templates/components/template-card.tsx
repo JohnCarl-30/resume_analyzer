@@ -1,4 +1,4 @@
-import { TemplatePreview } from "./template-preview";
+import { TemplateRealPreview } from "./template-preview";
 import type { ResumeTemplate } from "../model/template";
 
 interface TemplateCardProps {
@@ -22,7 +22,7 @@ export function TemplateCard({ template, isSelected, onSelect }: TemplateCardPro
       <div
         className={`relative flex h-40 w-full items-center justify-center overflow-hidden p-4 ${template.thumbnailClass}`}
       >
-        <TemplatePreview variant={template.previewVariant} />
+        <TemplateRealPreview variantId={template.id} />
       </div>
 
       <div className="space-y-3 px-5 py-5">
