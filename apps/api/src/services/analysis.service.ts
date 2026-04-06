@@ -182,4 +182,27 @@ export const analysisService = {
 
     return analysis;
   },
+
+  async updateAnalysis(
+    analysisId: string,
+    input: { jobDescription: string; targetRole?: string },
+  ): Promise<PersistedResumeAnalysis> {
+    const existing = await this.getAnalysisById(analysisId);
+
+    const updatedAnalysis = await this.createAnalysis({
+      targetRole: input.targetRole ?? existing.targetRole,
+      jobDescription: input.jobDescription,
+      resumeText: existing.parsedResumeText,
+    });
+
+    const persisted: PersistedResumeAnalysis = {
+      ...existing,
+      ...updatedAnalysis,
+      id: analysisId,
+      jobDescription: input.jobDescription,
+      targetRole: input.targetRole ?? existing.targetRole,
+    };
+
+    return analysisRepository.update(analysisId, persisted);
+  },
 };

@@ -17,4 +17,5 @@ export interface PersistedResumeAnalysis extends ResumeAnalysis {
 export interface AnalysisRepository {
   create(input: CreatePersistedAnalysisRecord): Promise<PersistedResumeAnalysis>;
   findById(id: string): Promise<PersistedResumeAnalysis | null>;
+  update(id: string, record: PersistedResumeAnalysis): Promise<PersistedResumeAnalysis>;
 }

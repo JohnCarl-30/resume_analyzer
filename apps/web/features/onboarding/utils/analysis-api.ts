@@ -89,3 +89,23 @@ export async function getResumeAnalysis(analysisId: string): Promise<ResumeAnaly
 
   return payload.data;
 }
+export async function updateResumeAnalysis(
+  analysisId: string,
+  input: { jobDescription: string; targetRole?: string },
+): Promise<ResumeAnalysisResult> {
+  const response = await fetch(buildApiUrl(`/api/analysis/${analysisId}`), {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to update resume analysis: ${errorText}`);
+  }
+
+  const { data } = await response.json();
+  return data;
+}

@@ -17,6 +17,15 @@ export const analysisController = {
     res.json({ data: analysis });
   },
 
+  async update(req: Request, res: Response) {
+    const analysisId = Array.isArray(req.params.analysisId)
+      ? req.params.analysisId[0]
+      : req.params.analysisId;
+
+    const updated = await analysisService.updateAnalysis(analysisId, req.body);
+    res.json({ data: updated });
+  },
+
   async createFromUpload(req: Request, res: Response) {
     const analysis = await analysisService.createAnalysisFromUpload({
       targetRole: req.body.targetRole,

@@ -77,6 +77,35 @@ class PostgresAnalysisRepository implements AnalysisRepository {
 
     return record ? mapRowToAnalysis(record) : null;
   }
+
+  async update(id: string, record: PersistedResumeAnalysis) {
+    if (!db.client) {
+      throw new Error("Database client is not configured.");
+    }
+
+    await db.ensureSchema();
+
+    await db.client
+      .update(resumeAnalysesTable)
+      .set({
+        targetRole: record.targetRole,
+        selectedTemplateId: record.selectedTemplateId,
+        jobDescription: record.jobDescription,
+        parsedResumeText: record.parsedResumeText,
+        score: record.score,
+        matchedKeywords: record.matchedKeywords,
+        missingKeywords: record.missingKeywords,
+        suggestions: record.suggestions,
+        generatedAt: record.generatedAt,
+        sourceFileName: record.sourceFileName ?? null,
+        extractedCharacterCount: record.extractedCharacterCount ?? null,
+        extractedProfile: record.extractedProfile ?? null,
+        extractionProvider: record.extractionProvider ?? null,
+      })
+      .where(eq(resumeAnalysesTable.id, id));
+
+    return record;
+  }
 }
 
 export const postgresAnalysisRepository = new PostgresAnalysisRepository();

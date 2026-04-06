@@ -21,6 +21,11 @@ class InMemoryAnalysisRepository implements AnalysisRepository {
   async findById(id: string) {
     return this.analyses.get(id) ?? null;
   }
+
+  async update(id: string, record: PersistedResumeAnalysis) {
+    this.analyses.set(id, record);
+    return record;
+  }
 }
 
 export const inMemoryAnalysisRepository = new InMemoryAnalysisRepository();
