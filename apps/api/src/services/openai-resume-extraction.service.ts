@@ -145,30 +145,39 @@ export const openAiResumeExtractionService = {
       return null;
     }
 
-    const content = await openAiClient.createStructuredChatCompletion({
-      model: env.OPENAI_EXTRACTION_MODEL,
-      temperature: 0.1,
-      response_format: {
-        type: "json_schema",
-        json_schema: extractionSchema,
-      },
-      messages: [
-        {
-          role: "system",
-          content:
-            "You extract resume information into a strict JSON schema. Use only information explicitly present in the resume text. Do not invent facts. If a field is unknown, return an empty string or empty array.",
+    try {
+      const content = await openAiClient.createStructuredChatCompletion({
+        model: env.OPENAI_EXTRACTION_MODEL,
+        temperature: 0.1,
+        response_format: {
+          type: "json_schema",
+          json_schema: extractionSchema,
         },
-        {
-          role: "user",
-          content: [
-            `Target role: ${input.targetRole}`,
-            "Resume text:",
-            input.resumeText,
-          ].join("\n\n"),
-        },
-      ],
-    });
+        messages: [
+          {
+            role: "system",
+            content:
+              "You extract resume information into a strict JSON schema. Use only information explicitly present in the resume text. Do not invent facts. If a field is unknown, return an empty string or empty array.",
+          },
+          {
+            role: "user",
+            content: [
+              `Target role: ${input.targetRole}`,
+              "Resume text:",
+              input.resumeText,
+            ].join("\n\n"),
+          },
+        ],
+      });
 
-    return sanitizeProfile(JSON.parse(content));
+      return sanitizeProfile(JSON.parse(content));
+    } catch (error) {
+      console.warn(
+        `[resume-extraction] OpenAI enrichment skipped for model "${env.OPENAI_EXTRACTION_MODEL}". Falling back to parser-only mode.`,
+        error,
+      );
+
+      return null;
+    }
   },
 };

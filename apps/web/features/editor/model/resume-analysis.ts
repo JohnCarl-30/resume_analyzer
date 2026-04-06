@@ -17,6 +17,7 @@ export interface ResumeAnalysisResult {
   targetRole: string;
   jobDescription?: string;
   selectedTemplateId?: string;
+  parsedResumeText?: string;
   score: number;
   matchedKeywords: string[];
   missingKeywords: string[];

@@ -14,7 +14,10 @@ import { StepDocumentUpload } from "../components/step-document-upload";
 import { StepTemplateSelection } from "../components/step-template-selection";
 import { AnalysisWorkspace } from "../../editor/views/analysis-workspace";
 import type { ResumeAnalysisResult } from "../../editor/model/resume-analysis";
-import { resumeFormFromExtractedProfile } from "../../editor/model/resume-form";
+import {
+  emptyResumeForm,
+  resumeFormFromExtractedProfile,
+} from "../../editor/model/resume-form";
 import {
   isResumeTemplateVariant,
   sampleTemplates,
@@ -50,6 +53,7 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   const [isRestoringAnalysis, setIsRestoringAnalysis] = useState(false);
   const [analysisIdFromUrl, setAnalysisIdFromUrl] = useState<string | null>(null);
+  const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
 
   const selectedTemplate =
     sampleTemplates.find((template) => template.id === selectedTemplateId) ?? sampleTemplates[0];
@@ -57,9 +61,9 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
   const trimmedJobDescription = jobDescription.trim();
   const canContinueFromRole = trimmedTargetRole.length >= 2;
   const canContinueFromUpload = Boolean(resumeFile) && trimmedJobDescription.length >= 30;
-  const initialWorkspaceForm = resumeFormFromExtractedProfile(
-    analysisResult?.extractedProfile,
-  );
+  const initialWorkspaceForm = analysisResult?.extractedProfile
+    ? resumeFormFromExtractedProfile(analysisResult.extractedProfile)
+    : emptyResumeForm;
 
   const stepOverview = [
     {
@@ -201,6 +205,20 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
   }
 
   useEffect(() => {
+    if (!resumeFile || resumeFile.type !== "application/pdf") {
+      setResumePreviewUrl(null);
+      return;
+    }
+
+    const nextPreviewUrl = URL.createObjectURL(resumeFile);
+    setResumePreviewUrl(nextPreviewUrl);
+
+    return () => {
+      URL.revokeObjectURL(nextPreviewUrl);
+    };
+  }, [resumeFile]);
+
+  useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
@@ -283,9 +301,11 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
               resumeFileName={
                 analysisResult?.sourceFileName ?? resumeFile?.name ?? "resume.pdf"
               }
+              resumePreviewUrl={resumePreviewUrl}
               analysisResult={analysisResult}
               initialForm={initialWorkspaceForm}
               onBack={handleBack}
+              onTemplateChange={setSelectedTemplateId}
             />
           ) : (
             <>
