@@ -42,40 +42,44 @@ function HarvardClassicLayout({ form }: { form: ResumeForm }) {
       </header>
 
       <div className="space-y-8">
-        <section>
-          <h2 className="text-lg font-bold uppercase border-b border-gray-900 mb-4 pb-0.5">Education</h2>
-          <div className="space-y-4">
-            {form.education.map((edu) => (
-              <div key={edu.id} className="flex justify-between items-start">
-                <div>
-                  <div className="font-bold">{edu.institution}</div>
-                  <div className="italic">{edu.degree}</div>
+        {form.education.length > 0 && (
+          <section>
+            <h2 className="text-lg font-bold uppercase border-b border-gray-900 mb-4 pb-0.5">Education</h2>
+            <div className="space-y-4">
+              {form.education.map((edu) => (
+                <div key={edu.id} className="flex justify-between items-start">
+                  <div>
+                    <div className="font-bold">{edu.institution}</div>
+                    <div className="italic">{edu.degree}</div>
+                  </div>
+                  <div className="text-right text-[0.95rem]">
+                    <div className="font-medium">{edu.location}</div>
+                    <div>{edu.dateRange}</div>
+                  </div>
                 </div>
-                <div className="text-right text-[0.95rem]">
-                  <div className="font-medium">{edu.location}</div>
-                  <div>{edu.dateRange}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
 
-        <section>
-          <h2 className="text-lg font-bold uppercase border-b border-gray-900 mb-4 pb-0.5">Experience</h2>
-          <div className="space-y-6">
-            {form.experience.map((exp) => (
-              <div key={exp.id} className="flex justify-between items-start">
-                <div>
-                  <div className="font-bold">{exp.role}</div>
+        {form.experience.length > 0 && (
+          <section>
+            <h2 className="text-lg font-bold uppercase border-b border-gray-900 mb-4 pb-0.5">Experience</h2>
+            <div className="space-y-6">
+              {form.experience.map((exp) => (
+                <div key={exp.id} className="flex justify-between items-start">
+                  <div>
+                    <div className="font-bold">{exp.role}</div>
+                  </div>
+                  <div className="text-right text-[0.95rem]">
+                    <div className="font-medium">{exp.location}</div>
+                    <div>{exp.dateRange}</div>
+                  </div>
                 </div>
-                <div className="text-right text-[0.95rem]">
-                  <div className="font-medium">{exp.location}</div>
-                  <div>{exp.dateRange}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
 
         {form.leadership.length > 0 && (
           <section>
@@ -157,45 +161,49 @@ function ModernSansLayout({ form }: { form: ResumeForm }) {
       </header>
 
       <div className="space-y-10">
-        <section>
-          <div className="flex items-center gap-4 mb-5">
-            <h2 className="text-sm font-black uppercase tracking-[0.2em] whitespace-nowrap">Education</h2>
-            <div className="h-[2px] w-full bg-slate-100" />
-          </div>
-          <div className="space-y-6">
-            {form.education.map((edu) => (
-              <div key={edu.id} className="grid grid-cols-[1fr_auto] gap-4">
-                <div>
-                  <div className="font-bold text-lg">{edu.institution}</div>
-                  <div className="text-slate-600 font-medium">{edu.degree}</div>
+        {form.education.length > 0 && (
+          <section>
+            <div className="flex items-center gap-4 mb-5">
+              <h2 className="text-sm font-black uppercase tracking-[0.2em] whitespace-nowrap">Education</h2>
+              <div className="h-[2px] w-full bg-slate-100" />
+            </div>
+            <div className="space-y-6">
+              {form.education.map((edu) => (
+                <div key={edu.id} className="grid grid-cols-[1fr_auto] gap-4">
+                  <div>
+                    <div className="font-bold text-lg">{edu.institution}</div>
+                    <div className="text-slate-600 font-medium">{edu.degree}</div>
+                  </div>
+                  <div className="text-right text-sm font-bold text-slate-400 uppercase tracking-wider">
+                    {edu.dateRange}
+                  </div>
                 </div>
-                <div className="text-right text-sm font-bold text-slate-400 uppercase tracking-wider">
-                  {edu.dateRange}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
 
-        <section>
-          <div className="flex items-center gap-4 mb-5">
-            <h2 className="text-sm font-black uppercase tracking-[0.2em] whitespace-nowrap">Experience</h2>
-            <div className="h-[2px] w-full bg-slate-100" />
-          </div>
-          <div className="space-y-8">
-            {form.experience.map((exp) => (
-              <div key={exp.id} className="grid grid-cols-[1fr_auto] gap-4">
-                <div>
-                  <div className="font-bold text-lg">{exp.role}</div>
-                  <div className="text-slate-500 font-medium">{exp.location}</div>
+        {form.experience.length > 0 && (
+          <section>
+            <div className="flex items-center gap-4 mb-5">
+              <h2 className="text-sm font-black uppercase tracking-[0.2em] whitespace-nowrap">Experience</h2>
+              <div className="h-[2px] w-full bg-slate-100" />
+            </div>
+            <div className="space-y-8">
+              {form.experience.map((exp) => (
+                <div key={exp.id} className="grid grid-cols-[1fr_auto] gap-4">
+                  <div>
+                    <div className="font-bold text-lg">{exp.role}</div>
+                    <div className="text-slate-500 font-medium">{exp.location}</div>
+                  </div>
+                  <div className="text-right text-sm font-bold text-slate-400 uppercase tracking-wider">
+                    {exp.dateRange}
+                  </div>
                 </div>
-                <div className="text-right text-sm font-bold text-slate-400 uppercase tracking-wider">
-                  {exp.dateRange}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
 
         {form.leadership.length > 0 && (
           <section>
@@ -286,42 +294,46 @@ function RubyAccentLayout({ form }: { form: ResumeForm }) {
       </header>
 
       <div className="space-y-8">
-        <section>
-          <div className="flex items-baseline gap-3 mb-4">
-            <h2 className="text-sm font-bold uppercase tracking-[0.15em]" style={{ color: accentColor }}>Education</h2>
-            <div className="h-[1px] flex-1" style={{ backgroundColor: `${accentColor}20` }} />
-          </div>
-          <div className="space-y-4">
-            {form.education.map((edu) => (
-              <div key={edu.id} className="grid grid-cols-[1fr_auto] gap-4">
-                <div>
-                  <div className="font-bold">{edu.institution}</div>
-                  <div className="italic text-gray-600">{edu.degree}</div>
+        {form.education.length > 0 && (
+          <section>
+            <div className="flex items-baseline gap-3 mb-4">
+              <h2 className="text-sm font-bold uppercase tracking-[0.15em]" style={{ color: accentColor }}>Education</h2>
+              <div className="h-[1px] flex-1" style={{ backgroundColor: `${accentColor}20` }} />
+            </div>
+            <div className="space-y-4">
+              {form.education.map((edu) => (
+                <div key={edu.id} className="grid grid-cols-[1fr_auto] gap-4">
+                  <div>
+                    <div className="font-bold">{edu.institution}</div>
+                    <div className="italic text-gray-600">{edu.degree}</div>
+                  </div>
+                  <div className="text-right text-sm font-medium">
+                    {edu.dateRange}
+                  </div>
                 </div>
-                <div className="text-right text-sm font-medium">
-                  {edu.dateRange}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
 
-        <section>
-          <div className="flex items-baseline gap-3 mb-4">
-            <h2 className="text-sm font-bold uppercase tracking-[0.15em]" style={{ color: accentColor }}>Experience</h2>
-            <div className="h-[1px] flex-1" style={{ backgroundColor: `${accentColor}20` }} />
-          </div>
-          <div className="space-y-6">
-            {form.experience.map((exp) => (
-              <div key={exp.id} className="grid grid-cols-[1fr_auto] gap-4">
-                <div className="font-bold">{exp.role}</div>
-                <div className="text-right text-sm font-medium">
-                  {exp.dateRange}
+        {form.experience.length > 0 && (
+          <section>
+            <div className="flex items-baseline gap-3 mb-4">
+              <h2 className="text-sm font-bold uppercase tracking-[0.15em]" style={{ color: accentColor }}>Experience</h2>
+              <div className="h-[1px] flex-1" style={{ backgroundColor: `${accentColor}20` }} />
+            </div>
+            <div className="space-y-6">
+              {form.experience.map((exp) => (
+                <div key={exp.id} className="grid grid-cols-[1fr_auto] gap-4">
+                  <div className="font-bold">{exp.role}</div>
+                  <div className="text-right text-sm font-medium">
+                    {exp.dateRange}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
 
         {form.leadership.length > 0 && (
           <section>
@@ -396,7 +408,7 @@ function MinimalistGridLayout({ form }: { form: ResumeForm }) {
     <div className="h-full space-y-10">
       <header className="space-y-4 border-b border-[color:var(--page-line)] pb-8">
         <h1 className="text-4xl font-bold tracking-tight text-[color:var(--page-text)] uppercase text-center">
-          {form.personalInfo.fullName}
+          {form.personalInfo.fullName || "Your Name"}
         </h1>
         <div className="flex justify-center gap-5 text-sm text-[color:var(--page-muted)]">
           <span>{form.personalInfo.phone}</span>
@@ -406,75 +418,83 @@ function MinimalistGridLayout({ form }: { form: ResumeForm }) {
       </header>
 
       <div className="grid gap-10">
-        <section className="space-y-5">
-          <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
-            Education
-          </h2>
-          <div className="space-y-6">
-            {form.education.map((edu) => (
-              <div key={edu.id} className="grid grid-cols-[1fr_auto] gap-2">
-                <div className="space-y-1">
-                  <h3 className="font-bold text-[color:var(--page-text)]">{edu.institution}</h3>
-                  <p className="text-sm italic text-[color:var(--page-muted)]">{edu.degree}</p>
+        {form.education.length > 0 && (
+          <section className="space-y-5">
+            <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
+              Education
+            </h2>
+            <div className="space-y-6">
+              {form.education.map((edu) => (
+                <div key={edu.id} className="grid grid-cols-[1fr_auto] gap-2">
+                  <div className="space-y-1">
+                    <h3 className="font-bold text-[color:var(--page-text)]">{edu.institution}</h3>
+                    <p className="text-sm italic text-[color:var(--page-muted)]">{edu.degree}</p>
+                  </div>
+                  <div className="text-right text-sm text-[color:var(--page-muted)]">
+                    <p className="font-medium">{edu.location}</p>
+                    <p>{edu.dateRange}</p>
+                  </div>
                 </div>
-                <div className="text-right text-sm text-[color:var(--page-muted)]">
-                  <p className="font-medium">{edu.location}</p>
-                  <p>{edu.dateRange}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
 
-        <section className="space-y-5">
-          <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
-            Professional Experience
-          </h2>
-          <div className="space-y-6">
-            {form.experience.map((exp) => (
-              <div key={exp.id} className="grid grid-cols-[1fr_auto] gap-2">
-                <div className="space-y-1">
-                  <h3 className="font-bold text-[color:var(--page-text)]">{exp.role}</h3>
+        {form.experience.length > 0 && (
+          <section className="space-y-5">
+            <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
+              Professional Experience
+            </h2>
+            <div className="space-y-6">
+              {form.experience.map((exp) => (
+                <div key={exp.id} className="grid grid-cols-[1fr_auto] gap-2">
+                  <div className="space-y-1">
+                    <h3 className="font-bold text-[color:var(--page-text)]">{exp.role}</h3>
+                  </div>
+                  <div className="text-right text-sm text-[color:var(--page-muted)]">
+                    <p className="font-medium">{exp.location}</p>
+                    <p>{exp.dateRange}</p>
+                  </div>
                 </div>
-                <div className="text-right text-sm text-[color:var(--page-muted)]">
-                  <p className="font-medium">{exp.location}</p>
-                  <p>{exp.dateRange}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
 
-        <section className="space-y-5">
-          <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
-            Leadership & Volunteers
-          </h2>
-          <div className="space-y-6">
-            {form.leadership.map((lead) => (
-              <div key={lead.id} className="grid grid-cols-[1fr_auto] gap-2">
-                <div className="space-y-1">
-                  <h3 className="font-bold text-[color:var(--page-text)]">{lead.role}</h3>
-                  <p className="text-sm italic text-[color:var(--page-muted)]">{lead.organization}</p>
+        {form.leadership.length > 0 && (
+          <section className="space-y-5">
+            <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
+              Leadership & Volunteers
+            </h2>
+            <div className="space-y-6">
+              {form.leadership.map((lead) => (
+                <div key={lead.id} className="grid grid-cols-[1fr_auto] gap-2">
+                  <div className="space-y-1">
+                    <h3 className="font-bold text-[color:var(--page-text)]">{lead.role}</h3>
+                    <p className="text-sm italic text-[color:var(--page-muted)]">{lead.organization}</p>
+                  </div>
+                  <div className="text-right text-sm text-[color:var(--page-muted)]">
+                    <p className="font-medium">{lead.location}</p>
+                    <p>{lead.dateRange}</p>
+                  </div>
                 </div>
-                <div className="text-right text-sm text-[color:var(--page-muted)]">
-                  <p className="font-medium">{lead.location}</p>
-                  <p>{lead.dateRange}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
 
-        <section className="space-y-5">
-          <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
-            Awards & Honors
-          </h2>
-          <ul className="list-inside list-disc space-y-2 text-[color:var(--page-muted)]">
-            {form.awards.map((award, index) => (
-              <li key={index}>{award}</li>
-            ))}
-          </ul>
-        </section>
+        {form.awards.length > 0 && (
+          <section className="space-y-5">
+            <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
+              Awards & Honors
+            </h2>
+            <ul className="list-inside list-disc space-y-2 text-[color:var(--page-muted)]">
+              {form.awards.map((award, index) => (
+                <li key={index}>{award}</li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {form.projects.length > 0 ? (
           <section className="space-y-5">
