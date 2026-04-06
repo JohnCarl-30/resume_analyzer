@@ -10,11 +10,38 @@ export interface ResumeTemplate {
     | "standard-technical"
     | "modern-hybrid"
     | "academic-cv"
-    | "creative-single-column";
+    | "creative-single-column"
+    | "harvard-classic"
+    | "modern-sans"
+    | "ruby-accent";
   isPremium?: boolean;
 }
 
 export const sampleTemplates: ResumeTemplate[] = [
+  {
+    id: "harvard-classic",
+    name: "Harvard Classic",
+    description: "The gold standard for professional careers. Serif fonts, centered header, and traditional spacing.",
+    thumbnailClass: "bg-gradient-to-br from-[#f8fafc] to-[#e2e8f0]",
+    atsLabel: "High Success",
+    previewVariant: "harvard-classic",
+  },
+  {
+    id: "modern-sans",
+    name: "Modern Sans",
+    description: "A clean, high-impact sans-serif layout with an asymmetric header. Perfect for tech and startups.",
+    thumbnailClass: "bg-gradient-to-br from-[#f1f5f9] to-[#cbd5e1]",
+    atsLabel: "ATS-Friendly",
+    previewVariant: "modern-sans",
+  },
+  {
+    id: "ruby-accent",
+    name: "Ruby Accent",
+    description: "Professional serif layout with subtle crimson highlights to make key sections pop.",
+    thumbnailClass: "bg-gradient-to-br from-[#fff1f2] to-[#fecdd3]",
+    atsLabel: "Modern",
+    previewVariant: "ruby-accent",
+  },
   {
     id: "minimalist-grid",
     name: "Minimalist Grid",

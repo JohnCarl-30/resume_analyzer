@@ -262,7 +262,7 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
           {viewMode === "workspace" ? (
             <AnalysisWorkspace
               targetRole={targetRole}
-              selectedTemplateName={selectedTemplate?.name ?? "Selected template"}
+              selectedTemplateId={selectedTemplateId}
               resumeFileName={
                 analysisResult?.sourceFileName ?? resumeFile?.name ?? "resume.pdf"
               }

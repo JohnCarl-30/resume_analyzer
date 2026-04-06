@@ -6,6 +6,94 @@ interface TemplatePreviewProps {
 }
 
 export function TemplatePreview({ variant }: TemplatePreviewProps) {
+  if (variant === "harvard-classic") {
+    return (
+      <div className="flex h-full w-full items-center justify-center rounded-[12px] bg-[#f8fafc] p-3 shadow-[0_18px_34px_rgba(34,55,102,0.14)]">
+        <div className="w-full h-full rounded-[4px] bg-white p-3 shadow-[0_4px_12px_rgba(50,70,120,0.08)] flex flex-col items-center">
+          <div className="h-2 w-1/3 rounded-full bg-[#334155] mb-1" />
+          <div className="h-1 w-2/3 rounded-full bg-[#94a3b8] mb-3" />
+          <div className="w-full h-[1px] bg-[#e2e8f0] mb-3" />
+          <div className="w-full space-y-2">
+            <div className="h-1 w-1/4 bg-[#64748b]" />
+            <div className="h-1 w-full bg-[#cbd5e1]" />
+            <div className="h-1 w-full bg-[#cbd5e1]" />
+            <div className="h-1 w-3/4 bg-[#cbd5e1]" />
+          </div>
+          <div className="w-full h-[1px] bg-[#e2e8f0] my-3" />
+          <div className="w-full space-y-2">
+            <div className="h-1 w-1/4 bg-[#64748b]" />
+            <div className="h-1 w-full bg-[#cbd5e1]" />
+            <div className="h-1 w-5/6 bg-[#cbd5e1]" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (variant === "modern-sans") {
+    return (
+      <div className="flex h-full w-full items-center justify-center rounded-[12px] bg-[#f1f5f9] p-3 shadow-[0_18px_34px_rgba(34,55,102,0.14)]">
+        <div className="w-full h-full rounded-[4px] bg-white p-3 shadow-[0_4px_12px_rgba(50,70,120,0.08)]">
+          <div className="grid grid-cols-[0.4fr_0.6fr] gap-2 mb-4">
+            <div className="space-y-1">
+              <div className="h-3 w-full bg-[#0f172a]" />
+              <div className="h-1 w-2/3 bg-[#64748b]" />
+            </div>
+            <div className="flex flex-col items-end space-y-1">
+              <div className="h-1 w-full bg-[#94a3b8]" />
+              <div className="h-1 w-2/3 bg-[#94a3b8]" />
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <div className="h-1.5 w-1/3 bg-[#334155] mb-1.5" />
+              <div className="space-y-1">
+                <div className="h-1 w-full bg-[#e2e8f0]" />
+                <div className="h-1 w-5/6 bg-[#e2e8f0]" />
+              </div>
+            </div>
+            <div>
+              <div className="h-1.5 w-1/3 bg-[#334155] mb-1.5" />
+              <div className="space-y-1">
+                <div className="h-1 w-full bg-[#e2e8f0]" />
+                <div className="h-1 w-4/5 bg-[#e2e8f0]" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (variant === "ruby-accent") {
+    return (
+      <div className="flex h-full w-full items-center justify-center rounded-[12px] bg-[#fff1f2] p-3 shadow-[0_18px_34px_rgba(153,27,27,0.12)]">
+        <div className="w-full h-full rounded-[4px] bg-white p-3 shadow-[0_4px_12px_rgba(153,27,27,0.06)] flex flex-col items-center">
+          <div className="h-2 w-1/3 rounded-full bg-[#991b1b] mb-1" />
+          <div className="h-1 w-2/3 rounded-full bg-[#64748b] mb-3" />
+          <div className="w-full space-y-3">
+            <div>
+              <div className="h-1 w-1/4 bg-[#991b1b] mb-1.5" />
+              <div className="h-[1px] w-full bg-[#fecdd3] mb-1.5" />
+              <div className="space-y-1">
+                <div className="h-1 w-full bg-[#cbd5e1]" />
+                <div className="h-1 w-5/6 bg-[#cbd5e1]" />
+              </div>
+            </div>
+            <div>
+              <div className="h-1 w-1/4 bg-[#991b1b] mb-1.5" />
+              <div className="h-[1px] w-full bg-[#fecdd3] mb-1.5" />
+              <div className="space-y-1">
+                <div className="h-1 w-full bg-[#cbd5e1]" />
+                <div className="h-1 w-4/5 bg-[#cbd5e1]" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (variant === "minimalist-grid") {
     return (
       <div className="relative h-full w-full rounded-[12px] bg-[#f7f9fc] p-3 shadow-[0_18px_34px_rgba(34,55,102,0.16)]">

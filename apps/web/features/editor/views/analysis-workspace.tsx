@@ -7,6 +7,8 @@ import { ExperienceEditor } from "../components/editors/experience-editor";
 import { EducationEditor } from "../components/editors/education-editor";
 import { LeadershipEditor } from "../components/editors/leadership-editor";
 import { AwardsEditor } from "../components/editors/awards-editor";
+import { ResumeRenderer } from "../components/resume-renderer";
+
 import {
   UserCircleIcon,
   GraduationCapIcon,
@@ -35,7 +37,7 @@ import {
 
 interface AnalysisWorkspaceProps {
   targetRole: string;
-  selectedTemplateName: string;
+  selectedTemplateId: string;
   resumeFileName: string;
   analysisResult: ResumeAnalysisResult | null;
   initialForm?: ResumeForm;
@@ -141,7 +143,7 @@ const emptyProjectDraft: ProjectDraft = {
 
 export function AnalysisWorkspace({
   targetRole,
-  selectedTemplateName,
+  selectedTemplateId,
   resumeFileName,
   analysisResult,
   initialForm,
@@ -386,11 +388,6 @@ export function AnalysisWorkspace({
           </h2>
           <p className="mt-2 text-base text-[color:var(--page-muted)]">Click any section to edit</p>
           <div className="mt-4 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-3 text-sm text-[color:var(--page-muted)]">
-            Template:{" "}
-            <span className="font-medium text-[color:var(--page-text)]">
-              {selectedTemplateName}
-            </span>
-            <br />
             Source:{" "}
             <span className="font-medium text-[color:var(--page-text)]">{resumeFileName}</span>
           </div>
@@ -656,128 +653,7 @@ export function AnalysisWorkspace({
           ) : null}
 
           <div className="mx-auto aspect-[1/1.414] w-full max-w-5xl bg-white shadow-[var(--shadow-md)] px-8 py-10 sm:px-12 sm:py-14 lg:px-16 lg:py-16">
-            <div className="h-full space-y-10">
-              <header className="space-y-4 border-b border-[color:var(--page-line)] pb-8">
-                <h1 className="text-4xl font-bold tracking-tight text-[color:var(--page-text)] uppercase text-center">
-                  {form.personalInfo.fullName}
-                </h1>
-                <div className="flex justify-center gap-5 text-sm text-[color:var(--page-muted)]">
-                  <span>{form.personalInfo.phone}</span>
-                  <span className="opacity-40">•</span>
-                  <span>{form.personalInfo.email}</span>
-                </div>
-              </header>
-
-              <div className="grid gap-10">
-                <section className="space-y-5">
-                  <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
-                    Education
-                  </h2>
-                  <div className="space-y-6">
-                    {form.education.map((edu) => (
-                      <div key={edu.id} className="grid grid-cols-[1fr_auto] gap-2">
-                        <div className="space-y-1">
-                          <h3 className="font-bold text-[color:var(--page-text)]">{edu.institution}</h3>
-                          <p className="text-sm italic text-[color:var(--page-muted)]">{edu.degree}</p>
-                        </div>
-                        <div className="text-right text-sm text-[color:var(--page-muted)]">
-                          <p className="font-medium">{edu.location}</p>
-                          <p>{edu.dateRange}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                <section className="space-y-5">
-                  <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
-                    Professional Experience
-                  </h2>
-                  <div className="space-y-6">
-                    {form.experience.map((exp) => (
-                      <div key={exp.id} className="grid grid-cols-[1fr_auto] gap-2">
-                        <div className="space-y-1">
-                          <h3 className="font-bold text-[color:var(--page-text)]">{exp.role}</h3>
-                        </div>
-                        <div className="text-right text-sm text-[color:var(--page-muted)]">
-                          <p className="font-medium">{exp.location}</p>
-                          <p>{exp.dateRange}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                <section className="space-y-5">
-                  <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
-                    Leadership & Volunteers
-                  </h2>
-                  <div className="space-y-6">
-                    {form.leadership.map((lead) => (
-                      <div key={lead.id} className="grid grid-cols-[1fr_auto] gap-2">
-                        <div className="space-y-1">
-                          <h3 className="font-bold text-[color:var(--page-text)]">{lead.role}</h3>
-                          <p className="text-sm italic text-[color:var(--page-muted)]">{lead.organization}</p>
-                        </div>
-                        <div className="text-right text-sm text-[color:var(--page-muted)]">
-                          <p className="font-medium">{lead.location}</p>
-                          <p>{lead.dateRange}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                <section className="space-y-5">
-                  <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
-                    Awards & Honors
-                  </h2>
-                  <ul className="list-inside list-disc space-y-2 text-[color:var(--page-muted)]">
-                    {form.awards.map((award, index) => (
-                      <li key={index}>{award}</li>
-                    ))}
-                  </ul>
-                </section>
-
-                {form.projects.length > 0 ? (
-                  <section className="space-y-5">
-                    <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
-                      Projects
-                    </h2>
-                    <div className="space-y-6">
-                      {form.projects.map((project) => (
-                        <div key={project.id} className="space-y-3">
-                          <div className="grid grid-cols-[1fr_auto] gap-2">
-                            <div className="space-y-1">
-                              <h3 className="font-bold text-[color:var(--page-text)]">
-                                {project.name}
-                              </h3>
-                              <p className="text-sm text-[color:var(--page-muted)]">
-                                {project.technologies}
-                              </p>
-                              {project.link ? (
-                                <p className="text-sm text-[color:var(--brand)]">{project.link}</p>
-                              ) : null}
-                            </div>
-                            <div className="text-right text-sm text-[color:var(--page-muted)]">
-                              <p>{project.startDate}</p>
-                              <p>{project.endDate}</p>
-                            </div>
-                          </div>
-                          {project.bullets.length > 0 ? (
-                            <ul className="list-inside list-disc space-y-1.5 text-[color:var(--page-muted)]">
-                              {project.bullets.map((bullet, index) => (
-                                <li key={`${project.id}-${index}`}>{bullet}</li>
-                              ))}
-                            </ul>
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                ) : null}
-              </div>
-            </div>
+            <ResumeRenderer form={form} variantId={selectedTemplateId} />
           </div>
         </section>
       </div>
