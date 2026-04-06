@@ -11,43 +11,16 @@ import { db } from "../db/client.js";
 import { inMemoryAnalysisRepository } from "../repositories/in-memory-analysis.repository.js";
 import { postgresAnalysisRepository } from "../repositories/postgres-analysis.repository.js";
 
-const trackedKeywords = [
-  "typescript",
-  "javascript",
-  "react",
-  "next.js",
-  "node.js",
-  "express",
-  "postgresql",
-  "sql",
-  "aws",
-  "docker",
-  "kubernetes",
-  "git",
-  "api",
-  "testing",
-  "ci/cd",
-  "microservices",
-  "leadership",
-  "communication",
-  "analytics",
-  "python",
-] as const;
+// Composable analyzers
+import { analyzeKeywords } from "../analyzers/keyword.analyzer.js";
+import { analyzeWritingQuality } from "../analyzers/writing.analyzer.js";
+import { analyzeImpactMetrics } from "../analyzers/impact.analyzer.js";
 
-const weakActionPhrases = [
-  "worked on",
-  "helped with",
-  "responsible for",
-  "tasked with",
-] as const;
+// OpenAI-powered JD extraction
+import { openAiJdExtractionService } from "./openai-jd-extraction.service.js";
 
-function normalizeText(value: string) {
-  return value.toLowerCase();
-}
-
-function uniqueSorted(values: Iterable<string>) {
-  return Array.from(new Set(values)).sort((left, right) => left.localeCompare(right));
-}
+// Scoring
+import { computeScore } from "../scoring/score.js";
 
 const analysisRepository = db.isConfigured
   ? postgresAnalysisRepository
@@ -57,71 +30,54 @@ export const analysisService = {
   async createAnalysis(input: unknown): Promise<ResumeAnalysis> {
     const payload = createAnalysisSchema.parse(input);
 
-    const normalizedJobDescription = normalizeText(payload.jobDescription);
-    const normalizedResumeText = normalizeText(payload.resumeText);
-
-    const matchedKeywords = trackedKeywords.filter(
-      (keyword) =>
-        normalizedJobDescription.includes(keyword) && normalizedResumeText.includes(keyword),
-    );
-    const missingKeywords = trackedKeywords.filter(
-      (keyword) =>
-        normalizedJobDescription.includes(keyword) && !normalizedResumeText.includes(keyword),
+    // Step 1: Extract structured keywords from JD via OpenAI (if enabled)
+    const jdExtraction = await openAiJdExtractionService.extractKeywordsFromJd(
+      payload.jobDescription,
+      payload.targetRole,
     );
 
-    const suggestions: AnalysisSuggestion[] = [];
+    // Step 2: Run composable analyzers in parallel
+    const [keywordResult, writingResult, impactResult] = await Promise.all([
+      Promise.resolve(
+        analyzeKeywords(payload.resumeText, payload.jobDescription, {
+          jdKeywords: jdExtraction.keywords.length > 0 ? jdExtraction.keywords : undefined,
+        }),
+      ),
+      Promise.resolve(analyzeWritingQuality(payload.resumeText)),
+      Promise.resolve(analyzeImpactMetrics(payload.resumeText)),
+    ]);
 
-    if (missingKeywords.length > 0) {
-      suggestions.push({
-        id: "missing-keywords",
-        title: "Add missing job keywords",
-        detail: `Consider adding evidence for ${missingKeywords
-          .slice(0, 3)
-          .join(", ")} to better align the resume with the target role.`,
-        severity: "high",
-        category: "keywords",
-      });
-    }
+    // Step 3: Count required skill matches
+    const normalizedResume = payload.resumeText.toLowerCase();
+    const requiredSkillsMatched = jdExtraction.requiredSkills.filter((skill) =>
+      normalizedResume.includes(skill.toLowerCase()),
+    ).length;
 
-    const foundWeakPhrase = weakActionPhrases.find((phrase) =>
-      normalizedResumeText.includes(phrase),
-    );
+    // Step 4: Collect all suggestions
+    const allSuggestions: AnalysisSuggestion[] = [
+      ...buildKeywordSuggestions(keywordResult.missingKeywords, jdExtraction.requiredSkills),
+      ...writingResult.suggestions,
+      ...impactResult.suggestions,
+    ];
 
-    if (foundWeakPhrase) {
-      suggestions.push({
-        id: "stronger-verbs",
-        title: "Use stronger action verbs",
-        detail: `Replace phrases like "${foundWeakPhrase}" with clearer ownership verbs such as "built", "led", or "improved".`,
-        severity: "medium",
-        category: "writing",
-      });
-    }
+    const highSeverityCount = allSuggestions.filter((s) => s.severity === "high").length;
 
-    const containsImpactMetric = /\b\d+%|\b\d+\s?(users|clients|requests|projects|hours|days)\b/i.test(
-      payload.resumeText,
-    );
-
-    if (!containsImpactMetric) {
-      suggestions.push({
-        id: "add-metrics",
-        title: "Add measurable impact",
-        detail: "Include metrics like percentages, throughput, or team size so accomplishments are easier to trust and compare.",
-        severity: "medium",
-        category: "impact",
-      });
-    }
-
-    const scoreBase = 45;
-    const keywordScore = matchedKeywords.length * 8;
-    const penalty = missingKeywords.length * 5 + suggestions.filter((item) => item.severity === "high").length * 4;
-    const score = Math.max(32, Math.min(98, scoreBase + keywordScore - penalty));
+    // Step 5: Compute weighted score
+    const { score } = computeScore({
+      keywordScore: keywordResult.keywordScore,
+      requiredSkillsMatched,
+      requiredSkillsTotal: jdExtraction.requiredSkills.length,
+      writingPenalty: writingResult.penalty,
+      impactPenalty: impactResult.penalty,
+      highSeverityCount,
+    });
 
     return {
-      targetRole: payload.targetRole,
+      targetRole: jdExtraction.targetRoleTitle || payload.targetRole,
       score,
-      matchedKeywords: uniqueSorted(matchedKeywords),
-      missingKeywords: uniqueSorted(missingKeywords),
-      suggestions,
+      matchedKeywords: keywordResult.matchedKeywords,
+      missingKeywords: keywordResult.missingKeywords,
+      suggestions: allSuggestions,
       generatedAt: new Date().toISOString(),
     };
   },
@@ -158,7 +114,7 @@ export const analysisService = {
 
     const extractedProfile = await openAiResumeExtractionService.extractProfile({
       resumeText: extracted.text,
-      targetRole: payload.targetRole,
+      targetRole: analysis.targetRole,
     });
 
     return analysisRepository.create({
@@ -206,3 +162,46 @@ export const analysisService = {
     return analysisRepository.update(analysisId, persisted);
   },
 };
+
+/**
+ * Builds keyword suggestions, distinguishing between missing required skills
+ * (high severity) and missing general JD keywords (medium severity).
+ */
+function buildKeywordSuggestions(
+  missingKeywords: string[],
+  requiredSkills: string[],
+): AnalysisSuggestion[] {
+  if (missingKeywords.length === 0) return [];
+
+  const suggestions: AnalysisSuggestion[] = [];
+
+  const missingRequired = missingKeywords.filter((kw) =>
+    requiredSkills.map((s) => s.toLowerCase()).includes(kw.toLowerCase()),
+  );
+
+  const missingOptional = missingKeywords.filter(
+    (kw) => !requiredSkills.map((s) => s.toLowerCase()).includes(kw.toLowerCase()),
+  );
+
+  if (missingRequired.length > 0) {
+    suggestions.push({
+      id: "missing-required-skills",
+      title: "Missing required skills",
+      detail: `These skills are explicitly required in the JD but absent from your resume: ${missingRequired.slice(0, 5).join(", ")}${missingRequired.length > 5 ? ` (+${missingRequired.length - 5} more)` : ""}.`,
+      severity: "high",
+      category: "keywords",
+    });
+  }
+
+  if (missingOptional.length > 0) {
+    suggestions.push({
+      id: "missing-keywords",
+      title: "Add relevant JD keywords",
+      detail: `Consider naturally incorporating: ${missingOptional.slice(0, 4).join(", ")} to improve alignment with the role.`,
+      severity: "medium",
+      category: "keywords",
+    });
+  }
+
+  return suggestions;
+}
