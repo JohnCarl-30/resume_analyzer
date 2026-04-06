@@ -48,6 +48,8 @@ interface AnalysisWorkspaceProps {
   initialForm?: ResumeForm;
   onBack: () => void;
   onTemplateChange?: (id: ResumeTemplateVariant) => void;
+  onAnalysisUpdate?: (result: ResumeAnalysisResult) => void;
+  onJobDescriptionChange?: (jd: string) => void;
 }
 
 const workspaceSections = [
@@ -58,7 +60,7 @@ const workspaceSections = [
   { id: "awards", label: "Awards & Honors", icon: "awards", expanded: false },
 ] as const;
 
-type ContentModalView = "content" | "project" | "templates" | null;
+type ContentModalView = "content" | "project" | "templates" | "tailor" | null;
 
 type ContentOptionId =
   | "summary"
@@ -242,6 +244,8 @@ export function AnalysisWorkspace({
   initialForm,
   onBack,
   onTemplateChange,
+  onAnalysisUpdate,
+  onJobDescriptionChange,
 }: AnalysisWorkspaceProps) {
   const {
     form,
@@ -266,6 +270,9 @@ export function AnalysisWorkspace({
   const [projectDraft, setProjectDraft] = useState<ProjectDraft>(emptyProjectDraft);
   const [projectFormError, setProjectFormError] = useState("");
   const [previewZoom, setPreviewZoom] = useState(100);
+  const [isUpdatingAnalysis, setIsUpdatingAnalysis] = useState(false);
+  const [newJobDescription, setNewJobDescription] = useState(analysisResult?.jobDescription ?? "");
+  const [updateError, setUpdateError] = useState("");
 
   const resumeTitle =
     form.personalInfo.fullName.trim() ||
