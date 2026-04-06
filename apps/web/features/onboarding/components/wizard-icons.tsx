@@ -258,6 +258,106 @@ export function UsersIcon() {
   );
 }
 
+export function TargetIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
+      <circle cx="10" cy="10" r="6.75" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="10" cy="10" r="3.5" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="10" cy="10" r="1.35" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function CodeBracketsIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
+      <path
+        d="M7.25 5.5L4.25 10l3 4.5M12.75 5.5l3 4.5-3 4.5M11 4.75L9 15.25"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function ResearchIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
+      <path
+        d="M8 3.5L4.2 10h3.1L5.9 16.5h8.2L12.7 10h3.1L12 3.5H8z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function BadgeIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
+      <path
+        d="M10 3.25l2 .95 2.15-.2 1.15 1.8 1.95.95-.45 2.1.45 2.1-1.95.95-1.15 1.8-2.15-.2-2 .95-2-.95-2.15.2-1.15-1.8-1.95-.95.45-2.1-.45-2.1 1.95-.95 1.15-1.8 2.15.2 2-.95z"
+        stroke="currentColor"
+        strokeWidth="1.35"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function BookOpenIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
+      <path
+        d="M4.5 4.5h4.75c1 0 1.75.3 2.25.9.5-.6 1.25-.9 2.25-.9H18v10.25h-4.25c-1.25 0-2 .3-2.5.95-.5-.65-1.25-.95-2.5-.95H4.5V4.5z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path d="M10 5.4v9.35" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+export function CloseIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
+      <path
+        d="M14.25 5.75L5.75 14.25M5.75 5.75l8.5 8.5"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+export function TrashIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
+      <path
+        d="M5.75 6.5h8.5M8 6.5V5.2c0-.66.54-1.2 1.2-1.2h1.6c.66 0 1.2.54 1.2 1.2v1.3M7.1 8.25v6M10 8.25v6M12.9 8.25v6M6.25 6.5l.45 8.5c.03.69.6 1.25 1.29 1.25h3.02c.69 0 1.26-.56 1.29-1.25l.45-8.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-4 w-4">
+      <rect x="3.75" y="4.75" width="12.5" height="11.5" rx="1.75" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M6.75 3.75v2M13.25 3.75v2M3.75 8h12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function TrophyIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">

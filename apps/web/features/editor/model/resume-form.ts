@@ -29,12 +29,24 @@ export interface LeadershipEntry {
   dateRange: string;
 }
 
+export interface ProjectEntry {
+  id: string;
+  name: string;
+  technologies: string;
+  link: string;
+  startDate: string;
+  endDate: string;
+  current: boolean;
+  bullets: string[];
+}
+
 export interface ResumeForm {
   personalInfo: PersonalInfo;
   education: EducationEntry[];
   experience: ExperienceEntry[];
   leadership: LeadershipEntry[];
   awards: string[];
+  projects: ProjectEntry[];
 }
 
 export const emptyResumeForm: ResumeForm = {
@@ -47,6 +59,7 @@ export const emptyResumeForm: ResumeForm = {
   experience: [],
   leadership: [],
   awards: [],
+  projects: [],
 };
 
 export function resumeFormFromExtractedProfile(
@@ -83,6 +96,7 @@ export function resumeFormFromExtractedProfile(
       dateRange: entry.dateRange,
     })),
     awards: extractedProfile.awards,
+    projects: [],
   };
 }
 
@@ -126,4 +140,5 @@ export const defaultResumeForm: ResumeForm = {
     },
   ],
   awards: ["Dean's Lister - First Semester 2023"],
+  projects: [],
 };

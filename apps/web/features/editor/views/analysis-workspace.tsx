@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import type { ResumeAnalysisResult } from "../model/resume-analysis";
 import type { ResumeForm } from "../model/resume-form";
 import { useResumeEditor } from "../view-models/use-resume-editor";
@@ -14,7 +14,6 @@ import {
   UsersIcon,
   TrophyIcon,
   SparklesIcon,
-  ArrowLeftIcon,
   PencilIcon,
   ClockIcon,
   EyeIcon,
@@ -23,6 +22,15 @@ import {
   PlusIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  FileIcon,
+  TargetIcon,
+  CodeBracketsIcon,
+  ResearchIcon,
+  BadgeIcon,
+  BookOpenIcon,
+  CloseIcon,
+  TrashIcon,
+  CalendarIcon,
 } from "../../onboarding/components/wizard-icons";
 
 interface AnalysisWorkspaceProps {
@@ -41,6 +49,95 @@ const workspaceSections = [
   { id: "leadership", label: "Leadership", icon: "leadership", expanded: false },
   { id: "awards", label: "Awards & Honors", icon: "awards", expanded: false },
 ] as const;
+
+type ContentModalView = "content" | "project" | null;
+
+type ContentOptionId =
+  | "summary"
+  | "objective"
+  | "projects"
+  | "research"
+  | "certifications"
+  | "publications"
+  | "skills";
+
+interface ContentOption {
+  id: ContentOptionId;
+  title: string;
+  description: string;
+  icon: "file" | "target" | "projects" | "research" | "badge" | "book" | "skills";
+  interactive?: boolean;
+}
+
+interface ProjectDraft {
+  name: string;
+  technologies: string;
+  link: string;
+  startDate: string;
+  endDate: string;
+  current: boolean;
+  bulletInput: string;
+  bullets: string[];
+}
+
+const maxProjectBullets = 3;
+
+const addContentOptions: ContentOption[] = [
+  {
+    id: "summary",
+    title: "Professional Summary",
+    description: "Brief overview of your experience and strengths",
+    icon: "file",
+  },
+  {
+    id: "objective",
+    title: "Career Objective",
+    description: "Your career goals and target role",
+    icon: "target",
+  },
+  {
+    id: "projects",
+    title: "Projects",
+    description: "Showcase notable projects and technologies",
+    icon: "projects",
+    interactive: true,
+  },
+  {
+    id: "research",
+    title: "Research",
+    description: "Research papers, theses, and academic work",
+    icon: "research",
+  },
+  {
+    id: "certifications",
+    title: "Certifications",
+    description: "Professional certifications and licenses",
+    icon: "badge",
+  },
+  {
+    id: "publications",
+    title: "Publications",
+    description: "Published papers, articles, and books",
+    icon: "book",
+  },
+  {
+    id: "skills",
+    title: "Skills",
+    description: "List your technical and professional skills",
+    icon: "skills",
+  },
+];
+
+const emptyProjectDraft: ProjectDraft = {
+  name: "",
+  technologies: "",
+  link: "",
+  startDate: "",
+  endDate: "",
+  current: false,
+  bulletInput: "",
+  bullets: [],
+};
 
 export function AnalysisWorkspace({
   targetRole,
@@ -67,9 +164,28 @@ export function AnalysisWorkspace({
     updateAwards,
     addAward,
     removeAward,
+    addProject,
+    removeProject,
   } = useResumeEditor(initialForm);
+  const [modalView, setModalView] = useState<ContentModalView>(null);
+  const [projectDraft, setProjectDraft] = useState<ProjectDraft>(emptyProjectDraft);
+  const [projectFormError, setProjectFormError] = useState("");
 
-  function sectionIcon(icon: (typeof workspaceSections)[number]["icon"]) {
+  const editorSections = [
+    ...workspaceSections,
+    ...(form.projects.length > 0
+      ? [
+          {
+            id: "projects",
+            label: "Projects",
+            icon: "projects" as const,
+            expanded: false,
+          },
+        ]
+      : []),
+  ];
+
+  function sectionIcon(icon: (typeof editorSections)[number]["icon"]) {
     if (icon === "personal") {
       return <UserCircleIcon />;
     }
@@ -85,7 +201,122 @@ export function AnalysisWorkspace({
     if (icon === "awards") {
       return <TrophyIcon />;
     }
+    if (icon === "projects") {
+      return <CodeBracketsIcon />;
+    }
     return <SparklesIcon />;
+  }
+
+  function contentOptionIcon(icon: ContentOption["icon"]) {
+    if (icon === "file") {
+      return <FileIcon />;
+    }
+    if (icon === "target") {
+      return <TargetIcon />;
+    }
+    if (icon === "projects") {
+      return <CodeBracketsIcon />;
+    }
+    if (icon === "research") {
+      return <ResearchIcon />;
+    }
+    if (icon === "badge") {
+      return <BadgeIcon />;
+    }
+    if (icon === "book") {
+      return <BookOpenIcon />;
+    }
+    return <SparklesIcon />;
+  }
+
+  function openAddContentModal() {
+    setModalView("content");
+    setProjectFormError("");
+  }
+
+  function openProjectModal() {
+    setModalView("project");
+    setProjectFormError("");
+  }
+
+  function closeModal() {
+    setModalView(null);
+    setProjectFormError("");
+    setProjectDraft(emptyProjectDraft);
+  }
+
+  function updateProjectDraft<K extends keyof ProjectDraft>(key: K, value: ProjectDraft[K]) {
+    setProjectDraft((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  }
+
+  function handleCompleteBullet() {
+    const baseText = projectDraft.bulletInput.trim();
+    const autoCompletedText = baseText
+      ? `${baseText.replace(/[.]+$/, "")}.`
+      : projectDraft.name.trim()
+        ? `Built ${projectDraft.name.trim()} using ${projectDraft.technologies.trim() || "modern tools"} and shipped a measurable improvement.`
+        : "Built a feature that improved usability, speed, or delivery for the team.";
+
+    updateProjectDraft("bulletInput", autoCompletedText);
+  }
+
+  function handleAddBullet() {
+    const nextBullet = projectDraft.bulletInput.trim();
+
+    if (!nextBullet || projectDraft.bullets.length >= maxProjectBullets) {
+      return;
+    }
+
+    setProjectDraft((current) => ({
+      ...current,
+      bullets: [...current.bullets, nextBullet],
+      bulletInput: "",
+    }));
+  }
+
+  function handleRemoveBullet(index: number) {
+    setProjectDraft((current) => ({
+      ...current,
+      bullets: current.bullets.filter((_, bulletIndex) => bulletIndex !== index),
+    }));
+  }
+
+  function handleSaveProject() {
+    const trimmedName = projectDraft.name.trim();
+    const trimmedBullet = projectDraft.bulletInput.trim();
+    const normalizedBullets = trimmedBullet
+      ? [...projectDraft.bullets, trimmedBullet].slice(0, maxProjectBullets)
+      : projectDraft.bullets;
+
+    if (!trimmedName) {
+      setProjectFormError("Project name is required.");
+      return;
+    }
+
+    addProject({
+      id: `project_${Date.now()}`,
+      name: trimmedName,
+      technologies: projectDraft.technologies.trim(),
+      link: projectDraft.link.trim(),
+      startDate: projectDraft.startDate.trim(),
+      endDate: projectDraft.current ? "Present" : projectDraft.endDate.trim(),
+      current: projectDraft.current,
+      bullets: normalizedBullets,
+    });
+
+    closeModal();
+  }
+
+  function handleSectionOpen(sectionId: string) {
+    if (sectionId === "projects") {
+      openProjectModal();
+      return;
+    }
+
+    setActiveSectionId(sectionId);
   }
 
   function renderEditor() {
@@ -166,7 +397,7 @@ export function AnalysisWorkspace({
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-3">
-          {workspaceSections.map((section, index) => (
+          {editorSections.map((section, index) => (
             <div
               key={section.id}
               className={`${index === 0 ? "" : "border-t border-[color:var(--page-line)]"} px-2 py-4`}
@@ -175,7 +406,7 @@ export function AnalysisWorkspace({
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={() => setActiveSectionId(section.id)}
+                    onClick={() => handleSectionOpen(section.id)}
                     className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[color:var(--page-muted)] transition hover:bg-[color:var(--brand-soft)] hover:text-[color:var(--brand)]"
                   >
                     {activeSectionId === section.id ? <ChevronDownIcon /> : <ChevronRightIcon />}
@@ -183,7 +414,7 @@ export function AnalysisWorkspace({
                   <span className="text-[color:var(--page-muted)]">{sectionIcon(section.icon)}</span>
                   <button
                     type="button"
-                    onClick={() => setActiveSectionId(section.id)}
+                    onClick={() => handleSectionOpen(section.id)}
                     className="text-[1.05rem] font-medium text-[color:var(--page-text)] hover:text-[color:var(--brand)] transition"
                   >
                     {section.label}
@@ -204,7 +435,7 @@ export function AnalysisWorkspace({
                     <>
                       <button
                         type="button"
-                        onClick={() => setActiveSectionId(section.id)}
+                        onClick={() => handleSectionOpen(section.id)}
                         className="text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)]"
                         aria-label="Add item"
                       >
@@ -212,7 +443,7 @@ export function AnalysisWorkspace({
                       </button>
                       <button
                         type="button"
-                        onClick={() => setActiveSectionId(section.id)}
+                        onClick={() => handleSectionOpen(section.id)}
                         className="text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
                         aria-label="Open section"
                       >
@@ -229,6 +460,7 @@ export function AnalysisWorkspace({
         <div className="border-t border-[color:var(--page-line)] px-4 py-4 mt-auto">
           <button
             type="button"
+            onClick={openAddContentModal}
             className="inline-flex w-full items-center justify-center gap-3 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] px-4 py-3.5 text-lg font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
           >
             <PlusIcon />
@@ -506,11 +738,327 @@ export function AnalysisWorkspace({
                     ))}
                   </ul>
                 </section>
+
+                {form.projects.length > 0 ? (
+                  <section className="space-y-5">
+                    <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
+                      Projects
+                    </h2>
+                    <div className="space-y-6">
+                      {form.projects.map((project) => (
+                        <div key={project.id} className="space-y-3">
+                          <div className="grid grid-cols-[1fr_auto] gap-2">
+                            <div className="space-y-1">
+                              <h3 className="font-bold text-[color:var(--page-text)]">
+                                {project.name}
+                              </h3>
+                              <p className="text-sm text-[color:var(--page-muted)]">
+                                {project.technologies}
+                              </p>
+                              {project.link ? (
+                                <p className="text-sm text-[color:var(--brand)]">{project.link}</p>
+                              ) : null}
+                            </div>
+                            <div className="text-right text-sm text-[color:var(--page-muted)]">
+                              <p>{project.startDate}</p>
+                              <p>{project.endDate}</p>
+                            </div>
+                          </div>
+                          {project.bullets.length > 0 ? (
+                            <ul className="list-inside list-disc space-y-1.5 text-[color:var(--page-muted)]">
+                              {project.bullets.map((bullet, index) => (
+                                <li key={`${project.id}-${index}`}>{bullet}</li>
+                              ))}
+                            </ul>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
               </div>
             </div>
           </div>
         </section>
       </div>
+
+      {modalView ? (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-[rgba(15,23,42,0.35)] p-4 sm:p-6">
+          <div className="max-h-[92vh] w-full max-w-6xl overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]">
+            {modalView === "content" ? (
+              <>
+                <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-6 py-5 sm:px-8">
+                  <h2 className="text-[2rem] font-semibold tracking-tight text-[color:var(--page-text)]">
+                    Add Content
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="inline-flex h-12 w-12 items-center justify-center rounded-[16px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+                    aria-label="Close add content"
+                  >
+                    <CloseIcon />
+                  </button>
+                </div>
+
+                <div className="px-6 py-6 sm:px-8 sm:py-8">
+                  <div className="grid gap-5 lg:grid-cols-3">
+                    {addContentOptions.map((option) =>
+                      option.interactive ? (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={openProjectModal}
+                          className="rounded-[24px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] p-6 text-left transition hover:border-[color:var(--brand)] hover:-translate-y-0.5"
+                        >
+                          <div className="flex items-start gap-5">
+                            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[22px] border border-[color:var(--page-line)] bg-white text-[color:var(--page-muted)]">
+                              {contentOptionIcon(option.icon)}
+                            </div>
+                            <div className="space-y-2">
+                              <p className="text-[2rem] font-semibold tracking-tight text-[color:var(--page-text)]">
+                                {option.title}
+                              </p>
+                              <p className="max-w-[16rem] text-lg leading-9 text-[color:var(--page-muted)]">
+                                {option.description}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      ) : (
+                        <div
+                          key={option.id}
+                          className="rounded-[24px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] p-6"
+                        >
+                          <div className="flex items-start gap-5">
+                            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[22px] border border-[color:var(--page-line)] bg-white text-[color:var(--page-muted)]">
+                              {contentOptionIcon(option.icon)}
+                            </div>
+                            <div className="space-y-2">
+                              <p className="text-[2rem] font-semibold tracking-tight text-[color:var(--page-text)]">
+                                {option.title}
+                              </p>
+                              <p className="max-w-[16rem] text-lg leading-9 text-[color:var(--page-muted)]">
+                                {option.description}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-6 py-5 sm:px-8">
+                  <h2 className="text-[2rem] font-semibold tracking-tight text-[color:var(--page-text)]">
+                    Add Projects
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="inline-flex h-12 w-12 items-center justify-center rounded-[16px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+                    aria-label="Close add projects"
+                  >
+                    <CloseIcon />
+                  </button>
+                </div>
+
+                <div className="max-h-[calc(92vh-5.5rem)] overflow-y-auto px-6 py-8 sm:px-8">
+                  <div className="space-y-8">
+                    <div className="space-y-3">
+                      <label className="text-sm font-semibold tracking-wide text-[color:var(--page-text)]">
+                        Project Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={projectDraft.name}
+                        onChange={(event) => updateProjectDraft("name", event.target.value)}
+                        placeholder="E-Commerce Platform"
+                        className="w-full rounded-[18px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-6 py-4 text-2xl text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)]"
+                      />
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-sm font-semibold tracking-wide text-[color:var(--page-text)]">
+                        Technologies
+                      </label>
+                      <input
+                        type="text"
+                        value={projectDraft.technologies}
+                        onChange={(event) => updateProjectDraft("technologies", event.target.value)}
+                        placeholder="React, Node.js, PostgreSQL"
+                        className="w-full rounded-[18px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-6 py-4 text-xl text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)]"
+                      />
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-sm font-semibold tracking-wide text-[color:var(--page-text)]">
+                        Project Link <span className="text-[color:var(--page-muted)]">(Optional)</span>
+                      </label>
+                      <input
+                        type="url"
+                        value={projectDraft.link}
+                        onChange={(event) => updateProjectDraft("link", event.target.value)}
+                        placeholder="https://github.com/username/project"
+                        className="w-full rounded-[18px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-6 py-4 text-xl text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)]"
+                      />
+                    </div>
+
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-3">
+                        <label className="text-sm font-semibold tracking-wide text-[color:var(--page-text)]">
+                          Start Date
+                        </label>
+                        <div className="flex items-center justify-between rounded-[18px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-6 py-4">
+                          <input
+                            type="text"
+                            value={projectDraft.startDate}
+                            onChange={(event) => updateProjectDraft("startDate", event.target.value)}
+                            placeholder="January 2024"
+                            className="w-full bg-transparent text-xl text-[color:var(--page-text)] outline-none placeholder:text-[color:var(--page-muted)]"
+                          />
+                          <span className="ml-4 text-[color:var(--page-muted)]">
+                            <CalendarIcon />
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <label className="text-sm font-semibold tracking-wide text-[color:var(--page-text)]">
+                          End Date
+                        </label>
+                        <div className="flex items-center justify-between rounded-[18px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-6 py-4">
+                          <input
+                            type="text"
+                            value={projectDraft.endDate}
+                            onChange={(event) => updateProjectDraft("endDate", event.target.value)}
+                            placeholder="March 2024"
+                            disabled={projectDraft.current}
+                            className="w-full bg-transparent text-xl text-[color:var(--page-text)] outline-none placeholder:text-[color:var(--page-muted)] disabled:opacity-50"
+                          />
+                          <span className="ml-4 text-[color:var(--page-muted)]">
+                            <CalendarIcon />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <label className="flex items-center gap-4 text-xl text-[color:var(--page-text)]">
+                      <input
+                        type="checkbox"
+                        checked={projectDraft.current}
+                        onChange={(event) => updateProjectDraft("current", event.target.checked)}
+                        className="h-7 w-7 rounded border border-[color:var(--page-line)]"
+                      />
+                      Currently working on this project
+                    </label>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <label className="text-sm font-semibold tracking-wide text-[color:var(--page-text)]">
+                          Project Description
+                        </label>
+                        <button
+                          type="button"
+                          onClick={handleAddBullet}
+                          className="inline-flex items-center gap-3 rounded-[16px] border border-[color:var(--page-line)] bg-white px-5 py-3 text-lg font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
+                        >
+                          <PlusIcon />
+                          Add Bullet
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-6 text-3xl text-[color:var(--page-muted)]">
+                        <span className="font-semibold text-[color:var(--brand)]">B</span>
+                        <span className="italic text-sky-500">I</span>
+                      </div>
+
+                      {projectDraft.bullets.length > 0 ? (
+                        <div className="space-y-2">
+                          {projectDraft.bullets.map((bullet, index) => (
+                            <div
+                              key={`${bullet}-${index}`}
+                              className="flex items-start justify-between gap-3 rounded-[16px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] px-4 py-3"
+                            >
+                              <p className="text-base leading-7 text-[color:var(--page-text)]">
+                                {bullet}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveBullet(index)}
+                                className="text-[color:var(--page-muted)] transition hover:text-rose-500"
+                                aria-label="Remove bullet"
+                              >
+                                <TrashIcon />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      <div className="rounded-[20px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] p-5">
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => updateProjectDraft("bulletInput", "")}
+                            className="text-[color:var(--page-muted)] transition hover:text-rose-500"
+                            aria-label="Clear current bullet"
+                          >
+                            <TrashIcon />
+                          </button>
+                        </div>
+
+                        <textarea
+                          value={projectDraft.bulletInput}
+                          onChange={(event) => updateProjectDraft("bulletInput", event.target.value)}
+                          placeholder="Built a feature that..."
+                          className="mt-3 min-h-[9rem] w-full resize-none bg-transparent text-2xl leading-9 text-[color:var(--page-text)] outline-none placeholder:text-[color:var(--page-muted)]"
+                        />
+
+                        <div className="mt-5 flex flex-col gap-4 border-t border-[color:var(--page-line)] pt-5 sm:flex-row sm:items-center sm:justify-between">
+                          <p className="text-base text-[color:var(--page-muted)]">
+                            {Math.max(0, maxProjectBullets - projectDraft.bullets.length)} left
+                          </p>
+                          <button
+                            type="button"
+                            onClick={handleCompleteBullet}
+                            className="inline-flex items-center gap-3 rounded-[18px] border border-[color:var(--page-line)] bg-white px-5 py-3 text-lg font-semibold text-[color:var(--brand)] transition hover:border-[color:var(--brand)]"
+                          >
+                            <SparklesIcon />
+                            Complete Bullet
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4 border-t border-[color:var(--page-line)] px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+                  <div className="min-h-6 text-sm text-rose-500">{projectFormError}</div>
+                  <div className="flex items-center justify-end gap-4">
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      className="inline-flex items-center justify-center rounded-[16px] border border-[color:var(--page-line)] bg-white px-8 py-4 text-2xl font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)]"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveProject}
+                      className="inline-flex items-center justify-center rounded-[16px] bg-[color:var(--brand)] px-8 py-4 text-2xl font-semibold text-white transition hover:bg-[color:var(--brand-strong)]"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -93,6 +93,20 @@ export function useResumeEditor(initialForm: ResumeForm = defaultResumeForm) {
     setForm((prev) => ({ ...prev, awards: prev.awards.filter((_, i) => i !== index) }));
   };
 
+  const addProject = (project: ResumeForm["projects"][number]) => {
+    setForm((prev) => ({
+      ...prev,
+      projects: [...prev.projects, project],
+    }));
+  };
+
+  const removeProject = (id: string) => {
+    setForm((prev) => ({
+      ...prev,
+      projects: prev.projects.filter((item) => item.id !== id),
+    }));
+  };
+
   return {
     form,
     activeSectionId,
@@ -110,5 +124,7 @@ export function useResumeEditor(initialForm: ResumeForm = defaultResumeForm) {
     updateAwards,
     addAward,
     removeAward,
+    addProject,
+    removeProject,
   };
 }
