@@ -69,7 +69,8 @@ export function analyzeKeywords(
   let keywordScore = 0;
 
   for (const keyword of jdKeywords) {
-    const inResume = normalizedResume.includes(keyword);
+    const kw = keyword.toLowerCase();
+    const inResume = normalizedResume.includes(kw);
 
     if (inResume) {
       matchedKeywords.push(keyword);
