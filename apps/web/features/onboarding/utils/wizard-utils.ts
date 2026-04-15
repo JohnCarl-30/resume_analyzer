@@ -13,9 +13,5 @@ export function formatFileSize(bytes: number): string {
 export const maxFileSize = 10 * 1024 * 1024; // 10MB
 
 export function isSupportedFile(file: File): boolean {
-  const supportedTypes = [
-    "application/pdf",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  ];
-  return supportedTypes.includes(file.type);
+  return file.type === "application/pdf";
 }

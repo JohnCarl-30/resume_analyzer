@@ -3,6 +3,7 @@
 import React, {
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
@@ -66,9 +67,13 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
   const trimmedJobDescription = jobDescription.trim();
   const canContinueFromRole = trimmedTargetRole.length >= 2;
   const canContinueFromUpload = Boolean(resumeFile) && trimmedJobDescription.length >= 30;
-  const initialWorkspaceForm = analysisResult?.extractedProfile
-    ? resumeFormFromExtractedProfile(analysisResult.extractedProfile)
-    : emptyResumeForm;
+  const initialWorkspaceForm = useMemo(
+    () =>
+      analysisResult?.extractedProfile
+        ? resumeFormFromExtractedProfile(analysisResult.extractedProfile)
+        : emptyResumeForm,
+    [analysisResult?.extractedProfile],
+  );
 
   const stepOverview = [
     {
@@ -119,7 +124,7 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
     if (!candidateFile) return;
 
     if (!isSupportedFile(candidateFile)) {
-      setUploadError("Please choose a PDF, DOC, or DOCX resume.");
+      setUploadError("Please choose a PDF resume.");
       return;
     }
 
@@ -330,6 +335,8 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
               initialForm={initialWorkspaceForm}
               onBack={handleBack}
               onTemplateChange={setSelectedTemplateId}
+              onAnalysisUpdate={setAnalysisResult}
+              onJobDescriptionChange={setJobDescription}
             />
           ) : (
             <>
@@ -401,9 +408,6 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
                     formatFileSize={formatFileSize}
                     openFilePicker={openFilePicker}
                     uploadError={uploadError}
-                    jobDescription={jobDescription}
-                    setJobDescription={setJobDescription}
-                    targetRole={targetRole}
                     onNext={handleNext}
                     canContinue={canContinueFromUpload}
                   />

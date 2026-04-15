@@ -12,9 +12,6 @@ interface StepDocumentUploadProps {
   formatFileSize: (size: number) => string;
   openFilePicker: () => void;
   uploadError: string;
-  jobDescription: string;
-  setJobDescription: (desc: string) => void;
-  targetRole: string;
   onNext: () => void;
   canContinue: boolean;
 }
@@ -30,144 +27,100 @@ export function StepDocumentUpload({
   formatFileSize,
   openFilePicker,
   uploadError,
-  jobDescription,
-  setJobDescription,
-  targetRole,
   onNext,
   canContinue,
 }: StepDocumentUploadProps) {
-  const trimmedJobDescription = jobDescription.trim();
-  const jobDescriptionError =
-    trimmedJobDescription.length > 0 && trimmedJobDescription.length < 30
-      ? "Paste at least 30 characters from the job description."
-      : "";
-
   return (
     <section key="step-2" className="section-reveal flex flex-1 flex-col px-5 py-8 sm:px-8 lg:px-12">
       <div className="w-full">
         <div className="space-y-3 text-left sm:text-center">
           <div className="sm:flex sm:justify-center">
-            <span className="step-pill">STEP 2 OF 3</span>
+            <span className="step-pill">STEP 2 OF 4</span>
           </div>
           <h1 className="font-display text-4xl font-semibold tracking-tight text-[color:var(--page-text)]">
             Document Upload
           </h1>
           <p className="max-w-[42rem] text-sm leading-6 text-[color:var(--page-muted)] sm:mx-auto">
-            Upload your current resume and paste the target job description to begin
-            the analysis.
+            Upload your current resume so the system can parse and analyze your existing content.
           </p>
         </div>
 
         <div className="mt-9 grid gap-6 xl:grid-cols-[minmax(0,1fr)_19rem]">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div>
-              <p className="mb-3 text-sm font-semibold text-[color:var(--page-text)]">
-                Current Resume
-              </p>
-              <label
-                htmlFor={resumeInputId}
-                onDragOver={(event) => {
-                  event.preventDefault();
-                  setIsDragActive(true);
-                }}
-                onDragLeave={() => setIsDragActive(false)}
-                onDrop={handleDrop}
-                className={`flex min-h-[18rem] cursor-pointer flex-col items-center justify-center rounded-[20px] border-2 border-dashed px-6 py-8 text-center transition ${
-                  isDragActive
-                    ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)]"
-                    : "border-[color:var(--page-line-strong)] bg-[color:var(--page-bg-strong)]"
-                }`}
-              >
-                <input
-                  id={resumeInputId}
-                  ref={resumeInputRef}
-                  type="file"
-                  accept=".pdf,.docx"
-                  className="sr-only"
-                  onChange={handleFileChange}
-                />
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--page-line)] bg-white text-[color:var(--page-muted)] shadow-sm">
-                  <UploadIcon />
-                </div>
-
-                {resumeFile ? (
-                  <div className="mt-5 space-y-2">
-                    <p className="text-lg font-semibold text-[color:var(--page-text)]">
-                      {resumeFile.name}
-                    </p>
-                    <p className="text-sm text-[color:var(--page-muted)]">
-                      {formatFileSize(resumeFile.size)} ready for analysis
-                    </p>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        openFilePicker();
-                      }}
-                      className="mt-2 inline-flex items-center justify-center rounded-full border border-[color:var(--page-line)] bg-white px-4 py-2 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
-                    >
-                      Replace file
-                    </button>
-                  </div>
-                ) : (
-                  <div className="mt-5 space-y-2">
-                    <p className="text-lg font-semibold text-[color:var(--page-text)]">
-                      Drag &amp; drop your resume here
-                    </p>
-                    <p className="text-sm text-[color:var(--page-muted)]">
-                      Supports PDF, DOCX up to 10 MB
-                    </p>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        openFilePicker();
-                      }}
-                      className="mt-2 inline-flex items-center justify-center rounded-full border border-[color:var(--page-line)] bg-white px-4 py-2 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
-                    >
-                      Browse files
-                    </button>
-                  </div>
-                )}
-              </label>
-
-              <p className="mt-3 min-h-6 text-sm text-[#e16f62]">
-                {uploadError}
-              </p>
-            </div>
-
-            <div>
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-[color:var(--page-text)]">
-                  Target Job Description
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setJobDescription("");
-                  }}
-                  className="text-sm font-semibold text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)]"
-                >
-                  Clear text
-                </button>
-              </div>
-
-              <textarea
-                value={jobDescription}
-                onChange={(event) => {
-                  setJobDescription(event.target.value);
-                }}
-                placeholder="Paste the full job description here to optimize your resume against it..."
-                className="min-h-[18rem] w-full rounded-[20px] border border-[color:var(--page-line)] bg-white px-5 py-4 text-sm leading-6 text-[color:var(--page-text)] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] outline-none transition placeholder:text-[#b4bfd3] focus:border-[color:var(--brand)]"
+          <div>
+            <p className="mb-3 text-sm font-semibold text-[color:var(--page-text)]">
+              Current Resume
+            </p>
+            <label
+              htmlFor={resumeInputId}
+              onDragOver={(event) => {
+                event.preventDefault();
+                setIsDragActive(true);
+              }}
+              onDragLeave={() => setIsDragActive(false)}
+              onDrop={handleDrop}
+              className={`flex min-h-[18rem] cursor-pointer flex-col items-center justify-center rounded-[20px] border-2 border-dashed px-6 py-8 text-center transition ${
+                isDragActive
+                  ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)]"
+                  : "border-[color:var(--page-line-strong)] bg-[color:var(--page-bg-strong)]"
+              }`}
+            >
+              <input
+                id={resumeInputId}
+                ref={resumeInputRef}
+                type="file"
+                accept=".pdf"
+                className="sr-only"
+                onChange={handleFileChange}
               />
 
-              <div className="mt-3 flex items-center justify-between text-sm text-[color:var(--page-muted)]">
-                <span>Role target: {targetRole || "Not set"}</span>
-                <span>{trimmedJobDescription.length} characters</span>
+              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--page-line)] bg-white text-[color:var(--page-muted)] shadow-sm">
+                <UploadIcon />
               </div>
-              <p className="mt-2 min-h-6 text-sm text-[#e16f62]">{jobDescriptionError}</p>
-            </div>
+
+              {resumeFile ? (
+                <div className="mt-5 space-y-2">
+                  <p className="text-lg font-semibold text-[color:var(--page-text)]">
+                    {resumeFile.name}
+                  </p>
+                  <p className="text-sm text-[color:var(--page-muted)]">
+                    {formatFileSize(resumeFile.size)} ready for analysis
+                  </p>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      openFilePicker();
+                    }}
+                    className="mt-2 inline-flex items-center justify-center rounded-full border border-[color:var(--page-line)] bg-white px-4 py-2 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
+                  >
+                    Replace file
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-5 space-y-2">
+                  <p className="text-lg font-semibold text-[color:var(--page-text)]">
+                    Drag &amp; drop your resume here
+                  </p>
+                  <p className="text-sm text-[color:var(--page-muted)]">
+                    Supports PDF up to 10 MB
+                  </p>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      openFilePicker();
+                    }}
+                    className="mt-2 inline-flex items-center justify-center rounded-full border border-[color:var(--page-line)] bg-white px-4 py-2 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
+                  >
+                    Browse files
+                  </button>
+                </div>
+              )}
+            </label>
+
+            <p className="mt-3 min-h-6 text-sm text-[#e16f62]">
+              {uploadError}
+            </p>
           </div>
 
           <aside className="rounded-[20px] border border-[color:var(--page-line)] bg-[color:var(--page-bg-strong)] p-5 shadow-[0_10px_26px_rgba(0,0,0,0.03)]">
@@ -176,21 +129,9 @@ export function StepDocumentUpload({
             </p>
             <div className="mt-5 space-y-5">
               <div>
-                <p className="text-sm text-[color:var(--page-muted)]">Target role</p>
-                <p className="mt-1 text-base font-semibold text-[color:var(--page-text)]">
-                  {targetRole || "Waiting for role"}
-                </p>
-              </div>
-              <div>
                 <p className="text-sm text-[color:var(--page-muted)]">Resume status</p>
                 <p className="mt-1 text-base font-semibold text-[color:var(--page-text)]">
                   {resumeFile ? "Ready to compare" : "No file selected"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-[color:var(--page-muted)]">Job description</p>
-                <p className="mt-1 text-base font-semibold text-[color:var(--page-text)]">
-                  {jobDescription.trim().length > 0 ? "Added" : "Awaiting paste"}
                 </p>
               </div>
               <div className="rounded-[16px] border border-[color:var(--page-line)] bg-white px-4 py-4">
@@ -198,7 +139,7 @@ export function StepDocumentUpload({
                   Next up
                 </p>
                 <p className="mt-2 text-sm leading-6 text-[color:var(--page-muted)]">
-                  Once both inputs are ready, we&apos;ll move to template selection for
+                  Once your resume is ready, we&apos;ll move to template selection for
                   the final output.
                 </p>
               </div>
@@ -212,7 +153,7 @@ export function StepDocumentUpload({
           <p className="text-sm leading-6 text-[color:var(--page-muted)]">
             {resumeFile
               ? `Selected file: ${resumeFile.name}`
-              : "Add a resume and a target job description to unlock templates."}
+              : "Add a PDF resume to continue."}
           </p>
           <button
             type="button"

@@ -268,6 +268,8 @@ export function AnalysisWorkspace({
     removeAward,
     addProject,
   } = useResumeEditor(initialForm);
+  const [activeTemplateId, setActiveTemplateId] = useState(selectedTemplateId);
+  const [pendingModalClose, setPendingModalClose] = useState(false);
   const [modalView, setModalView] = useState<ContentModalView>(null);
   const [projectDraft, setProjectDraft] = useState<ProjectDraft>(emptyProjectDraft);
   const [projectFormError, setProjectFormError] = useState("");
@@ -307,6 +309,17 @@ export function AnalysisWorkspace({
         ]
       : []),
   ];
+
+  useEffect(() => {
+    setActiveTemplateId(selectedTemplateId);
+  }, [selectedTemplateId]);
+
+  useEffect(() => {
+    if (pendingModalClose) {
+      setModalView(null);
+      setPendingModalClose(false);
+    }
+  }, [pendingModalClose]);
 
   useEffect(() => {
     if (!resumePreviewUrl && previewMode === "uploaded") {
@@ -362,9 +375,10 @@ export function AnalysisWorkspace({
   }
 
   function handleSelectTemplate(templateId: ResumeTemplateVariant) {
+    setActiveTemplateId(templateId);
     onTemplateChange?.(templateId);
     setPreviewMode("structured");
-    setModalView(null);
+    setPendingModalClose(true);
   }
 
   function updateProjectDraft<K extends keyof ProjectDraft>(key: K, value: ProjectDraft[K]) {
@@ -685,7 +699,7 @@ export function AnalysisWorkspace({
             transformOrigin: "top center",
           }}
         >
-          <ResumeRenderer form={form} variantId={selectedTemplateId} />
+          <ResumeRenderer form={form} variantId={activeTemplateId} />
         </div>
       );
     }
@@ -1361,7 +1375,7 @@ export function AnalysisWorkspace({
                       <TemplateCard
                         key={template.id}
                         template={template}
-                        isSelected={selectedTemplateId === template.id}
+                        isSelected={activeTemplateId === template.id}
                         onSelect={() => handleSelectTemplate(template.id)}
                       />
                     ))}
