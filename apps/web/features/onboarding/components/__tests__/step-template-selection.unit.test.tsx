@@ -29,9 +29,9 @@ describe("StepTemplateSelection unit tests", () => {
   /**
    * Requirement 3.1 — third step indicator
    */
-  it("renders STEP 3 OF 4 step indicator", () => {
+  it("renders STEP 4 OF 5 step indicator", () => {
     renderStep();
-    expect(screen.getByText("STEP 3 OF 4")).toBeTruthy();
+    expect(screen.getByText("STEP 4 OF 5")).toBeTruthy();
   });
 
   /**
