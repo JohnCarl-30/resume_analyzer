@@ -90,6 +90,22 @@ export async function getResumeAnalysis(analysisId: string): Promise<ResumeAnaly
   return payload.data;
 }
 
+export async function listResumeAnalyses(): Promise<ResumeAnalysisResult[]> {
+  const response = await fetch(buildApiUrl("/api/analysis"), {
+    method: "GET",
+  });
+
+  const payload = (await response.json().catch(() => null)) as
+    | ApiEnvelope<ResumeAnalysisResult[]>
+    | null;
+
+  if (!response.ok || !payload?.data) {
+    throw new Error(buildValidationMessage(payload as ApiEnvelope<ResumeAnalysisResult> | null, "Unable to load analyses right now."));
+  }
+
+  return payload.data;
+}
+
 export function getResumeAnalysisSourceUrl(analysisId: string) {
   return buildApiUrl(`/api/analysis/${analysisId}/source`);
 }

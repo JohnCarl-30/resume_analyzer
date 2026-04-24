@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 import { db } from "../db/client.js";
 import { resumeAnalysesTable } from "../db/schema.js";
@@ -28,6 +28,7 @@ function mapRowToAnalysis(
     extractedCharacterCount: row.extractedCharacterCount ?? undefined,
     extractedProfile: row.extractedProfile ?? null,
     extractionProvider: row.extractionProvider ?? undefined,
+    createdAt: row.createdAt,
   };
 }
 
@@ -94,6 +95,21 @@ class PostgresAnalysisRepository implements AnalysisRepository {
       .limit(1);
 
     return record ? mapRowToAnalysis(record) : null;
+  }
+
+  async list() {
+    if (!db.client) {
+      return [];
+    }
+
+    await db.ensureSchema();
+
+    const records = await db.client
+      .select()
+      .from(resumeAnalysesTable)
+      .orderBy(desc(resumeAnalysesTable.createdAt));
+
+    return records.map(mapRowToAnalysis);
   }
 
   async update(id: string, record: PersistedResumeAnalysis) {

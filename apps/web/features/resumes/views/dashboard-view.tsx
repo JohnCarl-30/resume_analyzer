@@ -11,8 +11,14 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
   day: "2-digit",
 });
 
-export function DashboardView({ onNewAnalysis }: { onNewAnalysis: () => void }) {
-  const { resumes } = useResumeDashboard();
+interface DashboardViewProps {
+  onNewAnalysis: () => void;
+  onOpenAnalysis: (analysisId: string) => void;
+  onViewAll: () => void;
+}
+
+export function DashboardView({ onNewAnalysis, onOpenAnalysis, onViewAll }: DashboardViewProps) {
+  const { resumes, isLoading, error } = useResumeDashboard();
   
   const stats = [
     { label: "Total Resumes", value: resumes.length.toString().padStart(2, "0"), icon: <BriefcaseOutlineIcon /> },
@@ -70,8 +76,28 @@ export function DashboardView({ onNewAnalysis }: { onNewAnalysis: () => void }) 
       <section className="mx-auto max-w-6xl px-6 py-12 sm:px-10">
         <div className="mb-8 flex items-center justify-between">
           <h2 className="text-2xl font-bold tracking-tight text-[color:var(--page-text)]">Recent Analyses</h2>
-          <button className="text-sm font-semibold text-[color:var(--brand)] hover:underline">View all</button>
+          <button
+            type="button"
+            onClick={onViewAll}
+            className="text-sm font-semibold text-[color:var(--brand)] hover:underline"
+          >
+            View all
+          </button>
         </div>
+
+        {isLoading ? (
+          <div className="rounded-[20px] border border-[color:var(--page-line)] bg-white p-6 text-sm text-[color:var(--page-muted)]">
+            Loading analyses...
+          </div>
+        ) : error ? (
+          <div className="rounded-[20px] border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">
+            {error}
+          </div>
+        ) : resumes.length === 0 ? (
+          <div className="rounded-[20px] border border-[color:var(--page-line)] bg-white p-6 text-sm text-[color:var(--page-muted)]">
+            No analyses yet. Start your first one to see it here.
+          </div>
+        ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {resumes.map((resume) => (
@@ -99,7 +125,11 @@ export function DashboardView({ onNewAnalysis }: { onNewAnalysis: () => void }) 
                   <ClockIcon />
                   {dateFormatter.format(new Date(resume.uploadedAt))}
                 </div>
-                <button className="flex items-center gap-2 text-sm font-bold text-[color:var(--page-text)] opacity-0 transition group-hover:opacity-100">
+                <button
+                  type="button"
+                  onClick={() => onOpenAnalysis(resume.id)}
+                  className="flex items-center gap-2 text-sm font-bold text-[color:var(--page-text)] opacity-0 transition group-hover:opacity-100"
+                >
                   Open
                   <ArrowRightIcon />
                 </button>

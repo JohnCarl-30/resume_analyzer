@@ -11,7 +11,7 @@
  * Preservation requirements tested:
  *   3.1 — Current template stays selected when modal is opened (no new selection made)
  *   3.2 — Closing modal without selecting leaves selectedTemplateId and preview unchanged
- *   3.3 — Empty suggestions shows "No immediate edits suggested" fallback
+ *   3.3 — Empty suggestions shows fallback in StepSuggestions; suggestion cards render when present
  *   3.5 — Form data (personalInfo) is preserved when switching templates
  */
 
@@ -23,6 +23,7 @@ import type { ResumeTemplateVariant } from "../../../templates/model/template";
 import { resumeTemplateVariants } from "../../../templates/model/template";
 import type { ResumeForm } from "../../model/resume-form";
 import type { ResumeAnalysisResult } from "../../model/resume-analysis";
+import { StepSuggestions } from "../../../onboarding/components/step-suggestions";
 
 // ---------------------------------------------------------------------------
 // Spy on ResumeRenderer to capture the variantId prop it receives.
@@ -228,23 +229,45 @@ describe("Preservation — Non-Switching Inputs and Fallback Behavior Unaffected
   });
 
   // -------------------------------------------------------------------------
-  // 3.3 — Empty suggestions shows "No immediate edits suggested" fallback
+  // 3.3 — Empty suggestions shows fallback in StepSuggestions
   // -------------------------------------------------------------------------
   describe("3.3 — Empty suggestions fallback message", () => {
-    it("displays 'No immediate edits suggested' when analysisResult.suggestions is empty", () => {
-      renderWorkspace({ analysisResult: emptySuggestionsAnalysisResult });
+    it("displays fallback message when analysisResult.suggestions is empty", () => {
+      render(
+        <StepSuggestions
+          analysisResult={emptySuggestionsAnalysisResult}
+          onEnterEditor={vi.fn()}
+          onBack={vi.fn()}
+        />,
+      );
 
-      expect(screen.getByText(/no immediate edits suggested/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/no suggestions.*your resume looks well-matched/i),
+      ).toBeInTheDocument();
     });
 
-    it("does NOT display 'No immediate edits suggested' when suggestions are present", () => {
-      renderWorkspace({ analysisResult: minimalAnalysisResult });
+    it("does NOT display fallback message when suggestions are present", () => {
+      render(
+        <StepSuggestions
+          analysisResult={minimalAnalysisResult}
+          onEnterEditor={vi.fn()}
+          onBack={vi.fn()}
+        />,
+      );
 
-      expect(screen.queryByText(/no immediate edits suggested/i)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/no suggestions.*your resume looks well-matched/i),
+      ).not.toBeInTheDocument();
     });
 
     it("renders suggestion cards when suggestions are present", () => {
-      renderWorkspace({ analysisResult: minimalAnalysisResult });
+      render(
+        <StepSuggestions
+          analysisResult={minimalAnalysisResult}
+          onEnterEditor={vi.fn()}
+          onBack={vi.fn()}
+        />,
+      );
 
       expect(screen.getByText("Add metrics")).toBeInTheDocument();
     });

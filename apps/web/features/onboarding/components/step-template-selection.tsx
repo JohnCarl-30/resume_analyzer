@@ -23,7 +23,7 @@ export function StepTemplateSelection({
       <div className="w-full">
         <div className="space-y-3 text-left sm:text-center">
           <div className="sm:flex sm:justify-center">
-            <span className="step-pill">STEP 3 OF 3</span>
+            <span className="step-pill">STEP 4 OF 5</span>
           </div>
           <h1 className="font-display text-4xl font-semibold tracking-tight text-[color:var(--page-text)]">
             Select a Template

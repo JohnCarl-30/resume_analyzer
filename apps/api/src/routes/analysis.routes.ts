@@ -29,6 +29,7 @@ const analysisUpload = multer({
 });
 
 analysisRouter.post("/", asyncHandler(analysisController.create));
+analysisRouter.get("/", asyncHandler(analysisController.list));
 analysisRouter.get("/:analysisId/source", asyncHandler(analysisController.getSourceFile));
 analysisRouter.get("/:analysisId", asyncHandler(analysisController.getById));
 analysisRouter.patch("/:analysisId", asyncHandler(analysisController.update));

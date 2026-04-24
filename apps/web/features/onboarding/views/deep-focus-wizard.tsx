@@ -9,10 +9,13 @@ import React, {
   type ChangeEvent,
   type DragEvent,
 } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowLeftIcon, BrandMark } from "../components/wizard-icons";
 import { StepTargetRole } from "../components/step-target-role";
+import { StepJobDescription } from "../components/step-job-description";
 import { StepDocumentUpload } from "../components/step-document-upload";
 import { StepTemplateSelection } from "../components/step-template-selection";
+import { StepSuggestions } from "../components/step-suggestions";
 import { AnalysisWorkspace } from "../../editor/views/analysis-workspace";
 import type { ResumeAnalysisResult } from "../../editor/model/resume-analysis";
 import {
@@ -31,14 +34,16 @@ import {
 } from "../utils/analysis-api";
 import { formatFileSize, isSupportedFile, maxFileSize } from "../utils/wizard-utils";
 
-type WizardStep = 1 | 2 | 3;
+type WizardStep = 1 | 2 | 3 | 4 | 5;
 type ViewMode = "wizard" | "workspace";
 
 interface DeepFocusWizardProps {
   onExit?: () => void;
+  initialAnalysisId?: string;
 }
 
-export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
+export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardProps) {
+  const router = useRouter();
   const resumeInputId = useId();
   const resumeInputRef = useRef<HTMLInputElement>(null);
   const restoredAnalysisIdRef = useRef<string | null>(null);
@@ -57,16 +62,15 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
   const [analysisError, setAnalysisError] = useState("");
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   const [isRestoringAnalysis, setIsRestoringAnalysis] = useState(false);
-  const [analysisIdFromUrl, setAnalysisIdFromUrl] = useState<string | null>(null);
+  const [analysisIdFromUrl, setAnalysisIdFromUrl] = useState<string | null>(initialAnalysisId ?? null);
   const [resumeSourceUrl, setResumeSourceUrl] = useState<string | null>(null);
   const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
 
-  const selectedTemplate =
-    sampleTemplates.find((template) => template.id === selectedTemplateId) ?? sampleTemplates[0];
   const trimmedTargetRole = targetRole.trim();
   const trimmedJobDescription = jobDescription.trim();
-  const canContinueFromRole = trimmedTargetRole.length >= 2;
-  const canContinueFromUpload = Boolean(resumeFile) && trimmedJobDescription.length >= 30;
+  const canContinueFromTargetRole = trimmedTargetRole.length >= 2;
+  const canContinueFromJobDescription = trimmedJobDescription.length >= 30;
+  const canContinueFromUpload = resumeFile !== null;
   const initialWorkspaceForm = useMemo(
     () =>
       analysisResult?.extractedProfile
@@ -78,44 +82,42 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
   const stepOverview = [
     {
       id: "01",
-      title: "Target the role",
-      description: "Define the position first so the rest of the flow stays tailored.",
+      title: "Target role",
+      description: "Choose the exact role this resume should be optimized for.",
     },
     {
       id: "02",
-      title: "Upload and compare",
-      description: "Bring in the current resume and the target job description together.",
+      title: "Paste job description",
+      description: "Anchor the entire session to the role you're targeting.",
     },
     {
       id: "03",
-      title: "Choose the finish",
-      description: "Select the final layout once the matching context is already set.",
+      title: "Upload your resume",
+      description: "Provide the PDF so the system can parse and analyze your content.",
+    },
+    {
+      id: "04",
+      title: "Choose a template",
+      description: "Select the visual layout for your final resume output.",
+    },
+    {
+      id: "05",
+      title: "Review suggestions",
+      description: "See AI-generated improvements before entering the editor.",
     },
   ] as const;
 
   function replaceAnalysisParam(analysisId: string | null) {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const nextParams = new URLSearchParams(window.location.search);
-
     if (analysisId) {
-      nextParams.set("analysis", analysisId);
+      router.replace(`/analysis/${analysisId}`);
     } else {
-      nextParams.delete("analysis");
+      router.replace("/analysis/new");
     }
-
-    const nextUrl = nextParams.toString()
-      ? `${window.location.pathname}?${nextParams.toString()}`
-      : window.location.pathname;
-
-    window.history.replaceState({}, "", nextUrl);
     setAnalysisIdFromUrl(analysisId);
   }
 
   function handleExitToDashboard() {
-    replaceAnalysisParam(null);
+    router.push("/");
     onExit?.();
   }
 
@@ -148,27 +150,49 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
   }
 
   function handleNext() {
-    if (step === 1 && canContinueFromRole) {
+    if (step === 1 && canContinueFromTargetRole) {
       setStep(2);
       return;
     }
-    if (step === 2 && canContinueFromUpload) {
+    if (step === 2 && canContinueFromJobDescription) {
       setStep(3);
       return;
     }
-    if (step === 3) {
+    if (step === 3 && canContinueFromUpload) {
+      setStep(4);
+      return;
+    }
+    if (step === 4) {
       void handleGenerateAnalysis();
+      return;
+    }
+    if (step === 5) {
+      setViewMode("workspace");
     }
   }
 
   function handleBack() {
     if (viewMode === "workspace") {
       setViewMode("wizard");
+      setStep(5);
+      return;
+    }
+    if (step === 5) {
+      setStep(4);
+      return;
+    }
+    if (step === 4) {
       setStep(3);
       return;
     }
-    if (step === 1) return;
-    setStep((currentStep) => (currentStep === 3 ? 2 : 1));
+    if (step === 3) {
+      setStep(2);
+      return;
+    }
+    if (step === 2) {
+      setStep(1);
+      return;
+    }
   }
 
   function openFilePicker() {
@@ -185,7 +209,7 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
 
     try {
       if (!resumeFile) {
-        throw new Error("Please upload a PDF or DOCX resume first.");
+        throw new Error("Please upload a PDF resume first.");
       }
 
       const nextAnalysis = await createResumeAnalysis({
@@ -204,7 +228,7 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
           : selectedTemplateId,
       );
       replaceAnalysisParam(nextAnalysis.id ?? null);
-      setViewMode("workspace");
+      setStep(5);
     } catch (error) {
       setAnalysisError(
         error instanceof Error ? error.message : "Unable to generate analysis right now.",
@@ -247,21 +271,8 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
   }, [analysisResult, resumeFile]);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const syncAnalysisId = () => {
-      setAnalysisIdFromUrl(new URLSearchParams(window.location.search).get("analysis"));
-    };
-
-    syncAnalysisId();
-    window.addEventListener("popstate", syncAnalysisId);
-
-    return () => {
-      window.removeEventListener("popstate", syncAnalysisId);
-    };
-  }, []);
+    setAnalysisIdFromUrl(initialAnalysisId ?? null);
+  }, [initialAnalysisId]);
 
   useEffect(() => {
     if (!analysisIdFromUrl || restoredAnalysisIdRef.current === analysisIdFromUrl) {
@@ -281,7 +292,7 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
 
         restoredAnalysisIdRef.current = analysisIdFromUrl;
         setAnalysisResult(savedAnalysis);
-        setTargetRole(savedAnalysis.targetRole);
+        setTargetRole(savedAnalysis.targetRole ?? "");
         setJobDescription(savedAnalysis.jobDescription ?? "");
         setSelectedTemplateId(
           savedAnalysis.selectedTemplateId &&
@@ -290,7 +301,7 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
             : defaultTemplateId,
         );
         setViewMode("workspace");
-        setStep(3);
+        setStep(5);
       })
       .catch((error) => {
         if (isCancelled) {
@@ -300,7 +311,7 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
         replaceAnalysisParam(null);
         setAnalysisResult(null);
         setViewMode("wizard");
-        setStep(3);
+        setStep(1);
         setAnalysisError(
           error instanceof Error ? error.message : "Unable to load the saved analysis right now.",
         );
@@ -316,7 +327,14 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
     };
   }, [analysisIdFromUrl, defaultTemplateId]);
 
-  const backLabel = step === 3 ? "Back to Upload" : "Back";
+  const backLabel =
+    step === 5
+      ? "Back to Templates"
+      : step === 4
+        ? "Back to Upload"
+        : step === 3
+          ? "Back to Job Description"
+          : "Back";
 
   return (
     <main className="relative min-h-screen bg-[color:var(--page-bg)] text-[color:var(--page-text)]">
@@ -367,7 +385,7 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
                 </div>
 
                 <div className="justify-self-end">
-                  {step > 1 ? <span className="step-pill">{`STEP ${step} OF 3`}</span> : null}
+                  <span className="step-pill">{`STEP ${step} OF 5`}</span>
                 </div>
               </header>
 
@@ -392,11 +410,18 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
                     targetRole={targetRole}
                     setTargetRole={setTargetRole}
                     onNext={handleNext}
-                    canContinue={canContinueFromRole}
+                    canContinue={canContinueFromTargetRole}
                     stepOverview={stepOverview}
                   />
+                ) : step === 2 ? (
+                  <StepJobDescription
+                    jobDescription={jobDescription}
+                    setJobDescription={setJobDescription}
+                    onNext={handleNext}
+                    canContinue={canContinueFromJobDescription}
+                  />
                 ) : null}
-                {step === 2 ? (
+                {step === 3 ? (
                   <StepDocumentUpload
                     resumeInputId={resumeInputId}
                     resumeInputRef={resumeInputRef}
@@ -412,13 +437,20 @@ export function DeepFocusWizard({ onExit }: DeepFocusWizardProps) {
                     canContinue={canContinueFromUpload}
                   />
                 ) : null}
-                {step === 3 ? (
+                {step === 4 ? (
                   <StepTemplateSelection
                     selectedTemplateId={selectedTemplateId}
                     setSelectedTemplateId={setSelectedTemplateId}
                     onNext={handleNext}
                     isSubmitting={isGeneratingAnalysis}
                     errorMessage={analysisError}
+                  />
+                ) : null}
+                {step === 5 && analysisResult !== null ? (
+                  <StepSuggestions
+                    analysisResult={analysisResult}
+                    onEnterEditor={() => setViewMode("workspace")}
+                    onBack={handleBack}
                   />
                 ) : null}
               </div>

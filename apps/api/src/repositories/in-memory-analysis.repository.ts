@@ -28,6 +28,12 @@ class InMemoryAnalysisRepository implements AnalysisRepository {
     return analysis ? this.toPublicAnalysis(analysis) : null;
   }
 
+  async list() {
+    return Array.from(this.analyses.values())
+      .sort((left, right) => Date.parse(right.generatedAt) - Date.parse(left.generatedAt))
+      .map((analysis) => this.toPublicAnalysis(analysis));
+  }
+
   async update(id: string, record: PersistedResumeAnalysis) {
     const existingRecord = this.analyses.get(id);
     const nextRecord: StoredResumeAnalysis = {

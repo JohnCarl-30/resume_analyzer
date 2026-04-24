@@ -158,6 +158,32 @@ function humanizeFileName(fileName: string) {
     .trim();
 }
 
+function relativeTimeLabel(timestamp?: string) {
+  if (!timestamp) {
+    return "Not saved yet";
+  }
+
+  const deltaMs = Date.now() - Date.parse(timestamp);
+  if (!Number.isFinite(deltaMs) || deltaMs < 0) {
+    return "Saved just now";
+  }
+
+  const seconds = Math.floor(deltaMs / 1000);
+  if (seconds < 60) {
+    return `Saved ${seconds}s ago`;
+  }
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) {
+    return `Saved ${minutes}m ago`;
+  }
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return `Saved ${hours}h ago`;
+  }
+  const days = Math.floor(hours / 24);
+  return `Saved ${days}d ago`;
+}
+
 function isLikelyHeading(line: string) {
   const normalizedLine = line.trim();
 
@@ -288,14 +314,7 @@ export function AnalysisWorkspace({
     "Uploaded Resume";
   const hasStructuredPreview = previewMode === "structured";
   const canZoomDocument = previewMode !== "uploaded";
-  const feedbackSummary = {
-    total: analysisResult?.suggestions.length ?? 0,
-    critical:
-      analysisResult?.suggestions.filter((suggestion) => suggestion.severity === "high").length ??
-      0,
-    metrics: analysisResult?.metricsFound ?? 0,
-  };
-
+  const lastSavedLabel = relativeTimeLabel(analysisResult?.generatedAt);
   const editorSections = [
     ...workspaceSections,
     ...(form.projects.length > 0
@@ -451,6 +470,29 @@ export function AnalysisWorkspace({
     setActiveSectionId(sectionId);
   }
 
+  function handleAddContentOption(optionId: ContentOptionId) {
+    if (optionId === "projects") {
+      openProjectModal();
+      return;
+    }
+    if (optionId === "summary" || optionId === "objective" || optionId === "skills") {
+      setActiveSectionId("personal");
+      closeModal();
+      return;
+    }
+    if (optionId === "research") {
+      addLeadership();
+      setActiveSectionId("leadership");
+      closeModal();
+      return;
+    }
+    if (optionId === "certifications" || optionId === "publications") {
+      addAward();
+      setActiveSectionId("awards");
+      closeModal();
+    }
+  }
+
   function renderEditor() {
     if (activeSectionId === "personal") {
       return (
@@ -597,12 +639,28 @@ export function AnalysisWorkspace({
     setPreviewZoom((currentZoom) => Math.max(70, Math.min(160, currentZoom + delta)));
   }
 
-  function handleDownloadSource() {
-    if (!resumeSourceUrl) return;
+  function handleExportResume() {
+    if (resumeSourceUrl) {
+      const anchor = document.createElement("a");
+      anchor.href = resumeSourceUrl;
+      anchor.download = resumeFileName;
+      anchor.click();
+      return;
+    }
+
+    const fallback = new Blob([JSON.stringify(form, null, 2)], {
+      type: "application/json",
+    });
+    const fallbackUrl = URL.createObjectURL(fallback);
     const anchor = document.createElement("a");
-    anchor.href = resumeSourceUrl;
-    anchor.download = resumeFileName;
+    anchor.href = fallbackUrl;
+    anchor.download = `${humanizeFileName(resumeFileName) || "resume"}-export.json`;
     anchor.click();
+    URL.revokeObjectURL(fallbackUrl);
+  }
+
+  function handleDownloadSource() {
+    handleExportResume();
   }
 
   async function handleTailorToJob() {
@@ -626,40 +684,6 @@ export function AnalysisWorkspace({
     } finally {
       setIsUpdatingAnalysis(false);
     }
-  }
-
-  function renderSuggestionCard(suggestion: ResumeAnalysisResult["suggestions"][number]) {
-    const accentClass =
-      suggestion.severity === "high"
-        ? "border-rose-300 bg-rose-50/70"
-        : suggestion.category === "impact"
-          ? "border-amber-300 bg-amber-50/80"
-          : "border-slate-200 bg-slate-50/80";
-    const badgeClass =
-      suggestion.severity === "high"
-        ? "bg-rose-100 text-rose-700"
-        : suggestion.category === "impact"
-          ? "bg-amber-100 text-amber-700"
-          : "bg-slate-100 text-slate-600";
-    const badgeLabel =
-      suggestion.severity === "high" ? "Critical" : suggestion.category === "impact" ? "Impact" : "Edit";
-
-    return (
-      <article
-        key={suggestion.id}
-        className={`rounded-[18px] border px-4 py-4 shadow-[0_10px_24px_rgba(26,32,61,0.05)] ${accentClass}`}
-      >
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="text-base font-semibold text-[color:var(--page-text)]">{suggestion.title}</h3>
-          <span
-            className={`rounded-full px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] ${badgeClass}`}
-          >
-            {badgeLabel}
-          </span>
-        </div>
-        <p className="mt-2 text-sm leading-7 text-[color:var(--page-muted)]">{suggestion.detail}</p>
-      </article>
-    );
   }
 
   function renderDocumentPreview() {
@@ -762,7 +786,7 @@ export function AnalysisWorkspace({
               <span className="text-emerald-500">
                 <ClockIcon />
               </span>
-              Saved 426s ago
+              {lastSavedLabel}
             </div>
 
             <button
@@ -802,7 +826,7 @@ export function AnalysisWorkspace({
         </aside>
 
         <section className="min-h-0 flex-1 overflow-hidden bg-[color:var(--page-bg-strong)]">
-          <div className="grid h-full gap-6 p-6 xl:grid-cols-[minmax(0,1fr)_22rem] xl:p-8">
+          <div className="grid h-full gap-6 p-6 xl:p-8">
             <div className="relative min-h-0 overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-[linear-gradient(180deg,#f4f7fc_0%,#eef3fb_100%)]">
               <div className="pointer-events-none absolute left-1/2 top-5 z-20 -translate-x-1/2">
                 <div className="pointer-events-auto inline-flex items-center gap-2 rounded-[16px] border border-[color:var(--page-line)] bg-white px-2.5 py-2.5 shadow-[0_14px_30px_rgba(26,32,61,0.1)]">
@@ -882,144 +906,6 @@ export function AnalysisWorkspace({
                 {renderDocumentPreview()}
               </div>
             </div>
-
-            <aside className="min-h-0 overflow-auto rounded-[28px] border border-[color:var(--page-line)] bg-white p-5 shadow-[0_18px_48px_rgba(26,32,61,0.08)]">
-              <div className="flex items-start justify-between gap-4 border-b border-[color:var(--page-line)] pb-5">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]">
-                    Target Role
-                  </p>
-                  <h2 className="mt-2 text-[1.9rem] font-semibold tracking-tight text-[color:var(--page-text)]">
-                    {targetRole}
-                  </h2>
-                  <p className="mt-2 text-sm text-[color:var(--page-muted)]">
-                    {analysisResult?.extractionProvider === "openai"
-                      ? "OpenAI structured extraction applied"
-                      : "Parser-based preview mode"}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleDownloadSource}
-                  disabled={!resumeSourceUrl}
-                  className="inline-flex shrink-0 items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-4 py-2.5 text-sm font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <DownloadIcon />
-                  Export PDF
-                </button>
-              </div>
-
-              {analysisResult ? (
-                <>
-                  <div className="mt-5 rounded-[20px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] p-5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]">
-                      Match Score
-                    </p>
-                    <div className="mt-3 flex items-end gap-2">
-                      <span className="text-5xl font-semibold tracking-tight text-[color:var(--page-text)]">
-                        {analysisResult.score}
-                      </span>
-                      <span className="pb-1 text-xl text-[color:var(--page-muted)]">/100</span>
-                    </div>
-                    <div className="mt-4 h-3 rounded-full bg-[color:var(--page-line)]">
-                      <div
-                        className="h-full rounded-full bg-[color:var(--brand)] transition-all"
-                        style={{ width: `${analysisResult.score}%` }}
-                      />
-                    </div>
-                    <div className="mt-3 flex items-center justify-between text-xs uppercase tracking-[0.16em] text-[color:var(--page-muted)]">
-                      <span>Poor</span>
-                      <span>Excellent</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 grid grid-cols-3 gap-3 border-b border-[color:var(--page-line)] pb-5 text-center">
-                    <div className="rounded-[16px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-3 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--page-muted)]">
-                        All
-                      </p>
-                      <p className="mt-2 text-2xl font-semibold text-[color:var(--page-text)]">
-                        {feedbackSummary.total}
-                      </p>
-                    </div>
-                    <div className="rounded-[16px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-3 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--page-muted)]">
-                        Critical
-                      </p>
-                      <p className="mt-2 text-2xl font-semibold text-[color:var(--page-text)]">
-                        {feedbackSummary.critical}
-                      </p>
-                    </div>
-                    <div className="rounded-[16px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-3 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--page-muted)]">
-                        Metrics
-                      </p>
-                      <p className="mt-2 text-2xl font-semibold text-[color:var(--page-text)]">
-                        {feedbackSummary.metrics}
-                      </p>
-                    </div>
-                  </div>
-
-
-
-                  <div className="mt-6 space-y-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]">
-                        Suggested Edits
-                      </p>
-                      {analysisResult.sourceFileName ? (
-                        <span className="text-xs text-[color:var(--page-muted)]">
-                          {analysisResult.sourceFileName}
-                        </span>
-                      ) : null}
-                    </div>
-                    {analysisResult.suggestions.length > 0 ? (
-                      analysisResult.suggestions.map((suggestion) => renderSuggestionCard(suggestion))
-                    ) : (
-                      <div className="rounded-[18px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-4 text-sm text-[color:var(--page-muted)]">
-                        No immediate edits suggested.
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-6 rounded-[18px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] p-4 text-sm text-[color:var(--page-muted)]">
-                    <div className="flex items-center gap-2 font-medium text-[color:var(--page-text)]">
-                      <ClockIcon />
-                      Generated {new Date(analysisResult.generatedAt).toLocaleString()}
-                    </div>
-                    {analysisResult.extractedCharacterCount ? (
-                      <p className="mt-2">
-                        {analysisResult.extractedCharacterCount.toLocaleString()} characters extracted
-                      </p>
-                    ) : null}
-                  </div>
-
-                  {analysisResult.extractedProfile ? (
-                    <div className="mt-6 rounded-[18px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]">
-                        Extracted Snapshot
-                      </p>
-                      <p className="mt-3 text-base font-semibold text-[color:var(--page-text)]">
-                        {analysisResult.extractedProfile.fullName || resumeTitle}
-                      </p>
-                      <p className="mt-2 text-sm leading-7 text-[color:var(--page-muted)]">
-                        {analysisResult.extractedProfile.summary || "No summary extracted."}
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {analysisResult.extractedProfile.skills.slice(0, 8).map((skill) => (
-                          <span
-                            key={skill}
-                            className="rounded-full border border-[color:var(--page-line)] bg-white px-3 py-1.5 text-xs font-medium text-[color:var(--page-text)]"
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </>
-              ) : null}
-            </aside>
           </div>
         </section>
       </div>
@@ -1068,9 +954,11 @@ export function AnalysisWorkspace({
                           </div>
                         </button>
                       ) : (
-                        <div
+                        <button
                           key={option.id}
-                          className="rounded-[24px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] p-6"
+                          type="button"
+                          onClick={() => handleAddContentOption(option.id)}
+                          className="rounded-[24px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] p-6 text-left transition hover:border-[color:var(--brand)] hover:-translate-y-0.5"
                         >
                           <div className="flex items-start gap-5">
                             <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[22px] border border-[color:var(--page-line)] bg-white text-[color:var(--page-muted)]">
@@ -1085,7 +973,7 @@ export function AnalysisWorkspace({
                               </p>
                             </div>
                           </div>
-                        </div>
+                        </button>
                       ),
                     )}
                   </div>

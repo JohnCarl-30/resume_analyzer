@@ -1,10 +1,9 @@
 "use client";
 
-import React from "react";
 import { useRouter } from "next/navigation";
 import { DashboardView } from "@/features/resumes/views/dashboard-view";
 
-export default function HomePage() {
+export default function AnalysesPage() {
   const router = useRouter();
 
   return (

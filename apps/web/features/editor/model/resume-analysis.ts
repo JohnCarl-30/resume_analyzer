@@ -29,4 +29,5 @@ export interface ResumeAnalysisResult {
   extractedCharacterCount?: number;
   extractedProfile?: ExtractedResumeProfile | null;
   extractionProvider?: "parser" | "openai";
+  createdAt?: string;
 }

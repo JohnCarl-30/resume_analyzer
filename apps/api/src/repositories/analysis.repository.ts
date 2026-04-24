@@ -15,6 +15,7 @@ export interface PersistedResumeAnalysis extends ResumeAnalysis {
   selectedTemplateId: string;
   parsedResumeText: string;
   sourceFileContentType?: string;
+  createdAt?: string;
 }
 
 export interface PersistedAnalysisSourceFile {
@@ -26,6 +27,7 @@ export interface PersistedAnalysisSourceFile {
 export interface AnalysisRepository {
   create(input: CreatePersistedAnalysisRecord): Promise<PersistedResumeAnalysis>;
   findById(id: string): Promise<PersistedResumeAnalysis | null>;
+  list(): Promise<PersistedResumeAnalysis[]>;
   update(id: string, record: PersistedResumeAnalysis): Promise<PersistedResumeAnalysis>;
   findSourceFileById(id: string): Promise<PersistedAnalysisSourceFile | null>;
 }

@@ -27,6 +27,10 @@ const analysisRepository = db.isConfigured
   : inMemoryAnalysisRepository;
 
 export const analysisService = {
+  async listAnalyses(): Promise<PersistedResumeAnalysis[]> {
+    return analysisRepository.list();
+  },
+
   async createAnalysis(input: unknown): Promise<ResumeAnalysis> {
     const payload = createAnalysisSchema.parse(input);
 
