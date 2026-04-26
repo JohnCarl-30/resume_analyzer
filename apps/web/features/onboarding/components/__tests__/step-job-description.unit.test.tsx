@@ -31,9 +31,9 @@ describe("StepJobDescription unit tests", () => {
   /**
    * Requirement 1.1 — first step indicator
    */
-  it("renders STEP 1 OF 4 step indicator", () => {
+  it("renders STEP 2 OF 5 step indicator", () => {
     renderStep("");
-    expect(screen.getByText("STEP 1 OF 4")).toBeTruthy();
+    expect(screen.getByText("STEP 2 OF 5")).toBeTruthy();
   });
 
   /**

@@ -53,7 +53,9 @@ describe(
       () => {
         fc.assert(
           fc.property(
-            fc.array(suggestionArbitrary),
+            fc.uniqueArray(suggestionArbitrary, {
+              selector: (suggestion) => suggestion.id,
+            }),
             (suggestions) => {
               const expectedTotal = suggestions.length;
               const expectedCritical = suggestions.filter((s) => s.severity === "high").length;

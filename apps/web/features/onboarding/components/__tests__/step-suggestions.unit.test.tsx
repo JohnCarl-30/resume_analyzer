@@ -48,9 +48,9 @@ describe("StepSuggestions unit tests", () => {
   /**
    * Requirement 6.1 — step indicator shows current step and total
    */
-  it("renders STEP 4 OF 4 step indicator", () => {
+  it("renders STEP 5 OF 5 step indicator", () => {
     renderStep();
-    expect(screen.getByText("STEP 4 OF 4")).toBeTruthy();
+    expect(screen.getByText("STEP 5 OF 5")).toBeTruthy();
   });
 
   /**
