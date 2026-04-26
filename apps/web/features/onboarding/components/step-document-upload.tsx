@@ -68,7 +68,7 @@ export function StepDocumentUpload({
                 id={resumeInputId}
                 ref={resumeInputRef}
                 type="file"
-                accept=".pdf"
+                accept=".pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 className="sr-only"
                 onChange={handleFileChange}
               />
@@ -102,7 +102,7 @@ export function StepDocumentUpload({
                     Drag &amp; drop your resume here
                   </p>
                   <p className="text-sm text-[color:var(--page-muted)]">
-                    Supports PDF up to 10 MB
+                    Supports PDF, DOCX up to 10 MB
                   </p>
                   <button
                     type="button"
@@ -153,7 +153,7 @@ export function StepDocumentUpload({
           <p className="text-sm leading-6 text-[color:var(--page-muted)]">
             {resumeFile
               ? `Selected file: ${resumeFile.name}`
-              : "Add a PDF resume to continue."}
+              : "Add a PDF or DOCX resume to continue."}
           </p>
           <button
             type="button"
