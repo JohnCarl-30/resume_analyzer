@@ -12,5 +12,8 @@
     "build:api": "corepack pnpm --filter @resume-analyzer/api build",
     "build:web": "corepack pnpm --filter @resume-analyzer/web build",
     "typecheck": "corepack pnpm -r typecheck"
+  },
+  "dependencies": {
+    "react": "^19.2.4"
   }
 }
