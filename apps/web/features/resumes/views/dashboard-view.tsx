@@ -18,12 +18,12 @@ interface DashboardViewProps {
 }
 
 export function DashboardView({ onNewAnalysis, onOpenAnalysis, onViewAll }: DashboardViewProps) {
-  const { resumes, isLoading, error } = useResumeDashboard();
+  const { resumes, isLoading, error, stats } = useResumeDashboard();
   
-  const stats = [
-    { label: "Total Resumes", value: resumes.length.toString().padStart(2, "0"), icon: <BriefcaseOutlineIcon /> },
-    { label: "Avg. Match Rate", value: "84%", icon: <SparklesIcon /> },
-    { label: "Optimized", value: "12", icon: <ClockIcon /> },
+  const displayStats = [
+    { label: "Total Resumes", value: stats.totalResumes.toString().padStart(2, "0"), icon: <BriefcaseOutlineIcon /> },
+    { label: "Avg. Match Rate", value: `${stats.averageMatchRate}%`, icon: <SparklesIcon /> },
+    { label: "Optimized", value: stats.optimizedCount.toString(), icon: <ClockIcon /> },
   ];
 
   return (
@@ -52,7 +52,7 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis, onViewAll }: Dash
           </div>
 
           <div className="mt-16 grid gap-6 sm:grid-cols-3">
-            {stats.map((stat) => (
+            {displayStats.map((stat) => (
               <div
                 key={stat.label}
                 className="group relative overflow-hidden rounded-[24px] border border-[color:var(--page-line)] bg-white p-6 shadow-sm transition hover:shadow-md"

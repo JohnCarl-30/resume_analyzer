@@ -14,11 +14,14 @@ export function StepJobDescription({
   onNext,
   canContinue,
 }: StepJobDescriptionProps) {
+  const MAX_LENGTH = 10000;
   const trimmedLength = jobDescription.trim().length;
   const jobDescriptionError =
     trimmedLength > 0 && trimmedLength < 30
       ? "Paste at least 30 characters from the job description."
-      : "";
+      : trimmedLength > MAX_LENGTH
+        ? `Job description must be ${MAX_LENGTH} characters or less.`
+        : "";
 
   return (
     <section className="section-reveal flex flex-1 flex-col px-5 py-8 sm:px-8 lg:px-12">
@@ -60,7 +63,9 @@ export function StepJobDescription({
 
           <div className="mt-3 flex items-center justify-between text-sm text-[color:var(--page-muted)]">
             <p className="min-h-6 text-sm text-[#e16f62]">{jobDescriptionError}</p>
-            <span>{trimmedLength} characters</span>
+            <span className={trimmedLength > MAX_LENGTH * 0.9 ? "text-[#e16f62] font-semibold" : ""}>
+              {trimmedLength} / {MAX_LENGTH} characters
+            </span>
           </div>
         </div>
       </div>
