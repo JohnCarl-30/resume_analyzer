@@ -1207,32 +1207,63 @@ export function AnalysisWorkspace({
                 <div className="px-6 py-8 sm:px-8">
                   <div className="space-y-6">
                     <div className="space-y-3">
-                      <label className="text-sm font-semibold tracking-wide text-[color:var(--page-text)]">
-                        Job Description
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-semibold tracking-wide text-[color:var(--page-text)]">
+                          Job Description
+                        </label>
+                        <span className="text-xs text-[color:var(--page-muted)]">
+                          {newJobDescription.trim().length} characters
+                        </span>
+                      </div>
                       <textarea
                         value={newJobDescription}
                         onChange={(e) => setNewJobDescription(e.target.value)}
                         placeholder="Paste the full job description here..."
                         className="min-h-[400px] w-full resize-none rounded-[24px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-6 py-5 text-lg leading-8 text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)]"
                       />
+                      {newJobDescription.length < 30 && newJobDescription.length > 0 && (
+                        <p className="text-xs text-[#e16f62]">
+                          Paste at least 30 characters from the job description.
+                        </p>
+                      )}
                     </div>
 
                     {updateError && (
-                      <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-600">
-                        {updateError}
-                      </p>
+                      <div className="flex items-start gap-3 rounded-xl bg-rose-50 px-4 py-3">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-rose-600">
+                            {updateError}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleTailorToJob}
+                          disabled={isUpdatingAnalysis}
+                          className="ml-2 whitespace-nowrap rounded-md bg-rose-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50"
+                          aria-label="Retry analysis"
+                        >
+                          Retry
+                        </button>
+                      </div>
                     )}
 
-                    <div className="flex justify-end pt-4">
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        disabled={isUpdatingAnalysis}
+                        className="inline-flex h-16 items-center justify-center rounded-[18px] border border-[color:var(--page-line)] bg-white px-10 text-lg font-semibold text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
                       <button
                         type="button"
                         disabled={isUpdatingAnalysis || newJobDescription.length < 30}
                         onClick={handleTailorToJob}
-                        className="inline-flex h-16 items-center justify-center gap-3 rounded-[18px] bg-[color:var(--brand)] px-10 text-xl font-semibold text-white shadow-[0_12px_32px_rgba(37,99,235,0.25)] transition hover:bg-[color:var(--brand-strong)] hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
+                        className="inline-flex h-16 items-center justify-center gap-3 rounded-[18px] bg-[color:var(--brand)] px-10 text-lg font-semibold text-white shadow-[0_12px_32px_rgba(37,99,235,0.25)] transition hover:bg-[color:var(--brand-strong)] hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
                       >
                         {isUpdatingAnalysis ? "Analyzing..." : "Update Analysis"}
-                        <SparklesIcon />
+                        {!isUpdatingAnalysis && <SparklesIcon />}
                       </button>
                     </div>
                   </div>

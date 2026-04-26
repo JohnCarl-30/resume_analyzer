@@ -1,3 +1,5 @@
+import { type ApiError } from "../../../lib/api-client";
+import { apiClient } from "../../../lib/api-instance";
 import { buildApiUrl } from "../../../lib/api";
 import type { ResumeAnalysisResult } from "../../editor/model/resume-analysis";
 
@@ -8,124 +10,77 @@ interface CreateResumeAnalysisInput {
   resumeFile: File;
 }
 
-interface ApiEnvelope<T> {
-  data: T;
-  error?: string;
-  details?: {
-    formErrors?: string[];
-    fieldErrors?: Record<string, string[] | undefined>;
-  };
-}
+function buildErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error) {
+    if ("fieldErrors" in error && error.fieldErrors) {
+      const orderedFieldLabels: Record<string, string> = {
+        targetRole: "Target role",
+        jobDescription: "Job description",
+        selectedTemplateId: "Template selection",
+        resumeText: "Resume text",
+      };
 
-function buildValidationMessage(
-  payload: ApiEnvelope<ResumeAnalysisResult> | null,
-  fallbackMessage: string,
-) {
-  if (payload?.error !== "Validation failed") {
-    return payload?.error ?? fallbackMessage;
-  }
+      const fieldErrors = (error as ApiError).fieldErrors;
+      if (fieldErrors) {
+        const formattedErrors = Object.entries(fieldErrors)
+          .flatMap(([field, messages]) =>
+            (messages ?? []).map((message) => `${orderedFieldLabels[field] ?? field}: ${message}`),
+          )
+          .filter(Boolean);
 
-  const fieldErrors = payload.details?.fieldErrors;
-
-  if (fieldErrors) {
-    const orderedFieldLabels: Record<string, string> = {
-      targetRole: "Target role",
-      jobDescription: "Job description",
-      selectedTemplateId: "Template selection",
-      resumeText: "Resume text",
-    };
-
-    const formattedErrors = Object.entries(fieldErrors)
-      .flatMap(([field, messages]) =>
-        (messages ?? []).map((message) => `${orderedFieldLabels[field] ?? field}: ${message}`),
-      )
-      .filter(Boolean);
-
-    if (formattedErrors.length > 0) {
-      return formattedErrors.join(" ");
+        if (formattedErrors.length > 0) {
+          return formattedErrors.join(" ");
+        }
+      }
     }
+    return error.message || fallback;
   }
-
-  if (payload?.details?.formErrors?.length) {
-    return payload.details.formErrors.join(" ");
-  }
-
-  return payload?.error ?? fallbackMessage;
+  return fallback;
 }
 
 export async function createResumeAnalysis(
   input: CreateResumeAnalysisInput,
 ): Promise<ResumeAnalysisResult> {
-  const formData = new FormData();
-  formData.set("targetRole", input.targetRole);
-  formData.set("jobDescription", input.jobDescription);
-  formData.set("selectedTemplateId", input.selectedTemplateId);
-  formData.set("resume", input.resumeFile);
+  try {
+    const formData = new FormData();
+    formData.set("targetRole", input.targetRole);
+    formData.set("jobDescription", input.jobDescription);
+    formData.set("selectedTemplateId", input.selectedTemplateId);
+    formData.set("resume", input.resumeFile);
 
-  const response = await fetch(buildApiUrl("/api/analysis/upload"), {
-    method: "POST",
-    body: formData,
-  });
-
-  const payload = (await response.json().catch(() => null)) as ApiEnvelope<ResumeAnalysisResult> | null;
-
-  if (!response.ok || !payload?.data) {
-    throw new Error(buildValidationMessage(payload, "Unable to generate analysis right now."));
+    return await apiClient.post<ResumeAnalysisResult>("/api/analysis/upload", formData, true);
+  } catch (error) {
+    throw new Error(buildErrorMessage(error, "Unable to generate analysis right now."));
   }
-
-  return payload.data;
 }
 
 export async function getResumeAnalysis(analysisId: string): Promise<ResumeAnalysisResult> {
-  const response = await fetch(buildApiUrl(`/api/analysis/${analysisId}`), {
-    method: "GET",
-  });
-
-  const payload = (await response.json().catch(() => null)) as ApiEnvelope<ResumeAnalysisResult> | null;
-
-  if (!response.ok || !payload?.data) {
-    throw new Error(buildValidationMessage(payload, "Unable to load the saved analysis right now."));
+  try {
+    return await apiClient.get<ResumeAnalysisResult>(`/api/analysis/${analysisId}`);
+  } catch (error) {
+    throw new Error(buildErrorMessage(error, "Unable to load the saved analysis right now."));
   }
-
-  return payload.data;
 }
 
 export async function listResumeAnalyses(): Promise<ResumeAnalysisResult[]> {
-  const response = await fetch(buildApiUrl("/api/analysis"), {
-    method: "GET",
-  });
-
-  const payload = (await response.json().catch(() => null)) as
-    | ApiEnvelope<ResumeAnalysisResult[]>
-    | null;
-
-  if (!response.ok || !payload?.data) {
-    throw new Error(buildValidationMessage(payload as ApiEnvelope<ResumeAnalysisResult> | null, "Unable to load analyses right now."));
+  try {
+    return await apiClient.get<ResumeAnalysisResult[]>("/api/analysis");
+  } catch (error) {
+    throw new Error(buildErrorMessage(error, "Unable to load analyses right now."));
   }
-
-  return payload.data;
 }
 
 export function getResumeAnalysisSourceUrl(analysisId: string) {
   return buildApiUrl(`/api/analysis/${analysisId}/source`);
 }
+
 export async function updateResumeAnalysis(
   analysisId: string,
   input: { jobDescription: string; targetRole?: string },
 ): Promise<ResumeAnalysisResult> {
-  const response = await fetch(buildApiUrl(`/api/analysis/${analysisId}`), {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(input),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Failed to update resume analysis: ${errorText}`);
+  try {
+    return await apiClient.patch<ResumeAnalysisResult>(`/api/analysis/${analysisId}`, input);
+  } catch (error) {
+    throw new Error(buildErrorMessage(error, "Failed to update resume analysis."));
   }
-
-  const { data } = await response.json();
-  return data;
 }
