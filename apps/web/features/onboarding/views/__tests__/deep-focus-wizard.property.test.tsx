@@ -83,6 +83,9 @@ function renderStep(step: 2 | 3 | 4 | 5): HTMLElement {
       <StepTemplateSelection
         selectedTemplateId="minimalist-grid"
         setSelectedTemplateId={vi.fn()}
+        useTemplateContent={false}
+        setUseTemplateContent={vi.fn()}
+        hasResumeFile={false}
         onNext={vi.fn()}
       />,
       { container },

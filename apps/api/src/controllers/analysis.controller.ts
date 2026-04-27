@@ -42,6 +42,17 @@ export const analysisController = {
     res.status(201).json({ data: analysis });
   },
 
+  async createFromTemplate(req: Request, res: Response) {
+    const analysis = await analysisService.createAnalysisFromTemplate({
+      targetRole: req.body.targetRole,
+      jobDescription: req.body.jobDescription,
+      selectedTemplateId: req.body.selectedTemplateId,
+      resumeText: req.body.resumeText,
+    });
+
+    res.status(201).json({ data: analysis });
+  },
+
   async getSourceFile(req: Request, res: Response) {
     const analysisId = Array.isArray(req.params.analysisId)
       ? req.params.analysisId[0]

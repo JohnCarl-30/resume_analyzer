@@ -38,3 +38,7 @@ analysisRouter.post(
   analysisUpload.single("resume"),
   asyncHandler(analysisController.createFromUpload),
 );
+analysisRouter.post(
+  "/template",
+  asyncHandler(analysisController.createFromTemplate),
+);

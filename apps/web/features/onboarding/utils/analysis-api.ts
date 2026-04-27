@@ -2,12 +2,20 @@ import { type ApiError } from "../../../lib/api-client";
 import { apiClient } from "../../../lib/api-instance";
 import { buildApiUrl } from "../../../lib/api";
 import type { ResumeAnalysisResult } from "../../editor/model/resume-analysis";
+import { resumeFormToText } from "../../editor/model/resume-form";
 
 interface CreateResumeAnalysisInput {
   targetRole: string;
   jobDescription: string;
   selectedTemplateId: string;
   resumeFile: File;
+}
+
+interface CreateTemplateAnalysisInput {
+  targetRole: string;
+  jobDescription: string;
+  selectedTemplateId: string;
+  resumeText: string;
 }
 
 function buildErrorMessage(error: unknown, fallback: string): string {
@@ -49,6 +57,16 @@ export async function createResumeAnalysis(
     formData.set("resume", input.resumeFile);
 
     return await apiClient.post<ResumeAnalysisResult>("/api/analysis/upload", formData, true);
+  } catch (error) {
+    throw new Error(buildErrorMessage(error, "Unable to generate analysis right now."));
+  }
+}
+
+export async function createAnalysisFromTemplate(
+  input: CreateTemplateAnalysisInput,
+): Promise<ResumeAnalysisResult> {
+  try {
+    return await apiClient.post<ResumeAnalysisResult>("/api/analysis/template", input);
   } catch (error) {
     throw new Error(buildErrorMessage(error, "Unable to generate analysis right now."));
   }

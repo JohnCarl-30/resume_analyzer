@@ -154,3 +154,51 @@ export const defaultResumeForm: ResumeForm = {
   awards: ["Dean's Lister - First Semester 2023"],
   projects: [],
 };
+
+export function resumeFormToText(form: ResumeForm): string {
+  const parts: string[] = [];
+
+  parts.push(form.personalInfo.fullName);
+  parts.push(form.personalInfo.phone);
+  parts.push(form.personalInfo.email);
+
+  if (form.education.length > 0) {
+    parts.push("\nEducation");
+    for (const edu of form.education) {
+      parts.push(`${edu.degree} at ${edu.institution}, ${edu.location}, ${edu.dateRange}`);
+    }
+  }
+
+  if (form.experience.length > 0) {
+    parts.push("\nExperience");
+    for (const exp of form.experience) {
+      parts.push(`${exp.role} at ${exp.location}, ${exp.dateRange}`);
+    }
+  }
+
+  if (form.leadership.length > 0) {
+    parts.push("\nLeadership");
+    for (const lead of form.leadership) {
+      parts.push(`${lead.role} at ${lead.organization}, ${lead.location}, ${lead.dateRange}`);
+    }
+  }
+
+  if (form.awards.length > 0) {
+    parts.push("\nAwards");
+    for (const award of form.awards) {
+      parts.push(award);
+    }
+  }
+
+  if (form.projects.length > 0) {
+    parts.push("\nProjects");
+    for (const proj of form.projects) {
+      parts.push(`${proj.name} - ${proj.technologies}`);
+      for (const bullet of proj.bullets) {
+        parts.push(`- ${bullet}`);
+      }
+    }
+  }
+
+  return parts.join("\n\n");
+}

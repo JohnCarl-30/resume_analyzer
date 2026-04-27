@@ -6,6 +6,9 @@ import { ArrowRightIcon } from "./wizard-icons";
 interface StepTemplateSelectionProps {
   selectedTemplateId: ResumeTemplate["id"];
   setSelectedTemplateId: (id: ResumeTemplate["id"]) => void;
+  useTemplateContent: boolean;
+  setUseTemplateContent: (value: boolean) => void;
+  hasResumeFile: boolean;
   onNext: () => void;
   isSubmitting?: boolean;
   errorMessage?: string;
@@ -14,6 +17,9 @@ interface StepTemplateSelectionProps {
 export function StepTemplateSelection({
   selectedTemplateId,
   setSelectedTemplateId,
+  useTemplateContent,
+  setUseTemplateContent,
+  hasResumeFile,
   onNext,
   isSubmitting = false,
   errorMessage,
@@ -80,6 +86,40 @@ export function StepTemplateSelection({
             })}
           </div>
 
+          {hasResumeFile && (
+            <div className="mb-6 rounded-[16px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] p-5">
+              <p className="text-sm font-semibold text-[color:var(--page-text)] mb-3">
+                How would you like to proceed?
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={() => setUseTemplateContent(false)}
+                  className={`flex-1 rounded-[12px] border px-4 py-3 text-left transition ${
+                    !useTemplateContent
+                      ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)] text-[color:var(--brand)]"
+                      : "border-[color:var(--page-line)] text-[color:var(--page-text)] hover:border-[color:var(--page-line-strong)]"
+                  }`}
+                >
+                  <span className="text-sm font-medium">Apply to my resume</span>
+                  <span className="block text-xs opacity-75">Use your uploaded resume content</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUseTemplateContent(true)}
+                  className={`flex-1 rounded-[12px] border px-4 py-3 text-left transition ${
+                    useTemplateContent
+                      ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)] text-[color:var(--brand)]"
+                      : "border-[color:var(--page-line)] text-[color:var(--page-text)] hover:border-[color:var(--page-line-strong)]"
+                  }`}
+                >
+                  <span className="text-sm font-medium">Start fresh</span>
+                  <span className="block text-xs opacity-75">Use template sample content</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           <aside className="rounded-[24px] border border-[color:var(--page-line)] bg-[color:var(--page-bg-strong)] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
             <p className="text-[0.7rem] font-black uppercase tracking-[0.25em] text-[color:var(--brand)]">
               Current Selection
@@ -133,7 +173,9 @@ export function StepTemplateSelection({
             <p className="mr-auto text-sm text-[color:#b42318]">{errorMessage}</p>
           ) : (
             <p className="mr-auto text-sm text-[color:var(--page-muted)]">
-              The analysis now runs through the Express backend before opening the workspace.
+              {useTemplateContent
+                ? "Using template sample content. The analysis will run against sample data."
+                : "The analysis now runs through the Express backend before opening the workspace."}
             </p>
           )}
           <button

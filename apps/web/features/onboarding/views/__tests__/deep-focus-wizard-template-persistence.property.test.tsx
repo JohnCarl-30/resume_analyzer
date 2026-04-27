@@ -46,6 +46,9 @@ describe(
                 <StepTemplateSelection
                   selectedTemplateId={selectedTemplateId}
                   setSelectedTemplateId={vi.fn()}
+                  useTemplateContent={false}
+                  setUseTemplateContent={vi.fn()}
+                  hasResumeFile={false}
                   onNext={vi.fn()}
                 />,
                 { container: iterContainer },

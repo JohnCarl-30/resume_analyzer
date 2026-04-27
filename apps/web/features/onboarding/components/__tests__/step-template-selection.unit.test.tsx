@@ -14,15 +14,19 @@ import type { ResumeTemplate } from "../../../templates/model/template";
 
 function renderStep(selectedTemplateId: ResumeTemplate["id"] = "minimalist-grid") {
   const setSelectedTemplateId = vi.fn();
+  const setUseTemplateContent = vi.fn();
   const onNext = vi.fn();
   render(
     <StepTemplateSelection
       selectedTemplateId={selectedTemplateId}
       setSelectedTemplateId={setSelectedTemplateId}
+      useTemplateContent={false}
+      setUseTemplateContent={setUseTemplateContent}
+      hasResumeFile={false}
       onNext={onNext}
     />,
   );
-  return { setSelectedTemplateId, onNext };
+  return { setSelectedTemplateId, setUseTemplateContent, onNext };
 }
 
 describe("StepTemplateSelection unit tests", () => {

@@ -32,6 +32,9 @@ function renderStep(selectedTemplateId: ResumeTemplate["id"]) {
     <StepTemplateSelection
       selectedTemplateId={selectedTemplateId}
       setSelectedTemplateId={vi.fn()}
+      useTemplateContent={false}
+      setUseTemplateContent={vi.fn()}
+      hasResumeFile={false}
       onNext={vi.fn()}
     />,
   );

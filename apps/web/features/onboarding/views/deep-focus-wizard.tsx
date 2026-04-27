@@ -21,6 +21,8 @@ import type { ResumeAnalysisResult } from "../../editor/model/resume-analysis";
 import {
   emptyResumeForm,
   resumeFormFromExtractedProfile,
+  defaultResumeForm,
+  resumeFormToText,
 } from "../../editor/model/resume-form";
 import {
   isResumeTemplateVariant,
@@ -29,6 +31,7 @@ import {
 } from "../../templates/model/template";
 import {
   createResumeAnalysis,
+  createAnalysisFromTemplate,
   getResumeAnalysis,
   getResumeAnalysisSourceUrl,
 } from "../utils/analysis-api";
@@ -65,18 +68,21 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
   const [analysisIdFromUrl, setAnalysisIdFromUrl] = useState<string | null>(initialAnalysisId ?? null);
   const [resumeSourceUrl, setResumeSourceUrl] = useState<string | null>(null);
   const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
+  const [useTemplateContent, setUseTemplateContent] = useState(false);
 
   const trimmedTargetRole = targetRole.trim();
   const trimmedJobDescription = jobDescription.trim();
   const canContinueFromTargetRole = trimmedTargetRole.length >= 2;
   const canContinueFromJobDescription = trimmedJobDescription.length >= 30;
-  const canContinueFromUpload = resumeFile !== null;
+  const canContinueFromUpload = resumeFile !== null || useTemplateContent;
   const initialWorkspaceForm = useMemo(
     () =>
-      analysisResult?.extractedProfile
-        ? resumeFormFromExtractedProfile(analysisResult.extractedProfile)
-        : emptyResumeForm,
-    [analysisResult?.extractedProfile],
+      useTemplateContent
+        ? defaultResumeForm
+        : analysisResult?.extractedProfile
+          ? resumeFormFromExtractedProfile(analysisResult.extractedProfile)
+          : emptyResumeForm,
+    [analysisResult?.extractedProfile, useTemplateContent],
   );
 
   const stepOverview = [
@@ -183,6 +189,7 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
     }
     if (step === 4) {
       setStep(3);
+      setUseTemplateContent(false);
       return;
     }
     if (step === 3) {
@@ -208,16 +215,28 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
     setIsGeneratingAnalysis(true);
 
     try {
-      if (!resumeFile) {
-        throw new Error("Please upload a PDF resume first.");
-      }
+      let nextAnalysis;
 
-      const nextAnalysis = await createResumeAnalysis({
-        targetRole,
-        jobDescription,
-        selectedTemplateId,
-        resumeFile,
-      });
+      if (useTemplateContent) {
+        const resumeText = resumeFormToText(defaultResumeForm);
+        nextAnalysis = await createAnalysisFromTemplate({
+          targetRole,
+          jobDescription,
+          selectedTemplateId,
+          resumeText,
+        });
+      } else {
+        if (!resumeFile) {
+          throw new Error("Please upload a PDF resume first.");
+        }
+
+        nextAnalysis = await createResumeAnalysis({
+          targetRole,
+          jobDescription,
+          selectedTemplateId,
+          resumeFile,
+        });
+      }
 
       restoredAnalysisIdRef.current = nextAnalysis.id ?? null;
       setAnalysisResult(nextAnalysis);
@@ -441,6 +460,9 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
                   <StepTemplateSelection
                     selectedTemplateId={selectedTemplateId}
                     setSelectedTemplateId={setSelectedTemplateId}
+                    useTemplateContent={useTemplateContent}
+                    setUseTemplateContent={setUseTemplateContent}
+                    hasResumeFile={resumeFile !== null}
                     onNext={handleNext}
                     isSubmitting={isGeneratingAnalysis}
                     errorMessage={analysisError}

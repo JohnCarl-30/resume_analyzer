@@ -2,6 +2,7 @@ import type { ResumeAnalysis, AnalysisSuggestion } from "../types/analysis.js";
 import {
   createAnalysisSchema,
   createUploadedAnalysisSchema,
+  createTemplateAnalysisSchema,
 } from "../schemas/analysis.schema.js";
 import { HttpError } from "../utils/http-error.js";
 import { openAiResumeExtractionService } from "./openai-resume-extraction.service.js";
@@ -131,6 +132,41 @@ export const analysisService = {
       sourceFileContentType: input.resumeFile.mimetype,
       sourceFileDataBase64: input.resumeFile.buffer.toString("base64"),
       extractedCharacterCount: extracted.text.length,
+      extractedProfile,
+      extractionProvider: extractedProfile ? "openai" : "parser",
+    });
+  },
+
+  async createAnalysisFromTemplate(input: {
+    targetRole: unknown;
+    jobDescription: unknown;
+    selectedTemplateId: unknown;
+    resumeText: string;
+  }): Promise<PersistedResumeAnalysis> {
+    const payload = createTemplateAnalysisSchema.parse({
+      targetRole: input.targetRole,
+      jobDescription: input.jobDescription,
+      selectedTemplateId: input.selectedTemplateId,
+      resumeText: input.resumeText,
+    });
+
+    const analysis = await this.createAnalysis({
+      targetRole: input.targetRole,
+      jobDescription: input.jobDescription,
+      resumeText: input.resumeText,
+    });
+
+    const extractedProfile = await openAiResumeExtractionService.extractProfile({
+      resumeText: input.resumeText,
+      targetRole: analysis.targetRole,
+    });
+
+    return analysisRepository.create({
+      ...analysis,
+      jobDescription: payload.jobDescription,
+      selectedTemplateId: payload.selectedTemplateId,
+      parsedResumeText: input.resumeText,
+      extractedCharacterCount: input.resumeText.length,
       extractedProfile,
       extractionProvider: extractedProfile ? "openai" : "parser",
     });
