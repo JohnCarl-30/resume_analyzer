@@ -45,6 +45,15 @@ interface DeepFocusWizardProps {
   initialAnalysisId?: string;
 }
 
+function normalizeTemplateId(
+  templateId: string | undefined,
+  fallbackTemplateId: ResumeTemplateVariant,
+): ResumeTemplateVariant {
+  return templateId && isResumeTemplateVariant(templateId)
+    ? templateId
+    : fallbackTemplateId;
+}
+
 export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardProps) {
   const router = useRouter();
   const resumeInputId = useId();
@@ -241,10 +250,7 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
       restoredAnalysisIdRef.current = nextAnalysis.id ?? null;
       setAnalysisResult(nextAnalysis);
       setSelectedTemplateId(
-        nextAnalysis.selectedTemplateId &&
-          isResumeTemplateVariant(nextAnalysis.selectedTemplateId)
-          ? nextAnalysis.selectedTemplateId
-          : selectedTemplateId,
+        normalizeTemplateId(nextAnalysis.selectedTemplateId, selectedTemplateId),
       );
       replaceAnalysisParam(nextAnalysis.id ?? null);
       setStep(5);
@@ -313,12 +319,7 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
         setAnalysisResult(savedAnalysis);
         setTargetRole(savedAnalysis.targetRole ?? "");
         setJobDescription(savedAnalysis.jobDescription ?? "");
-        setSelectedTemplateId(
-          savedAnalysis.selectedTemplateId &&
-            isResumeTemplateVariant(savedAnalysis.selectedTemplateId)
-            ? savedAnalysis.selectedTemplateId
-            : defaultTemplateId,
-        );
+        setSelectedTemplateId(normalizeTemplateId(savedAnalysis.selectedTemplateId, defaultTemplateId));
         setViewMode("workspace");
         setStep(5);
       })

@@ -1,5 +1,6 @@
 import { env } from "../config/env.js";
 import { openAiClient } from "../lib/openai-client.js";
+import { z } from "zod";
 
 const jdExtractionSchema = {
   name: "jd_keyword_extraction",
@@ -31,6 +32,31 @@ export interface JdExtractionResult {
   keywords: string[];
   requiredSkills: string[];
   targetRoleTitle: string;
+}
+
+const jdExtractionResultSchema = z.object({
+  keywords: z.array(z.string()),
+  requiredSkills: z.array(z.string()),
+  targetRoleTitle: z.string(),
+});
+
+function parseJdExtractionContent(content: string): JdExtractionResult {
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(content);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown JSON parse error";
+    throw new Error(`Invalid JSON payload from OpenAI (${message}).`);
+  }
+
+  const result = jdExtractionResultSchema.safeParse(parsed);
+
+  if (!result.success) {
+    throw new Error(`Schema validation failed: ${result.error.issues[0]?.message ?? "Unknown validation error"}`);
+  }
+
+  return result.data;
 }
 
 export const openAiJdExtractionService = {
@@ -69,9 +95,12 @@ export const openAiJdExtractionService = {
         ],
       });
 
-      return JSON.parse(content);
+      return parseJdExtractionContent(content);
     } catch (error) {
-      console.warn("[jd-extraction] OpenAI extraction failed, falling back to empty keywords.", error);
+      const reason = error instanceof Error ? error.message : "Unknown error";
+      console.warn(
+        `[jd-extraction] OpenAI extraction failed, falling back to empty keywords. Reason: ${reason}`,
+      );
       return {
         keywords: [],
         requiredSkills: [],

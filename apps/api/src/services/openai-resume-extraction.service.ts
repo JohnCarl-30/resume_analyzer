@@ -1,6 +1,7 @@
 import { env } from "../config/env.js";
 import { openAiClient } from "../lib/openai-client.js";
 import type { ExtractedResumeProfile } from "../types/resume-extraction.js";
+import { z } from "zod";
 
 const extractionSchema = {
   name: "resume_profile_extraction",
@@ -112,6 +113,61 @@ const extractionSchema = {
   },
 } as const;
 
+const extractionPayloadSchema = z.object({
+  fullName: z.string(),
+  email: z.string(),
+  phone: z.string(),
+  summary: z.string(),
+  skills: z.array(z.string()),
+  education: z.array(z.object({
+    institution: z.string(),
+    degree: z.string(),
+    location: z.string(),
+    dateRange: z.string(),
+  })),
+  experience: z.array(z.object({
+    role: z.string(),
+    location: z.string(),
+    dateRange: z.string(),
+    bullets: z.array(z.string()),
+  })),
+  leadership: z.array(z.object({
+    role: z.string(),
+    organization: z.string(),
+    location: z.string(),
+    dateRange: z.string(),
+    bullets: z.array(z.string()),
+  })),
+  projects: z.array(z.object({
+    name: z.string(),
+    technologies: z.string(),
+    link: z.string(),
+    startDate: z.string(),
+    endDate: z.string(),
+    bullets: z.array(z.string()),
+  })),
+  awards: z.array(z.string()),
+});
+
+function parseExtractionPayload(content: string): Record<string, unknown> {
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(content);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown JSON parse error";
+    throw new Error(`Invalid JSON payload from OpenAI (${message}).`);
+  }
+
+  const result = extractionPayloadSchema.safeParse(parsed);
+
+  if (!result.success) {
+    throw new Error(`Schema validation failed: ${result.error.issues[0]?.message ?? "Unknown validation error"}`);
+  }
+
+  return result.data;
+}
+
 function normalizeString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -215,11 +271,11 @@ export const openAiResumeExtractionService = {
         ],
       });
 
-      return sanitizeProfile(JSON.parse(content));
+      return sanitizeProfile(parseExtractionPayload(content));
     } catch (error) {
+      const reason = error instanceof Error ? error.message : "Unknown error";
       console.warn(
-        `[resume-extraction] OpenAI enrichment skipped for model "${env.OPENAI_EXTRACTION_MODEL}". Falling back to parser-only mode.`,
-        error,
+        `[resume-extraction] OpenAI enrichment skipped for model "${env.OPENAI_EXTRACTION_MODEL}". Falling back to parser-only mode. Reason: ${reason}`,
       );
 
       return null;

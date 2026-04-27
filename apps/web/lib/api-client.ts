@@ -113,24 +113,24 @@ export function createApiClient(config: ApiClientConfig) {
     }
 
     if (payload?.error === "Validation failed" && payload.details) {
-    // Filter out undefined values from fieldErrors
-    const filteredFieldErrors = payload.details.fieldErrors
-      ? Object.entries(payload.details.fieldErrors).reduce(
-          (acc, [key, value]) => {
-            if (value) {
-              acc[key] = value;
-            }
-            return acc;
-          },
-          {} as Record<string, string[]>,
-        )
-      : undefined;
+      // Filter out undefined values from fieldErrors
+      const filteredFieldErrors = payload.details.fieldErrors
+        ? Object.entries(payload.details.fieldErrors).reduce(
+            (acc, [key, value]) => {
+              if (value) {
+                acc[key] = value;
+              }
+              return acc;
+            },
+            {} as Record<string, string[]>,
+          )
+        : undefined;
 
-    return {
-      message: payload.details.formErrors?.join(" ") ?? "Validation failed",
-      fieldErrors: filteredFieldErrors,
-      formErrors: payload.details.formErrors,
-    };
+      return {
+        message: payload.details.formErrors?.join(" ") ?? "Validation failed",
+        fieldErrors: filteredFieldErrors,
+        formErrors: payload.details.formErrors,
+      };
     }
 
     return {
@@ -203,10 +203,35 @@ export function createApiClient(config: ApiClientConfig) {
           throw apiError;
         }
 
-        const data = (await response.json()) as ApiEnvelope<T>;
+        let data: ApiEnvelope<T>;
 
-        if (!data.data) {
-          throw new Error(data.error ?? "Empty response from server");
+        try {
+          data = (await response.json()) as ApiEnvelope<T>;
+        } catch (error) {
+          const decodeError =
+            error instanceof Error
+              ? new Error(`Malformed JSON response payload: ${error.message}`)
+              : new Error("Malformed JSON response payload.");
+
+          if (canRetry && attempt < maxRetries) {
+            lastError = decodeError;
+            continue;
+          }
+
+          throw decodeError;
+        }
+
+        if (typeof data !== "object" || data === null || !Object.hasOwn(data, "data")) {
+          const malformedEnvelopeError = new Error(
+            "Malformed success payload: missing data envelope.",
+          );
+
+          if (canRetry && attempt < maxRetries) {
+            lastError = malformedEnvelopeError;
+            continue;
+          }
+
+          throw malformedEnvelopeError;
         }
 
         log(`Success: ${method_upper} ${path}`, data.data);

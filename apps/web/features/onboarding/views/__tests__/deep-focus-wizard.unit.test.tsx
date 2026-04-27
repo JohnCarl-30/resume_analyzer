@@ -47,8 +47,14 @@ vi.mock("next/navigation", () => ({
 
 // Mock AnalysisWorkspace to avoid complex rendering — just render a sentinel
 vi.mock("../../../editor/views/analysis-workspace", () => ({
-  AnalysisWorkspace: ({ onBack }: { onBack: () => void }) => (
-    <div data-testid="analysis-workspace">
+  AnalysisWorkspace: ({
+    onBack,
+    selectedTemplateId,
+  }: {
+    onBack: () => void;
+    selectedTemplateId: string;
+  }) => (
+    <div data-testid="analysis-workspace" data-selected-template-id={selectedTemplateId}>
       <button type="button" onClick={onBack}>
         Back
       </button>
@@ -263,6 +269,36 @@ describe("DeepFocusWizard unit tests", () => {
         expect(hasStepPill("STEP 4 OF 5")).toBe(true);
         expect(screen.getByText("Server error")).toBeTruthy();
       });
+    });
+
+    it("falls back to local template when server returns unknown template id", async () => {
+      mockCreateResumeAnalysis.mockResolvedValue({
+        ...minimalAnalysisResult,
+        selectedTemplateId: "unknown-template-id",
+      });
+
+      render(<DeepFocusWizard />);
+
+      await advanceToStep3();
+
+      const generateBtn = screen.getByRole("button", { name: /generate analysis/i });
+      fireEvent.click(generateBtn);
+
+      await waitFor(() => {
+        expect(hasStepPill("STEP 5 OF 5")).toBe(true);
+      });
+
+      const enterEditorBtn = screen.getByRole("button", { name: /enter editor/i });
+      fireEvent.click(enterEditorBtn);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("analysis-workspace")).toBeTruthy();
+      });
+
+      expect(screen.getByTestId("analysis-workspace")).toHaveAttribute(
+        "data-selected-template-id",
+        "minimalist-grid",
+      );
     });
   });
 });

@@ -40,6 +40,7 @@ async function ensureSchema() {
           extracted_character_count integer,
           extraction_provider text,
           score integer NOT NULL,
+          metrics_found integer,
           matched_keywords jsonb NOT NULL,
           missing_keywords jsonb NOT NULL,
           suggestions jsonb NOT NULL,
@@ -58,6 +59,12 @@ async function ensureSchema() {
         drizzleClient.execute(sql`
           ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
           ADD COLUMN IF NOT EXISTS source_file_data_base64 text
+        `),
+      )
+      .then(() =>
+        drizzleClient.execute(sql`
+          ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
+          ADD COLUMN IF NOT EXISTS metrics_found integer
         `),
       )
       .then(() => undefined);
