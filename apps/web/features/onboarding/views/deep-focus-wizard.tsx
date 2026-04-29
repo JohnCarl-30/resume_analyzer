@@ -78,20 +78,23 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
   const [resumeSourceUrl, setResumeSourceUrl] = useState<string | null>(null);
   const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
   const [useTemplateContent, setUseTemplateContent] = useState(false);
+  const [createFromScratch, setCreateFromScratch] = useState(false);
 
   const trimmedTargetRole = targetRole.trim();
   const trimmedJobDescription = jobDescription.trim();
   const canContinueFromTargetRole = trimmedTargetRole.length >= 2;
   const canContinueFromJobDescription = trimmedJobDescription.length >= 30;
-  const canContinueFromUpload = resumeFile !== null || useTemplateContent;
+  const canContinueFromUpload = resumeFile !== null || useTemplateContent || createFromScratch;
   const initialWorkspaceForm = useMemo(
     () =>
-      useTemplateContent
-        ? defaultResumeForm
-        : analysisResult?.extractedProfile
-          ? resumeFormFromExtractedProfile(analysisResult.extractedProfile)
-          : emptyResumeForm,
-    [analysisResult?.extractedProfile, useTemplateContent],
+      createFromScratch
+        ? emptyResumeForm
+        : useTemplateContent
+          ? defaultResumeForm
+          : analysisResult?.extractedProfile
+            ? resumeFormFromExtractedProfile(analysisResult.extractedProfile)
+            : emptyResumeForm,
+    [analysisResult?.extractedProfile, useTemplateContent, createFromScratch],
   );
 
   const stepOverview = [
@@ -152,6 +155,7 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
 
     setUploadError("");
     setResumeFile(candidateFile);
+    setCreateFromScratch(false);
   }
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -174,6 +178,10 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
       return;
     }
     if (step === 3 && canContinueFromUpload) {
+      if (createFromScratch) {
+        setViewMode("workspace");
+        return;
+      }
       setStep(4);
       return;
     }
@@ -189,7 +197,12 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
   function handleBack() {
     if (viewMode === "workspace") {
       setViewMode("wizard");
-      setStep(5);
+      if (createFromScratch) {
+        setStep(3);
+        setCreateFromScratch(false);
+      } else {
+        setStep(5);
+      }
       return;
     }
     if (step === 5) {
@@ -199,6 +212,7 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
     if (step === 4) {
       setStep(3);
       setUseTemplateContent(false);
+      setCreateFromScratch(false);
       return;
     }
     if (step === 3) {
@@ -215,7 +229,7 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
     resumeInputRef.current?.click();
   }
 
-  async function handleGenerateAnalysis() {
+  async function handleGenerateAnalysis(skipTemplate = false) {
     if (isGeneratingAnalysis) {
       return;
     }
@@ -225,13 +239,16 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
 
     try {
       let nextAnalysis;
+      const templateIdToUse = skipTemplate
+        ? defaultTemplateId
+        : selectedTemplateId;
 
       if (useTemplateContent) {
         const resumeText = resumeFormToText(defaultResumeForm);
         nextAnalysis = await createAnalysisFromTemplate({
           targetRole,
           jobDescription,
-          selectedTemplateId,
+          selectedTemplateId: templateIdToUse,
           resumeText,
         });
       } else {
@@ -242,7 +259,7 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
         nextAnalysis = await createResumeAnalysis({
           targetRole,
           jobDescription,
-          selectedTemplateId,
+          selectedTemplateId: templateIdToUse,
           resumeFile,
         });
       }
@@ -250,7 +267,7 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
       restoredAnalysisIdRef.current = nextAnalysis.id ?? null;
       setAnalysisResult(nextAnalysis);
       setSelectedTemplateId(
-        normalizeTemplateId(nextAnalysis.selectedTemplateId, selectedTemplateId),
+        normalizeTemplateId(nextAnalysis.selectedTemplateId, templateIdToUse),
       );
       replaceAnalysisParam(nextAnalysis.id ?? null);
       setStep(5);
@@ -261,6 +278,10 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
     } finally {
       setIsGeneratingAnalysis(false);
     }
+  }
+
+  function handleSkipTemplate() {
+    void handleGenerateAnalysis(true);
   }
 
   useEffect(() => {
@@ -320,6 +341,7 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
         setTargetRole(savedAnalysis.targetRole ?? "");
         setJobDescription(savedAnalysis.jobDescription ?? "");
         setSelectedTemplateId(normalizeTemplateId(savedAnalysis.selectedTemplateId, defaultTemplateId));
+        setCreateFromScratch(false);
         setViewMode("workspace");
         setStep(5);
       })
@@ -330,6 +352,7 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
 
         replaceAnalysisParam(null);
         setAnalysisResult(null);
+        setCreateFromScratch(false);
         setViewMode("wizard");
         setStep(1);
         setAnalysisError(
@@ -365,7 +388,9 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
               targetRole={targetRole}
               selectedTemplateId={selectedTemplateId}
               resumeFileName={
-                analysisResult?.sourceFileName ?? resumeFile?.name ?? "resume.pdf"
+                createFromScratch
+                  ? "New Resume"
+                  : analysisResult?.sourceFileName ?? resumeFile?.name ?? "resume.pdf"
               }
               resumeSourceUrl={resumeSourceUrl}
               resumePreviewUrl={resumePreviewUrl}
@@ -455,6 +480,8 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
                     uploadError={uploadError}
                     onNext={handleNext}
                     canContinue={canContinueFromUpload}
+                    createFromScratch={createFromScratch}
+                    setCreateFromScratch={setCreateFromScratch}
                   />
                 ) : null}
                 {step === 4 ? (
@@ -465,6 +492,7 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
                     setUseTemplateContent={setUseTemplateContent}
                     hasResumeFile={resumeFile !== null}
                     onNext={handleNext}
+                    onSkipTemplate={handleSkipTemplate}
                     isSubmitting={isGeneratingAnalysis}
                     errorMessage={analysisError}
                   />
