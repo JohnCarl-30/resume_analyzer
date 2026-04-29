@@ -37,6 +37,8 @@ function renderStep(overrides: Partial<React.ComponentProps<typeof StepDocumentU
     uploadError: "",
     onNext,
     canContinue: false,
+    createFromScratch: false,
+    setCreateFromScratch: vi.fn(),
     ...overrides,
   };
 
