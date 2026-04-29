@@ -75,6 +75,8 @@ function renderStep(step: 2 | 3 | 4 | 5): HTMLElement {
         uploadError=""
         onNext={vi.fn()}
         canContinue={false}
+        createFromScratch={false}
+        setCreateFromScratch={vi.fn()}
       />,
       { container },
     );
