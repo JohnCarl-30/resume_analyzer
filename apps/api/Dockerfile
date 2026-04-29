@@ -8,7 +8,10 @@ FROM base AS build
 WORKDIR /app
 COPY . .
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
-RUN pnpm run build:api
+# Build API directly from its directory to avoid root script / corepack recursion
+WORKDIR /app/apps/api
+RUN pnpm exec tsc -p tsconfig.json
+WORKDIR /app
 
 # Production stage
 FROM base AS production
