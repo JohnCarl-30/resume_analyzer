@@ -20,7 +20,7 @@ export const resumeAnalysesTable = pgTable(databaseTables.resumeAnalyses, {
   sourceFileContentType: text("source_file_content_type"),
   sourceFileDataBase64: text("source_file_data_base64"),
   extractedCharacterCount: integer("extracted_character_count"),
-  extractionProvider: text("extraction_provider").$type<"parser" | "vertex" | null>(),
+  extractionProvider: text("extraction_provider").$type<"parser" | "vertex" | "openai" | null>(),
   score: integer("score").notNull(),
   metricsFound: integer("metrics_found"),
   matchedKeywords: jsonb("matched_keywords").$type<string[]>().notNull(),
