@@ -18,5 +18,7 @@ COPY --from=build /app/apps/api/node_modules /app/apps/api/node_modules
 COPY --from=build /app/apps/api/dist /app/apps/api/dist
 COPY --from=build /app/apps/api/package.json /app/apps/api/package.json
 
-EXPOSE 4000
-CMD ["node", "dist/index.js"]
+# Cloud Run requires PORT to be set via env, default to 8080
+ENV PORT=8080
+EXPOSE 8080
+CMD ["node", "dist/server.js"]
