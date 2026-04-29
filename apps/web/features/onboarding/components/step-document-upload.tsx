@@ -1,5 +1,5 @@
 import React from "react";
-import { UploadIcon, ArrowRightIcon } from "./wizard-icons";
+import { UploadIcon, ArrowRightIcon, PencilIcon } from "./wizard-icons";
 
 interface StepDocumentUploadProps {
   resumeInputId: string;
@@ -14,6 +14,8 @@ interface StepDocumentUploadProps {
   uploadError: string;
   onNext: () => void;
   canContinue: boolean;
+  createFromScratch: boolean;
+  setCreateFromScratch: (value: boolean) => void;
 }
 
 export function StepDocumentUpload({
@@ -29,6 +31,8 @@ export function StepDocumentUpload({
   uploadError,
   onNext,
   canContinue,
+  createFromScratch,
+  setCreateFromScratch,
 }: StepDocumentUploadProps) {
   return (
     <section key="step-2" className="section-reveal flex flex-1 flex-col px-5 py-8 sm:px-8 lg:px-12">
@@ -118,6 +122,33 @@ export function StepDocumentUpload({
               )}
             </label>
 
+            <div className="mt-5">
+              <p className="mb-3 text-sm font-semibold text-[color:var(--page-text)]">
+                Or start fresh
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setCreateFromScratch(true);
+                }}
+                className={`flex w-full items-center gap-4 rounded-[16px] border px-5 py-4 text-left transition ${
+                  createFromScratch
+                    ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)] text-[color:var(--brand)]"
+                    : "border-[color:var(--page-line)] bg-[color:var(--page-bg-strong)] text-[color:var(--page-text)] hover:border-[color:var(--page-line-strong)]"
+                }`}
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--page-line)] bg-white text-[color:var(--page-muted)] shadow-sm">
+                  <PencilIcon />
+                </div>
+                <div>
+                  <span className="block text-sm font-medium">Create from scratch</span>
+                  <span className="block text-xs opacity-75">
+                    Build your resume manually in the editor
+                  </span>
+                </div>
+              </button>
+            </div>
+
             <p className="mt-3 min-h-6 text-sm text-[#e16f62]">
               {uploadError}
             </p>
@@ -151,9 +182,11 @@ export function StepDocumentUpload({
       <div className="mt-auto border-t border-[color:var(--page-line)] pt-6">
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm leading-6 text-[color:var(--page-muted)]">
-            {resumeFile
-              ? `Selected file: ${resumeFile.name}`
-              : "Add a PDF or DOCX resume to continue."}
+            {createFromScratch
+              ? "You'll start with a blank resume and build it in the editor."
+              : resumeFile
+                ? `Selected file: ${resumeFile.name}`
+                : "Add a PDF or DOCX resume to continue."}
           </p>
           <button
             type="button"
@@ -161,7 +194,7 @@ export function StepDocumentUpload({
             disabled={!canContinue}
             className="inline-flex items-center justify-center gap-2 rounded-[12px] bg-[color:var(--brand)] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(79,107,255,0.22)] transition hover:bg-[color:var(--brand-strong)] disabled:cursor-not-allowed disabled:bg-[#c4ccf0] disabled:shadow-none"
           >
-            Continue to Templates
+            {createFromScratch ? "Start Building" : "Continue to Templates"}
             <ArrowRightIcon />
           </button>
         </div>
