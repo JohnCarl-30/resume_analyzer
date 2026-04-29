@@ -5,7 +5,7 @@ import {
   createTemplateAnalysisSchema,
 } from "../schemas/analysis.schema.js";
 import { HttpError } from "../utils/http-error.js";
-import { openAiResumeExtractionService } from "./openai-resume-extraction.service.js";
+import { resumeExtractionService } from "./resume-extraction.service.js";
 import { resumeParserService } from "./resume-parser.service.js";
 import type { PersistedResumeAnalysis } from "../repositories/analysis.repository.js";
 import { db } from "../db/client.js";
@@ -17,8 +17,8 @@ import { analyzeKeywords } from "../analyzers/keyword.analyzer.js";
 import { analyzeWritingQuality } from "../analyzers/writing.analyzer.js";
 import { analyzeImpactMetrics } from "../analyzers/impact.analyzer.js";
 
-// OpenAI-powered JD extraction
-import { openAiJdExtractionService } from "./openai-jd-extraction.service.js";
+// Vertex AI-powered JD extraction
+import { jdExtractionService } from "./jd-extraction.service.js";
 
 // Scoring
 import { computeScore } from "../scoring/score.js";
@@ -35,8 +35,8 @@ export const analysisService = {
   async createAnalysis(input: unknown): Promise<ResumeAnalysis> {
     const payload = createAnalysisSchema.parse(input);
 
-    // Step 1: Extract structured keywords from JD via OpenAI (if enabled)
-    const jdExtraction = await openAiJdExtractionService.extractKeywordsFromJd(
+    // Step 1: Extract structured keywords from JD via Vertex AI (if enabled)
+    const jdExtraction = await jdExtractionService.extractKeywordsFromJd(
       payload.jobDescription,
       payload.targetRole,
     );
@@ -118,7 +118,7 @@ export const analysisService = {
       resumeText: extracted.text,
     });
 
-    const extractedProfile = await openAiResumeExtractionService.extractProfile({
+    const extractedProfile = await resumeExtractionService.extractProfile({
       resumeText: extracted.text,
       targetRole: analysis.targetRole,
     });
@@ -133,7 +133,7 @@ export const analysisService = {
       sourceFileDataBase64: input.resumeFile.buffer.toString("base64"),
       extractedCharacterCount: extracted.text.length,
       extractedProfile,
-      extractionProvider: extractedProfile ? "openai" : "parser",
+      extractionProvider: extractedProfile ? "vertex" : "parser",
     });
   },
 
@@ -156,7 +156,7 @@ export const analysisService = {
       resumeText: input.resumeText,
     });
 
-    const extractedProfile = await openAiResumeExtractionService.extractProfile({
+    const extractedProfile = await resumeExtractionService.extractProfile({
       resumeText: input.resumeText,
       targetRole: analysis.targetRole,
     });
@@ -168,7 +168,7 @@ export const analysisService = {
       parsedResumeText: input.resumeText,
       extractedCharacterCount: input.resumeText.length,
       extractedProfile,
-      extractionProvider: extractedProfile ? "openai" : "parser",
+      extractionProvider: extractedProfile ? "vertex" : "parser",
     });
   },
 
