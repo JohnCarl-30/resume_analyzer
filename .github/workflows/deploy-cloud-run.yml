@@ -1,0 +1,61 @@
+name: Deploy API to Cloud Run
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+  SERVICE: resume-analyzer-api
+  REPOSITORY: resume-analyzer
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and push container image
+        run: |
+          IMAGE_TAG=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }}
+          docker build -t $IMAGE_TAG -f apps/api/Dockerfile .
+          docker push $IMAGE_TAG
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE }}
+          region: ${{ env.REGION }}
+          image: ${{ env.IMAGE_TAG }}
+          env_vars: |
+            PORT=8080
+            APP_ORIGIN=${{ secrets.APP_ORIGIN }}
+            DATABASE_URL=${{ secrets.CLOUD_SQL_DATABASE_URL }}
+            GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}
+            GCP_LOCATION=${{ secrets.GCP_LOCATION }}
+            AI_EXTRACTION_MODEL=${{ secrets.AI_EXTRACTION_MODEL }}
+          flags: |
+            --add-cloudsql-instances=${{ secrets.CLOUD_SQL_CONNECTION_NAME }}
+            --service-account=cloudrun-api@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com
+            --max-instances=5
+            --memory=1Gi
+            --cpu=1
+            --concurrency=80
+            --timeout=300
