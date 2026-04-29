@@ -67,6 +67,8 @@ function renderStep(type: string, size: number) {
       uploadError={uploadError}
       onNext={vi.fn()}
       canContinue={canContinue}
+      createFromScratch={false}
+      setCreateFromScratch={vi.fn()}
     />,
   );
 
