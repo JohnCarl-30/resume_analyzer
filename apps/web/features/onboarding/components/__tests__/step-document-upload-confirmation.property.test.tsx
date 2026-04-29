@@ -68,6 +68,8 @@ describe(
                   uploadError=""
                   onNext={vi.fn()}
                   canContinue={true}
+                  createFromScratch={false}
+                  setCreateFromScratch={vi.fn()}
                 />,
               );
 
