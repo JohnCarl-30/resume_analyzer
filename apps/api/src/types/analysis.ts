@@ -27,5 +27,5 @@ export interface ResumeAnalysis {
   sourceFileContentType?: string;
   extractedCharacterCount?: number;
   extractedProfile?: ExtractedResumeProfile | null;
-  extractionProvider?: "parser" | "openai";
+  extractionProvider?: "parser" | "vertex" | "openai";
 }
