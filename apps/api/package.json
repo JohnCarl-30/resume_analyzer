@@ -27,6 +27,7 @@
     "@types/express": "^5.0.1",
     "@types/multer": "^2.1.0",
     "@types/node": "^24.0.15",
+    "drizzle-kit": "^0.30.6",
     "tsx": "^4.19.2",
     "typescript": "^5.8.3"
   }
