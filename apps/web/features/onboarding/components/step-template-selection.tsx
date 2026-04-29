@@ -10,6 +10,7 @@ interface StepTemplateSelectionProps {
   setUseTemplateContent: (value: boolean) => void;
   hasResumeFile: boolean;
   onNext: () => void;
+  onSkipTemplate?: () => void;
   isSubmitting?: boolean;
   errorMessage?: string;
 }
@@ -21,6 +22,7 @@ export function StepTemplateSelection({
   setUseTemplateContent,
   hasResumeFile,
   onNext,
+  onSkipTemplate,
   isSubmitting = false,
   errorMessage,
 }: StepTemplateSelectionProps) {
@@ -178,6 +180,14 @@ export function StepTemplateSelection({
                 : "The analysis now runs through the Express backend before opening the workspace."}
             </p>
           )}
+          <button
+            type="button"
+            onClick={onSkipTemplate}
+            disabled={isSubmitting}
+            className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-white px-6 py-3 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg-strong)] disabled:cursor-wait disabled:opacity-50"
+          >
+            Skip Template & View Analysis
+          </button>
           <button
             type="button"
             onClick={onNext}
