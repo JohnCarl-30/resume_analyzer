@@ -304,7 +304,13 @@ export function AnalysisWorkspace({
   const [newJobDescription, setNewJobDescription] = useState(analysisResult?.jobDescription ?? "");
   const [updateError, setUpdateError] = useState("");
   const [previewMode, setPreviewMode] = useState<"uploaded" | "structured" | "parsed" | "empty">(
-    resumePreviewUrl ? "uploaded" : analysisResult?.extractedProfile ? "structured" : "parsed",
+    resumePreviewUrl
+      ? "uploaded"
+      : analysisResult?.extractedProfile || initialForm?.personalInfo?.fullName
+        ? "structured"
+        : analysisResult?.parsedResumeText
+          ? "parsed"
+          : "empty",
   );
 
   const resumeTitle =
@@ -343,7 +349,7 @@ export function AnalysisWorkspace({
   useEffect(() => {
     if (!resumePreviewUrl && previewMode === "uploaded") {
       setPreviewMode(
-        analysisResult?.extractedProfile
+        analysisResult?.extractedProfile || initialForm?.personalInfo?.fullName
           ? "structured"
           : analysisResult?.parsedResumeText
             ? "parsed"
@@ -355,7 +361,7 @@ export function AnalysisWorkspace({
     if (resumePreviewUrl && (previewMode === "parsed" || previewMode === "empty")) {
       setPreviewMode("uploaded");
     }
-  }, [analysisResult?.extractedProfile, analysisResult?.parsedResumeText, previewMode, resumePreviewUrl]);
+  }, [analysisResult?.extractedProfile, analysisResult?.parsedResumeText, previewMode, resumePreviewUrl, initialForm?.personalInfo?.fullName]);
 
   function sectionIcon(icon: (typeof editorSections)[number]["icon"]) {
     if (icon === "personal") return <UserCircleIcon />;
