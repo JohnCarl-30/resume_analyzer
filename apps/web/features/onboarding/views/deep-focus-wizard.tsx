@@ -127,9 +127,9 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
 
   function replaceAnalysisParam(analysisId: string | null) {
     if (analysisId) {
-      router.replace(`/analysis/${analysisId}`);
+      router.replace(`/create-resume/${analysisId}`);
     } else {
-      router.replace("/analysis/new");
+      router.replace("/create-resume");
     }
     setAnalysisIdFromUrl(analysisId);
   }
