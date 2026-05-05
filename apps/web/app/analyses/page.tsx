@@ -9,8 +9,8 @@ export default function AnalysesPage() {
   return (
     <main className="relative min-h-screen bg-[color:var(--page-bg)]">
       <DashboardView
-        onNewAnalysis={() => router.push("/analysis/new")}
-        onOpenAnalysis={(analysisId) => router.push(`/analysis/${analysisId}`)}
+        onNewAnalysis={() => router.push("/create-resume")}
+        onOpenAnalysis={(analysisId) => router.push(`/create-resume/${analysisId}`)}
         onViewAll={() => router.push("/analyses")}
       />
     </main>
