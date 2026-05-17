@@ -18,71 +18,66 @@ const drizzleClient = neonClient
     })
   : null;
 
-let schemaReadyPromise: Promise<void> | null = null;
-
-async function ensureSchema() {
+// Run schema setup once at module load, not per-request
+async function initializeSchema() {
   if (!drizzleClient) {
     return;
   }
 
-  if (!schemaReadyPromise) {
-    schemaReadyPromise = drizzleClient
-      .execute(sql`
-        CREATE TABLE IF NOT EXISTS ${sql.raw(databaseTables.resumeAnalyses)} (
-          id text PRIMARY KEY,
-          target_role text NOT NULL,
-          selected_template_id text NOT NULL,
-          job_description text NOT NULL,
-          parsed_resume_text text NOT NULL,
-          source_file_name text,
-          source_file_content_type text,
-          source_file_data_base64 text,
-          extracted_character_count integer,
-          extraction_provider text,
-          score integer NOT NULL,
-          metrics_found integer,
-          matched_keywords jsonb NOT NULL,
-          missing_keywords jsonb NOT NULL,
-          suggestions jsonb NOT NULL,
-          extracted_profile jsonb,
-          generated_at timestamptz NOT NULL,
-          created_at timestamptz NOT NULL DEFAULT now()
-        )
-      `)
-      .then(() =>
-        drizzleClient.execute(sql`
-          ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
-          ADD COLUMN IF NOT EXISTS source_file_content_type text
-        `),
+  try {
+    await drizzleClient.execute(sql`
+      CREATE TABLE IF NOT EXISTS ${sql.raw(databaseTables.resumeAnalyses)} (
+        id text PRIMARY KEY,
+        target_role text NOT NULL,
+        selected_template_id text NOT NULL,
+        job_description text NOT NULL,
+        parsed_resume_text text NOT NULL,
+        source_file_name text,
+        source_file_content_type text,
+        source_file_data_base64 text,
+        extracted_character_count integer,
+        extraction_provider text,
+        score integer NOT NULL,
+        metrics_found integer,
+        matched_keywords jsonb NOT NULL,
+        missing_keywords jsonb NOT NULL,
+        suggestions jsonb NOT NULL,
+        extracted_profile jsonb,
+        generated_at timestamptz NOT NULL,
+        created_at timestamptz NOT NULL DEFAULT now()
       )
-      .then(() =>
-        drizzleClient.execute(sql`
-          ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
-          ADD COLUMN IF NOT EXISTS source_file_data_base64 text
-        `),
-      )
-      .then(() =>
-        drizzleClient.execute(sql`
-          ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
-          ADD COLUMN IF NOT EXISTS metrics_found integer
-        `),
-      )
-      .then(() => undefined);
-  }
+    `);
 
-  await schemaReadyPromise;
+    await drizzleClient.execute(sql`
+      ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
+      ADD COLUMN IF NOT EXISTS source_file_content_type text
+    `);
+
+    await drizzleClient.execute(sql`
+      ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
+      ADD COLUMN IF NOT EXISTS source_file_data_base64 text
+    `);
+
+    await drizzleClient.execute(sql`
+      ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
+      ADD COLUMN IF NOT EXISTS metrics_found integer
+    `);
+  } catch (error) {
+    console.error("[db] Schema initialization failed:", error);
+  }
 }
+
+// Fire-and-forget schema initialization
+void initializeSchema();
 
 export interface DatabaseClient {
   kind: "drizzle";
   isConfigured: boolean;
   client: AppDatabase | null;
-  ensureSchema: () => Promise<void>;
 }
 
 export const db: DatabaseClient = {
   kind: "drizzle",
   isConfigured: Boolean(drizzleClient),
   client: drizzleClient,
-  ensureSchema,
 };
