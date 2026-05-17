@@ -38,6 +38,11 @@ import {
   CloseIcon,
   TrashIcon,
   CalendarIcon,
+  UndoIcon,
+  RedoIcon,
+  KeyboardIcon,
+  CheckCircleIcon,
+  MenuIcon,
 } from "../../onboarding/components/wizard-icons";
 
 interface AnalysisWorkspaceProps {
@@ -187,6 +192,38 @@ function relativeTimeLabel(timestamp?: string) {
   return `Saved ${days}d ago`;
 }
 
+function ScoreRing({ score, size = 44 }: { score: number; size?: number }) {
+  const radius = (size - 4) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const progress = Math.min(Math.max(score, 0), 100) / 100;
+  const offset = circumference - progress * circumference;
+
+  const color = score >= 75 ? "#10b981" : score >= 50 ? "#f59e0b" : "#ef4444";
+
+  return (
+    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#e2e8f0" strokeWidth="4" />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth="4"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          className="transition-all duration-700"
+        />
+      </svg>
+      <span className="absolute text-[0.65rem] font-bold" style={{ color }}>
+        {Math.round(score)}%
+      </span>
+    </div>
+  );
+}
+
 function isLikelyHeading(line: string) {
   const normalizedLine = line.trim();
 
@@ -319,6 +356,9 @@ export function AnalysisWorkspace({
   const [showAnnotations, setShowAnnotations] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(resumeFileName);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [saveFlash, setSaveFlash] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [previewMode, setPreviewMode] = useState<"uploaded" | "structured" | "parsed" | "empty">(
     resumePreviewUrl
       ? "uploaded"
@@ -381,6 +421,14 @@ export function AnalysisWorkspace({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo, redo]);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setSaveFlash(true);
+      setTimeout(() => setSaveFlash(false), 1200);
+    }, 800);
+    return () => clearTimeout(timeout);
+  }, [form]);
 
   useEffect(() => {
     if (!resumePreviewUrl && previewMode === "uploaded") {
@@ -626,64 +674,86 @@ export function AnalysisWorkspace({
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-3">
-          {editorSections.map((section, index) => (
-            <div
-              key={section.id}
-              className={`${index === 0 ? "" : "border-t border-[color:var(--page-line)]"} px-2 py-4`}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => handleSectionOpen(section.id)}
-                    className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[color:var(--page-muted)] transition hover:bg-[color:var(--brand-soft)] hover:text-[color:var(--brand)]"
-                  >
-                    {activeSectionId === section.id ? <ChevronDownIcon /> : <ChevronRightIcon />}
-                  </button>
-                  <span className="text-[color:var(--page-muted)]">{sectionIcon(section.icon)}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleSectionOpen(section.id)}
-                    className="text-[1.05rem] font-medium text-[color:var(--page-text)] hover:text-[color:var(--brand)] transition"
-                  >
-                    {section.label}
-                  </button>
-                </div>
+          {editorSections.map((section, index) => {
+            const isEmpty =
+              section.id === "education" ? form.education.length === 0 :
+              section.id === "experience" ? form.experience.length === 0 :
+              section.id === "leadership" ? form.leadership.length === 0 :
+              section.id === "awards" ? form.awards.length === 0 :
+              section.id === "personal" ? (!form.personalInfo.fullName && !form.personalInfo.email) :
+              false;
+            const emptyHints: Record<string, string> = {
+              personal: "Add your name, contact, and summary",
+              education: "No education yet — add your degree",
+              experience: "No work experience yet — add your first role",
+              leadership: "No leadership entries yet",
+              awards: "No awards or honors yet",
+            };
 
-                <div className="flex items-center gap-3">
-                  {section.id === "personal" ? (
+            return (
+              <div
+                key={section.id}
+                className={`${index === 0 ? "" : "border-t border-[color:var(--page-line)]"} px-2 py-4`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
                     <button
                       type="button"
-                      onClick={() => setActiveSectionId(section.id)}
-                      className="text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)]"
-                      aria-label="Edit section"
+                      onClick={() => handleSectionOpen(section.id)}
+                      className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[color:var(--page-muted)] transition hover:bg-[color:var(--brand-soft)] hover:text-[color:var(--brand)]"
                     >
-                      <PencilIcon />
+                      {activeSectionId === section.id ? <ChevronDownIcon /> : <ChevronRightIcon />}
                     </button>
-                  ) : (
-                    <>
+                    <span className="text-[color:var(--page-muted)]">{sectionIcon(section.icon)}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleSectionOpen(section.id)}
+                      className="text-[1.05rem] font-medium text-[color:var(--page-text)] hover:text-[color:var(--brand)] transition"
+                    >
+                      {section.label}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {section.id === "personal" ? (
                       <button
                         type="button"
-                        onClick={() => handleSectionOpen(section.id)}
+                        onClick={() => setActiveSectionId(section.id)}
                         className="text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)]"
-                        aria-label="Add item"
+                        aria-label="Edit section"
                       >
-                        <PlusIcon />
+                        <PencilIcon />
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => handleSectionOpen(section.id)}
-                        className="text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
-                        aria-label="Open section"
-                      >
-                        <ChevronRightIcon />
-                      </button>
-                    </>
-                  )}
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleSectionOpen(section.id)}
+                          className="text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)]"
+                          aria-label="Add item"
+                        >
+                          <PlusIcon />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSectionOpen(section.id)}
+                          className="text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+                          aria-label="Open section"
+                        >
+                          <ChevronRightIcon />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
+                {isEmpty && (
+                  <div className="ml-11 mt-1 text-xs text-[color:var(--page-muted)] opacity-70">
+                    {emptyHints[section.id]}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="border-t border-[color:var(--page-line)] px-4 py-4 mt-auto">
@@ -751,13 +821,13 @@ export function AnalysisWorkspace({
     }
   }
 
-  function AnnotationOverlay({ children }: { children: React.ReactNode }) {
-    if (!showAnnotations || !analysisResult) return <>{children}</>;
+  function SuggestionSidebar() {
+    if (!showAnnotations || !analysisResult) return null;
 
     const severityStyles = {
-      high: "border-rose-300 bg-rose-50 text-rose-800",
-      medium: "border-amber-300 bg-amber-50 text-amber-800",
-      low: "border-slate-300 bg-slate-50 text-slate-700",
+      high: "border-rose-200 bg-rose-50/80 text-rose-800 hover:border-rose-300",
+      medium: "border-amber-200 bg-amber-50/80 text-amber-800 hover:border-amber-300",
+      low: "border-slate-200 bg-slate-50/80 text-slate-700 hover:border-slate-300",
     };
 
     const severityLabels = {
@@ -767,14 +837,38 @@ export function AnalysisWorkspace({
     };
 
     return (
-      <div className="relative">
-        {children}
-        <div className="absolute right-0 top-0 z-10 flex w-72 flex-col gap-2 p-2">
-          {analysisResult.suggestions.map((suggestion, index) => (
-            <div
+      <div className="hidden lg:flex w-80 shrink-0 border-l border-[color:var(--page-line)] bg-white overflow-y-auto">
+        <div className="border-b border-[color:var(--page-line)] px-4 py-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-sm text-[color:var(--page-text)]">Suggestions</h3>
+            <button
+              type="button"
+              onClick={() => setShowAnnotations(false)}
+              className="rounded-lg p-1 text-[color:var(--page-muted)] hover:bg-[color:var(--page-bg)] hover:text-[color:var(--page-text)]"
+            >
+              <CloseIcon />
+            </button>
+          </div>
+          <div className="mt-2 flex gap-2 text-xs">
+            <span className="rounded-full bg-rose-100 px-2 py-0.5 text-rose-700 font-medium">{analysisResult.suggestions.filter(s => s.severity === "high").length} Critical</span>
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700 font-medium">{analysisResult.suggestions.filter(s => s.severity === "medium").length} Impact</span>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 p-3">
+          {analysisResult.suggestions.map((suggestion) => (
+            <button
               key={suggestion.id}
-              className={`rounded-[12px] border px-3 py-2 text-xs shadow-md ${severityStyles[suggestion.severity]}`}
-              style={{ transform: `translateY(${index * 4}px)` }}
+              type="button"
+              onClick={() => {
+                if (suggestion.category === "keywords") setActiveSectionId("personal");
+                else if (suggestion.title.toLowerCase().includes("summary")) setActiveSectionId("personal");
+                else if (suggestion.title.toLowerCase().includes("experience")) setActiveSectionId("experience");
+                else if (suggestion.title.toLowerCase().includes("education")) setActiveSectionId("education");
+                else if (suggestion.title.toLowerCase().includes("bullet")) setActiveSectionId("experience");
+                else setActiveSectionId("personal");
+                setShowAnnotations(false);
+              }}
+              className={`rounded-[12px] border px-3 py-2.5 text-left text-xs transition shadow-sm ${severityStyles[suggestion.severity]}`}
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold">{suggestion.title}</span>
@@ -783,28 +877,33 @@ export function AnalysisWorkspace({
                 </span>
               </div>
               <p className="mt-1 leading-4 opacity-90">{suggestion.detail}</p>
-            </div>
+              <span className="mt-2 inline-block text-[0.65rem] font-semibold text-[color:var(--brand)] opacity-70">Click to edit →</span>
+            </button>
           ))}
           {analysisResult.missingKeywords.length > 0 && (
-            <div className="rounded-[12px] border border-amber-300 bg-amber-50 px-3 py-2 text-xs shadow-md text-amber-800">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-semibold">Missing Keywords</span>
-                <span className="shrink-0 rounded-full bg-white/70 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider">
-                  Keywords
-                </span>
+            <div className="rounded-[12px] border border-amber-200 bg-amber-50/60 px-3 py-2.5 text-xs shadow-sm">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <span className="font-semibold text-amber-800">Missing Keywords</span>
+                <span className="shrink-0 rounded-full bg-white/70 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-amber-700">Keywords</span>
               </div>
-              <p className="mt-1 leading-4 opacity-90">{analysisResult.missingKeywords.join(", ")}</p>
+              <div className="flex flex-wrap gap-1">
+                {analysisResult.missingKeywords.map((kw) => (
+                  <span key={kw} className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[0.65rem] font-medium text-amber-700">{kw}</span>
+                ))}
+              </div>
             </div>
           )}
           {analysisResult.matchedKeywords.length > 0 && (
-            <div className="rounded-[12px] border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs shadow-md text-emerald-800">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-semibold">Matched Keywords</span>
-                <span className="shrink-0 rounded-full bg-white/70 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider">
-                  Keywords
-                </span>
+            <div className="rounded-[12px] border border-emerald-200 bg-emerald-50/60 px-3 py-2.5 text-xs shadow-sm">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <span className="font-semibold text-emerald-800">Matched Keywords</span>
+                <span className="shrink-0 rounded-full bg-white/70 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-emerald-700">Keywords</span>
               </div>
-              <p className="mt-1 leading-4 opacity-90">{analysisResult.matchedKeywords.join(", ")}</p>
+              <div className="flex flex-wrap gap-1">
+                {analysisResult.matchedKeywords.map((kw) => (
+                  <span key={kw} className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[0.65rem] font-medium text-emerald-700">{kw}</span>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -815,48 +914,42 @@ export function AnalysisWorkspace({
   function renderDocumentPreview() {
     if (previewMode === "uploaded" && resumePreviewUrl) {
       return (
-        <AnnotationOverlay>
-          <div className="mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white shadow-[0_24px_60px_rgba(26,32,61,0.12)]">
-            <iframe
-              key={`${resumePreviewUrl}-${previewZoom}`}
-              title="Uploaded resume preview"
-              src={`${resumePreviewUrl}#toolbar=0&navpanes=0&scrollbar=0&zoom=${previewZoom}`}
-              className="h-full w-full bg-white"
-            />
-          </div>
-        </AnnotationOverlay>
+        <div className="mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white shadow-[0_24px_60px_rgba(26,32,61,0.12)]">
+          <iframe
+            key={`${resumePreviewUrl}-${previewZoom}`}
+            title="Uploaded resume preview"
+            src={`${resumePreviewUrl}#toolbar=0&navpanes=0&scrollbar=0&zoom=${previewZoom}`}
+            className="h-full w-full bg-white"
+          />
+        </div>
       );
     }
 
     if (previewMode === "parsed" && analysisResult?.parsedResumeText) {
       return (
-        <AnnotationOverlay>
-          <div
-            className="print-resume mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white px-10 py-12 shadow-[0_24px_60px_rgba(26,32,61,0.12)] sm:px-14 sm:py-16"
-            style={{
-              transform: `scale(${previewZoom / 100})`,
-              transformOrigin: "top center",
-            }}
-          >
-            <ParsedTextPreview text={analysisResult.parsedResumeText} />
-          </div>
-        </AnnotationOverlay>
+        <div
+          className="print-resume mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white px-10 py-12 shadow-[0_24px_60px_rgba(26,32,61,0.12)] sm:px-14 sm:py-16"
+          style={{
+            transform: `scale(${previewZoom / 100})`,
+            transformOrigin: "top center",
+          }}
+        >
+          <ParsedTextPreview text={analysisResult.parsedResumeText} />
+        </div>
       );
     }
 
     if (hasStructuredPreview) {
       return (
-        <AnnotationOverlay>
-          <div
-            className="print-resume mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white px-8 py-10 shadow-[0_24px_60px_rgba(26,32,61,0.12)] sm:px-12 sm:py-14 lg:px-16 lg:py-16"
-            style={{
-              transform: `scale(${previewZoom / 100})`,
-              transformOrigin: "top center",
-            }}
-          >
-            <ResumeRenderer form={form} variantId={activeTemplateId} />
-          </div>
-        </AnnotationOverlay>
+        <div
+          className="print-resume mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white px-8 py-10 shadow-[0_24px_60px_rgba(26,32,61,0.12)] sm:px-12 sm:py-14 lg:px-16 lg:py-16"
+          style={{
+            transform: `scale(${previewZoom / 100})`,
+            transformOrigin: "top center",
+          }}
+        >
+          <ResumeRenderer form={form} variantId={activeTemplateId} />
+        </div>
       );
     }
 
@@ -913,6 +1006,14 @@ export function AnalysisWorkspace({
       <header className="border-b border-[color:var(--page-line)] bg-white px-5 py-4 sm:px-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-wrap items-center gap-4 text-sm">
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="inline-flex items-center justify-center rounded-[14px] border border-[color:var(--page-line)] bg-white px-3 py-2.5 text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-soft)] xl:hidden"
+              aria-label="Open editor menu"
+            >
+              <MenuIcon />
+            </button>
             <button
               type="button"
               onClick={onBack}
@@ -976,6 +1077,16 @@ export function AnalysisWorkspace({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {!createMode && analysisResult && (
+              <div className="inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-3 py-2">
+                <ScoreRing score={analysisResult.score} size={40} />
+                <div className="text-xs leading-tight">
+                  <div className="font-bold text-[color:var(--page-text)]">{Math.round(analysisResult.score)}% Match</div>
+                  <div className="text-[color:var(--page-muted)]">{analysisResult.matchedKeywords.length} keywords</div>
+                </div>
+              </div>
+            )}
+
             <div className="inline-flex items-center gap-1">
               <button
                 type="button"
@@ -985,7 +1096,7 @@ export function AnalysisWorkspace({
                 aria-label="Undo"
                 title="Undo"
               >
-                ↶
+                <UndoIcon />
               </button>
               <button
                 type="button"
@@ -995,15 +1106,33 @@ export function AnalysisWorkspace({
                 aria-label="Redo"
                 title="Redo"
               >
-                ↷
+                <RedoIcon />
               </button>
             </div>
             <div className="inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-2.5 text-sm text-[color:var(--page-muted)]">
-              <span className="text-emerald-500">
+              <span className={`transition-opacity duration-500 ${saveFlash ? "opacity-100" : "opacity-0"} text-emerald-500`}>
+                <CheckCircleIcon />
+              </span>
+              <span className={`transition-opacity duration-500 ${saveFlash ? "opacity-0" : "opacity-100"}`}>
                 <ClockIcon />
               </span>
-              {lastSavedLabel}
+              <span className={`transition-opacity duration-500 ${saveFlash ? "opacity-0" : "opacity-100"}`}>
+                {lastSavedLabel}
+              </span>
+              <span className={`absolute transition-opacity duration-500 ${saveFlash ? "opacity-100" : "opacity-0"} text-emerald-600 font-medium`}>
+                Saved
+              </span>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setShowShortcuts(true)}
+              className="inline-flex items-center justify-center rounded-[14px] border border-[color:var(--page-line)] bg-white px-3 py-2.5 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-soft)]"
+              aria-label="Keyboard shortcuts"
+              title="Keyboard shortcuts"
+            >
+              <KeyboardIcon />
+            </button>
 
             {!createMode && (
               <button
@@ -1051,13 +1180,34 @@ export function AnalysisWorkspace({
       </header>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <aside className="w-[420px] shrink-0 border-r border-[color:var(--page-line)] bg-white">
-          {renderEditor()}
+        {mobileSidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm xl:hidden"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
+        )}
+        <aside className={`shrink-0 border-r border-[color:var(--page-line)] bg-white transition-transform duration-300 ease-in-out
+          fixed inset-y-0 left-0 z-50 w-80 transform ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"} xl:static xl:w-[420px] xl:transform-none xl:translate-x-0`}>
+          <div className="flex h-full flex-col">
+            <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-4 py-3 xl:hidden">
+              <span className="font-semibold text-[color:var(--page-text)]">Editor</span>
+              <button
+                type="button"
+                onClick={() => setMobileSidebarOpen(false)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] border border-[color:var(--page-line)] text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+              >
+                <CloseIcon />
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              {renderEditor()}
+            </div>
+          </div>
         </aside>
 
-        <section className="min-h-0 flex-1 overflow-hidden bg-[color:var(--page-bg-strong)]">
-          <div className="grid h-full gap-6 p-6 xl:p-8">
-            <div className="relative min-h-0 overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-[linear-gradient(180deg,#f4f7fc_0%,#eef3fb_100%)]">
+        <section className="min-h-0 flex flex-1 overflow-hidden bg-[color:var(--page-bg-strong)]">
+          <div className="flex h-full flex-1 gap-0">
+            <div className="relative min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-[linear-gradient(180deg,#f4f7fc_0%,#eef3fb_100%)] m-2 sm:m-4 xl:m-8">
               <div className="pointer-events-none absolute left-1/2 top-5 z-20 -translate-x-1/2">
                 <div className="pointer-events-auto inline-flex items-center gap-2 rounded-[16px] border border-[color:var(--page-line)] bg-white px-2.5 py-2.5 shadow-[0_14px_30px_rgba(26,32,61,0.1)]">
                   <div className="flex items-center gap-1 rounded-[12px] bg-slate-50 p-1">
@@ -1153,12 +1303,13 @@ export function AnalysisWorkspace({
                 {renderDocumentPreview()}
               </div>
             </div>
+            <SuggestionSidebar />
           </div>
         </section>
       </div>
 
       {modalView ? (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-[rgba(15,23,42,0.35)] p-4 sm:p-6">
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-[rgba(15,23,42,0.35)] p-4 sm:p-6">
           <div className="max-h-[92vh] w-full max-w-6xl overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]">
             {modalView === "content" ? (
               <>
@@ -1564,6 +1715,41 @@ export function AnalysisWorkspace({
           </div>
         </div>
       ) : null}
+
+      {showShortcuts && (
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-[rgba(15,23,42,0.35)] p-4 sm:p-6">
+          <div className="w-full max-w-md overflow-hidden rounded-[24px] border border-[color:var(--page-line)] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]">
+            <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-6 py-4">
+              <h2 className="text-lg font-semibold text-[color:var(--page-text)]">Keyboard Shortcuts</h2>
+              <button
+                type="button"
+                onClick={() => setShowShortcuts(false)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] border border-[color:var(--page-line)] text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+              >
+                <CloseIcon />
+              </button>
+            </div>
+            <div className="px-6 py-4">
+              <div className="space-y-3">
+                {[
+                  { keys: "Ctrl + Z", action: "Undo" },
+                  { keys: "Ctrl + Y", action: "Redo" },
+                  { keys: "Ctrl + Shift + Z", action: "Redo" },
+                  { keys: "Ctrl + P", action: "Print / PDF" },
+                ].map((shortcut) => (
+                  <div key={shortcut.action} className="flex items-center justify-between rounded-[12px] bg-[color:var(--page-bg)] px-4 py-3">
+                    <span className="text-sm text-[color:var(--page-text)]">{shortcut.action}</span>
+                    <kbd className="rounded-md border border-[color:var(--page-line)] bg-white px-2 py-1 text-xs font-mono font-semibold text-[color:var(--page-muted)]">
+                      {shortcut.keys}
+                    </kbd>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-xs text-[color:var(--page-muted)]">Changes are auto-saved to your browser every 800ms.</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
