@@ -1,5 +1,5 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&display=swap');
+@import "tailwindcss";
 
 
 :root {
@@ -95,5 +95,30 @@ textarea {
     animation: none;
     opacity: 1;
     transform: none;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-resume,
+  .print-resume * {
+    visibility: visible;
+  }
+  .print-resume {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    transform: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+    aspect-ratio: auto !important;
+    max-width: none !important;
   }
 }
