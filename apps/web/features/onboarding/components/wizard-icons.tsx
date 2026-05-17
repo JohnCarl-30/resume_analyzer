@@ -377,6 +377,48 @@ export function SparklesIcon() {
   );
 }
 
+export function UndoIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-4 w-4">
+      <path d="M6.5 7.5L3 10l3.5 2.5M3 10h9.5a4 4 0 014 4v0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function RedoIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-4 w-4">
+      <path d="M13.5 7.5L17 10l-3.5 2.5M17 10H7.5a4 4 0 00-4 4v0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function KeyboardIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-4 w-4">
+      <rect x="2" y="5" width="16" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M5 9h.01M8 9h.01M11 9h.01M14 9h.01M5 12h.01M8 12h.01M11 12h.01M14 12h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function CheckCircleIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-4 w-4">
+      <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M6.5 10.5l2.5 2.5 4.5-5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function MenuIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
+      <path d="M3.5 6h13M3.5 10h13M3.5 14h13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function BrandMark() {
   return (
     <div className="flex h-5 w-5 items-end gap-[2px] text-[color:var(--page-text)]" aria-hidden>
