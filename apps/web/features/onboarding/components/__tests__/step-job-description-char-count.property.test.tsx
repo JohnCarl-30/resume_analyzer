@@ -45,7 +45,7 @@ describe(
             renderStep(jobDescription);
 
             const expectedCount = jobDescription.trim().length;
-            const countText = screen.getByText(`${expectedCount} characters`);
+            const countText = screen.getByText(`${expectedCount} / 10000 characters`);
 
             expect(countText).toBeTruthy();
 
