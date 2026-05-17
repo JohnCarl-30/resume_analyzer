@@ -93,6 +93,6 @@ describe("StepJobDescription unit tests", () => {
    */
   it("displays the trimmed character count", () => {
     renderStep("hello");
-    expect(screen.getByText("5 characters")).toBeTruthy();
+    expect(screen.getByText("5 / 10000 characters")).toBeTruthy();
   });
 });
