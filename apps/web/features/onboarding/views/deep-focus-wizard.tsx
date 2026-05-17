@@ -127,9 +127,9 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
 
   function replaceAnalysisParam(analysisId: string | null) {
     if (analysisId) {
-      router.replace(`/create-resume/${analysisId}`);
+      router.replace(`/analysis/${analysisId}`);
     } else {
-      router.replace("/create-resume");
+      router.replace("/analysis/new");
     }
     setAnalysisIdFromUrl(analysisId);
   }
@@ -396,6 +396,7 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
               resumePreviewUrl={resumePreviewUrl}
               analysisResult={analysisResult}
               initialForm={initialWorkspaceForm}
+              createMode={createFromScratch}
               onBack={handleBack}
               onTemplateChange={setSelectedTemplateId}
               onAnalysisUpdate={setAnalysisResult}
