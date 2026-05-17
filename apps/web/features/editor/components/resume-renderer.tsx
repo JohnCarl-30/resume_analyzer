@@ -39,6 +39,14 @@ function HarvardClassicLayout({ form }: { form: ResumeForm }) {
           <span className="opacity-40">|</span>
           <span>{form.personalInfo.email}</span>
         </div>
+        {form.personalInfo.summary && (
+          <p className="mt-4 text-[0.95rem] text-gray-700 leading-relaxed max-w-2xl mx-auto">{form.personalInfo.summary}</p>
+        )}
+        {form.personalInfo.skills && (
+          <div className="mt-3 text-sm text-gray-600">
+            <span className="font-semibold">Skills: </span>{form.personalInfo.skills}
+          </div>
+        )}
       </header>
 
       <div className="space-y-8">
@@ -68,10 +76,17 @@ function HarvardClassicLayout({ form }: { form: ResumeForm }) {
             <div className="space-y-6">
               {form.experience.map((exp) => (
                 <div key={exp.id} className="flex justify-between items-start">
-                  <div>
+                  <div className="flex-1">
                     <div className="font-bold">{exp.role}</div>
+                    {exp.bullets.length > 0 && (
+                      <ul className="mt-2 ml-4 list-disc text-sm text-gray-700 space-y-1">
+                        {exp.bullets.map((bullet, i) => (
+                          <li key={i}>{bullet}</li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
-                  <div className="text-right text-[0.95rem]">
+                  <div className="text-right text-[0.95rem] ml-4 shrink-0">
                     <div className="font-medium">{exp.location}</div>
                     <div>{exp.dateRange}</div>
                   </div>
@@ -160,6 +175,19 @@ function ModernSansLayout({ form }: { form: ResumeForm }) {
         </div>
       </header>
 
+      {(form.personalInfo.summary || form.personalInfo.skills) && (
+        <section className="mb-8">
+          {form.personalInfo.summary && (
+            <p className="text-[0.95rem] text-slate-700 leading-relaxed">{form.personalInfo.summary}</p>
+          )}
+          {form.personalInfo.skills && (
+            <div className="mt-2 text-sm text-slate-600">
+              <span className="font-semibold">Skills: </span>{form.personalInfo.skills}
+            </div>
+          )}
+        </section>
+      )}
+
       <div className="space-y-10">
         {form.education.length > 0 && (
           <section>
@@ -195,6 +223,13 @@ function ModernSansLayout({ form }: { form: ResumeForm }) {
                   <div>
                     <div className="font-bold text-lg">{exp.role}</div>
                     <div className="text-slate-500 font-medium">{exp.location}</div>
+                    {exp.bullets.length > 0 && (
+                      <ul className="mt-2 ml-4 list-disc text-sm text-slate-600 space-y-1">
+                        {exp.bullets.map((bullet, i) => (
+                          <li key={i}>{bullet}</li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                   <div className="text-right text-sm font-bold text-slate-400 uppercase tracking-wider">
                     {exp.dateRange}
@@ -291,6 +326,14 @@ function RubyAccentLayout({ form }: { form: ResumeForm }) {
           <span>{form.personalInfo.phone}</span>
           <span>{form.personalInfo.email}</span>
         </div>
+        {form.personalInfo.summary && (
+          <p className="mt-4 text-[0.95rem] text-gray-700 leading-relaxed max-w-2xl mx-auto">{form.personalInfo.summary}</p>
+        )}
+        {form.personalInfo.skills && (
+          <div className="mt-3 text-sm text-gray-600">
+            <span className="font-semibold">Skills: </span>{form.personalInfo.skills}
+          </div>
+        )}
       </header>
 
       <div className="space-y-8">
@@ -325,7 +368,16 @@ function RubyAccentLayout({ form }: { form: ResumeForm }) {
             <div className="space-y-6">
               {form.experience.map((exp) => (
                 <div key={exp.id} className="grid grid-cols-[1fr_auto] gap-4">
-                  <div className="font-bold">{exp.role}</div>
+                  <div>
+                    <div className="font-bold">{exp.role}</div>
+                    {exp.bullets.length > 0 && (
+                      <ul className="mt-2 ml-4 list-disc text-sm space-y-1" style={{ color: `${accentColor}cc` }}>
+                        {exp.bullets.map((bullet, i) => (
+                          <li key={i}>{bullet}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                   <div className="text-right text-sm font-medium">
                     {exp.dateRange}
                   </div>
@@ -415,6 +467,14 @@ function MinimalistGridLayout({ form }: { form: ResumeForm }) {
           <span className="opacity-40">•</span>
           <span>{form.personalInfo.email}</span>
         </div>
+        {form.personalInfo.summary && (
+          <p className="text-center text-[0.95rem] text-[color:var(--page-muted)] leading-relaxed max-w-2xl mx-auto">{form.personalInfo.summary}</p>
+        )}
+        {form.personalInfo.skills && (
+          <div className="text-center text-sm text-[color:var(--page-muted)]">
+            <span className="font-semibold">Skills: </span>{form.personalInfo.skills}
+          </div>
+        )}
       </header>
 
       <div className="grid gap-10">
@@ -450,6 +510,13 @@ function MinimalistGridLayout({ form }: { form: ResumeForm }) {
                 <div key={exp.id} className="grid grid-cols-[1fr_auto] gap-2">
                   <div className="space-y-1">
                     <h3 className="font-bold text-[color:var(--page-text)]">{exp.role}</h3>
+                    {exp.bullets.length > 0 && (
+                      <ul className="mt-2 ml-4 list-disc text-sm text-[color:var(--page-muted)] space-y-1">
+                        {exp.bullets.map((bullet, i) => (
+                          <li key={i}>{bullet}</li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                   <div className="text-right text-sm text-[color:var(--page-muted)]">
                     <p className="font-medium">{exp.location}</p>
