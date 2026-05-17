@@ -3,7 +3,7 @@
  *
  * Tests:
  * 1. Download button present in header
- * 2. Download button disabled with "Export PDF" label when no source URL
+ * 2. Source download button disabled when no source URL
  * 3. "Tailor to Job" button present
  * 4. Loading overlay shown when isUpdatingAnalysis=true
  * 5. Error shown in tailor modal on failure
@@ -113,27 +113,27 @@ describe("AnalysisWorkspace — unit tests (task 7.7)", () => {
   it("renders a download button in the header", () => {
     const { container } = renderWorkspace();
 
-    // The header download button has visible text "Export PDF" or "Download Source"
+    // The header download button has visible text "Export JSON" or "Download Source"
     // (the floating toolbar button only has an aria-label, no visible text)
     const header = container.querySelector("header");
     expect(header).not.toBeNull();
     const downloadButton = Array.from(header!.querySelectorAll("button")).find(
-      (btn) => /export pdf|download source/i.test(btn.textContent ?? ""),
+      (btn) => /export json|download source/i.test(btn.textContent ?? ""),
     );
     expect(downloadButton).toBeDefined();
   });
 
   // -------------------------------------------------------------------------
-  // Test 2: Download button disabled with "Export PDF" label when no source URL
+  // Test 2: Source download button disabled when no source URL
   // Validates: Requirements 7.3
   // -------------------------------------------------------------------------
-  it("renders the download button as disabled with 'Export PDF' label when resumeSourceUrl is null", () => {
+  it("renders the source download button as disabled when resumeSourceUrl is null", () => {
     const { container } = renderWorkspace({ resumeSourceUrl: null });
 
     const header = container.querySelector("header");
     expect(header).not.toBeNull();
     const downloadButton = Array.from(header!.querySelectorAll("button")).find(
-      (btn) => /export pdf/i.test(btn.textContent ?? ""),
+      (btn) => /export json/i.test(btn.textContent ?? ""),
     );
     expect(downloadButton).toBeDefined();
     expect(downloadButton).toBeDisabled();
