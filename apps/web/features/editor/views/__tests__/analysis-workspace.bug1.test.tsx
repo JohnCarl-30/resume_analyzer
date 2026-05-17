@@ -128,20 +128,7 @@ function renderWorkspace(overrides?: { onTemplateChange?: (id: ResumeTemplateVar
 // Helper: open the "Switch Template" modal
 // ---------------------------------------------------------------------------
 function openTemplateModal() {
-  // The "Switch Template" button is the one with GridIcon — text "resume.pdf" humanized
-  // There are two buttons that open the templates modal: the title button and the grid button.
-  // We click the one with aria-label or text "Switch Template" header button.
-  // In the component, clicking the button with GridIcon sets modalView="templates".
-  // We find it by its text content (humanizeFileName("resume.pdf") = "resume").
-  const switchTemplateButtons = screen.getAllByRole("button");
-  // Find the button that opens the templates modal — it contains the GridIcon and humanized filename
-  // The component renders: <GridIcon /> {humanizeFileName(resumeFileName)}
-  // humanizeFileName("resume.pdf") => "resume"
-  const gridButton = switchTemplateButtons.find(
-    (btn) => btn.textContent?.includes("resume") && !btn.textContent?.includes("Back"),
-  );
-  if (!gridButton) throw new Error("Could not find Switch Template button");
-  fireEvent.click(gridButton);
+  fireEvent.click(screen.getByRole("button", { name: /switch template/i }));
 }
 
 // ---------------------------------------------------------------------------
