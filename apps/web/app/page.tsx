@@ -47,6 +47,24 @@ export default function LandingPage() {
             </div>
           </Link>
         </div>
+
+        <div className="mt-16 border-t border-[color:var(--page-line)] pt-10">
+          <div className="grid gap-6 sm:grid-cols-3 text-left">
+            {[
+              { title: "4 Templates", desc: "Harvard, Modern, Ruby & Minimalist layouts" },
+              { title: "AI Extraction", desc: "Upload PDF/DOCX and get structured data instantly" },
+              { title: "Match Score", desc: "See how well your resume fits the job description" },
+              { title: "Bullet Enhancer", desc: "Improve experience bullets with one click" },
+              { title: "Auto-Save", desc: "Never lose progress with localStorage backup" },
+              { title: "PDF Export", desc: "Print-ready output in any template" },
+            ].map((feature) => (
+              <div key={feature.title} className="rounded-[16px] border border-[color:var(--page-line)] bg-white p-5 transition hover:border-[color:var(--brand)] hover:shadow-md">
+                <h3 className="font-semibold text-[color:var(--page-text)]">{feature.title}</h3>
+                <p className="mt-1 text-sm text-[color:var(--page-muted)]">{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </main>
   );
