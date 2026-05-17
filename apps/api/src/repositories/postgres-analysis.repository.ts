@@ -39,8 +39,6 @@ class PostgresAnalysisRepository implements AnalysisRepository {
       throw new Error("Database client is not configured.");
     }
 
-    await db.ensureSchema();
-
     const analysisId = crypto.randomUUID();
 
     await db.client.insert(resumeAnalysesTable).values({
@@ -88,8 +86,6 @@ class PostgresAnalysisRepository implements AnalysisRepository {
       return null;
     }
 
-    await db.ensureSchema();
-
     const [record] = await db.client
       .select()
       .from(resumeAnalysesTable)
@@ -104,8 +100,6 @@ class PostgresAnalysisRepository implements AnalysisRepository {
       return [];
     }
 
-    await db.ensureSchema();
-
     const records = await db.client
       .select()
       .from(resumeAnalysesTable)
@@ -118,8 +112,6 @@ class PostgresAnalysisRepository implements AnalysisRepository {
     if (!db.client) {
       throw new Error("Database client is not configured.");
     }
-
-    await db.ensureSchema();
 
     await db.client
       .update(resumeAnalysesTable)
@@ -149,8 +141,6 @@ class PostgresAnalysisRepository implements AnalysisRepository {
     if (!db.client) {
       return null;
     }
-
-    await db.ensureSchema();
 
     const [record] = await db.client
       .select({
