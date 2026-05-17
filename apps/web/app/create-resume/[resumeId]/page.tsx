@@ -1,11 +1,10 @@
-import { DeepFocusWizard } from "@/features/onboarding/views/deep-focus-wizard";
+import { redirect } from "next/navigation";
 
-interface CreateResumePageProps {
+interface ResumeDetailPageProps {
   params: Promise<{ resumeId: string }>;
 }
 
-export default async function ResumeDetailPage({ params }: CreateResumePageProps) {
+export default async function ResumeDetailPage({ params }: ResumeDetailPageProps) {
   const { resumeId } = await params;
-
-  return <DeepFocusWizard initialAnalysisId={resumeId} />;
+  redirect(`/analysis/${resumeId}`);
 }
