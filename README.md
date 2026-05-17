@@ -1,26 +1,26 @@
 # Resume Analyzer
 
-Resume Analyzer is a full-stack monorepo for uploading resumes, storing files in Cloudflare R2, and managing resume metadata through an Express API backed by Neon and Drizzle.
-
-It is designed as a strong starter for building a larger AI-powered resume analysis platform.
+Resume Analyzer is a full-stack monorepo for AI-powered resume creation and analysis. Upload a resume and job description to get structured feedback, or build a resume from scratch with AI-guided editing, multiple templates, and PDF export.
 
 ## Why This Project
 
-- Upload resumes directly from the browser to Cloudflare R2
-- Register and list uploaded resumes through a typed Express API
-- Validate configuration safely with Zod
-- Keep the frontend organized with an MVVM-style feature structure
-- Provide a clean foundation for future OCR, parsing, embeddings, and analysis workflows
+- Upload resumes (PDF or DOCX) and get AI-powered analysis against job descriptions
+- Create resumes from scratch with a live preview and 4 templates
+- AI-enhance experience bullet points with structured suggestions
+- Edit resume sections inline with undo/redo support
+- Export to PDF via browser print
+- Backend supports both Neon PostgreSQL and in-memory storage
 
 ## Tech Stack
 
 | Layer | Technology |
 | --- | --- |
-| Frontend | Next.js, React, TypeScript |
-| Backend | Express, TypeScript |
+| Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS v4 |
+| Backend | Express, TypeScript, ESM |
+| AI | Google Vertex AI (Gemini 2.5 Flash) via Vercel AI SDK |
 | Validation | Zod |
-| Database | Neon, Drizzle ORM |
-| Storage | Cloudflare R2 |
+| Database | Neon, Drizzle ORM (optional) |
+| Storage | Cloudflare R2 (optional, mocked locally) |
 | Workspace | pnpm monorepo |
 
 ## Monorepo Structure
@@ -32,44 +32,29 @@ apps/
 infra/   deployment and infrastructure config
 ```
 
-## Architecture Overview
-
-### Frontend
-
-The frontend lives in `apps/web` and uses an MVVM-style structure for the resume feature.
-
-| Layer | Path | Responsibility |
-| --- | --- | --- |
-| View | `apps/web/features/resumes/views` | UI rendering and presentation |
-| ViewModel | `apps/web/features/resumes/view-models` | State, async actions, and event handling |
-| Model | `apps/web/features/resumes/model.ts` | Shared frontend types |
-
-### Backend
-
-The backend lives in `apps/api` and is responsible for:
-
-- validating environment configuration
-- generating presigned upload URLs for R2
-- creating resume records in the database
-- listing and fetching uploaded resumes
-
 ## Current Features
 
-- Resume upload flow from browser to R2
-- Resume metadata registration through API
-- Resume listing in the frontend
-- Zod-based environment validation
-- Separate web and API apps inside one workspace
+- **Resume Analysis**: Upload PDF/DOCX, extract text, and compare against a job description
+- **Create Resume**: Build a resume from scratch without a job description
+- **Live Preview**: See changes in real-time with 4 templates (Harvard, Modern Sans, Ruby Accent, Minimalist Grid)
+- **AI Bullet Enhancement**: Improve experience bullet points with one click
+- **Undo/Redo**: Full history support (Ctrl+Z / Ctrl+Y)
+- **Auto-save**: Form state persists to localStorage automatically
+- **PDF Export**: Print-to-PDF via browser print dialog
+- **Inline Editing**: Click any section to edit; inline title renaming
 
 ## API Endpoints
 
 | Method | Route | Purpose |
 | --- | --- | --- |
 | `GET` | `/health` | Health check |
-| `POST` | `/api/analysis` | Run a starter resume-vs-job analysis |
-| `POST` | `/api/analysis/upload` | Upload a PDF or DOCX resume, extract text, and analyze it |
-| `POST` | `/api/uploads/sign` | Create a presigned upload URL |
-| `POST` | `/api/resumes` | Save uploaded resume metadata |
+| `POST` | `/api/analysis` | Run resume-vs-job analysis |
+| `POST` | `/api/analysis/upload` | Upload PDF/DOCX, extract, analyze, and save |
+| `GET` | `/api/analysis/:id` | Fetch a saved analysis |
+| `PATCH` | `/api/analysis/:id` | Update job description and re-analyze |
+| `POST` | `/api/enhance/bullets` | AI-enhance experience bullet points |
+| `POST` | `/api/uploads/sign` | Create a presigned R2 upload URL |
+| `POST` | `/api/resumes` | Save resume metadata |
 | `GET` | `/api/resumes` | List resumes |
 | `GET` | `/api/resumes/:resumeId` | Get one resume |
 
@@ -88,24 +73,32 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 ```
 
-### 3. Fill in the required values
+### 3. Fill in optional values
 
-#### API environment
+The API starts without any environment variables. To enable features:
+
+#### API environment (`apps/api/.env`)
 
 ```env
 PORT=4000
 APP_ORIGIN=http://localhost:3000
-OPENAI_API_KEY=
-OPENAI_EXTRACTION_MODEL=gpt-5.4-mini
+
+# Optional: enables AI extraction and analysis
+GCP_PROJECT_ID=your-gcp-project-id
+GCP_LOCATION=us-central1
+VERTEX_AI_MODEL=gemini-2.5-flash
+
+# Optional: enables database persistence
 DATABASE_URL=postgres://user:password@host/database?sslmode=require
-R2_ACCOUNT_ID=your-cloudflare-account-id
+
+# Optional: enables real R2 uploads (otherwise mocked)
 R2_BUCKET_NAME=resume-analyzer
-R2_ACCESS_KEY_ID=your-r2-access-key-id
-R2_SECRET_ACCESS_KEY=your-r2-secret-access-key
-R2_PUBLIC_BASE_URL=
+R2_PUBLIC_BASE_URL=https://your-bucket.r2.dev
 ```
 
-#### Web environment
+> **Note:** `GOOGLE_APPLICATION_CREDENTIALS` is not required. The API uses Application Default Credentials (ADC). Run `gcloud auth application-default login` locally.
+
+#### Web environment (`apps/web/.env.local`)
 
 ```env
 NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
@@ -126,53 +119,28 @@ corepack pnpm dev:api
 corepack pnpm dev:web
 ```
 
-### 5. Try the Express backend
+### 5. Try the API
 
-Once `corepack pnpm dev:api` is running, you can hit the JSON analysis endpoint:
-
-```bash
-curl -X POST http://localhost:4000/api/analysis \
-  -H "Content-Type: application/json" \
-  -d '{
-    "targetRole": "Senior Backend Engineer",
-    "jobDescription": "We are hiring a Senior Backend Engineer with strong Node.js, Express, PostgreSQL, Docker, AWS, CI/CD, and leadership experience.",
-    "resumeText": "Backend engineer with Node.js, Express, PostgreSQL, Docker, and AWS experience. Led API work and improved deployment times by 35%."
-  }'
-```
-
-It returns a starter analysis payload with:
-
-- a heuristic match score
-- matched keywords
-- missing keywords
-- practical writing suggestions
-
-You can also upload an actual resume file for parsing:
+Upload and analyze a resume:
 
 ```bash
 curl -X POST http://localhost:4000/api/analysis/upload \
   -F "targetRole=Senior Backend Engineer" \
   -F "selectedTemplateId=minimalist-grid" \
   -F "jobDescription=We are hiring a Senior Backend Engineer with strong Node.js, Express, PostgreSQL, Docker, AWS, CI/CD, and leadership experience." \
-  -F "resume=@./resume.docx;type=application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  -F "resume=@./resume.pdf;type=application/pdf"
 ```
 
-This route:
-
-- accepts `multipart/form-data`
-- parses PDF and DOCX resumes on the backend
-- extracts text before running the same analysis logic
-- optionally enriches the parsed text with OpenAI structured extraction when `OPENAI_API_KEY` is set
-- saves the parsed text and analysis result to Postgres when `DATABASE_URL` is configured
-- returns an analysis `id` that the web app uses to restore the workspace after refresh
-
-You can reload a saved analysis directly:
+Enhance bullet points:
 
 ```bash
-curl http://localhost:4000/api/analysis/<analysis-id>
+curl -X POST http://localhost:4000/api/enhance/bullets \
+  -H "Content-Type: application/json" \
+  -d '{
+    "role": "Backend Engineer",
+    "bullets": ["Built APIs with Node.js"]
+  }'
 ```
-
-Without `DATABASE_URL`, the API falls back to in-memory storage, so refresh persistence only lasts while the API process is still running.
 
 ## Available Scripts
 
@@ -182,59 +150,55 @@ Without `DATABASE_URL`, the API falls back to in-memory storage, so refresh pers
 | `corepack pnpm dev:api` | Run only the API |
 | `corepack pnpm dev:web` | Run only the frontend |
 | `corepack pnpm typecheck` | Run TypeScript checks across the workspace |
-| `corepack pnpm test` | Run backend tests |
-| `corepack pnpm build` | Build backend and frontend |
-| `corepack pnpm db:generate` | Generate Drizzle migrations |
-| `corepack pnpm db:migrate` | Apply database migrations |
+| `corepack pnpm build:api` | Build the API to `dist/` |
+| `corepack pnpm build:web` | Build the Next.js frontend |
+
+> **Note:** `test` and `db:migrate` scripts do not exist yet. Use `corepack pnpm exec tsx src/tests/<script>.ts` to run manual API sanity checks.
 
 ## Development Notes
 
-- The API uses Zod to fail fast when required environment variables are missing.
-- The frontend expects `NEXT_PUBLIC_API_BASE_URL` to point to the running API.
-- Uploaded files go directly from the browser to R2 after the API signs the upload request.
-- The analysis endpoint is intentionally heuristic-first so you can wire the frontend now and swap in OpenAI or a queue worker later without changing the route shape.
-- The upload analysis route parses PDF text with `unpdf` and DOCX text with `mammoth` before scoring.
+- The API is strictly ESM (`"type": "module"`). Always use `.js` extensions in imports, even for TypeScript files.
+- The API uses Zod for environment validation but starts gracefully with defaults (`PORT=4000`, `APP_ORIGIN=http://localhost:3000`).
+- Without `DATABASE_URL`, the API falls back to in-memory storage. Analysis persistence only lasts while the process is running.
+- Without `GCP_PROJECT_ID`, AI extraction is skipped and the API runs in parser-only mode.
+- Uploaded files go directly from the browser to R2 after the API signs the upload request. Without R2 credentials, a mocked public URL is returned.
+- The frontend uses an MVVM-style feature structure: `views/` for UI, `view-models/` for state, and `model/` for types.
 
 ## Backend Walkthrough
 
-The Express backend in `apps/api` is split into small layers so each file has one job:
+The Express backend in `apps/api` is split into small layers:
 
-- `src/server.ts`: starts the HTTP server
+- `src/server.ts`: starts the HTTP server with graceful shutdown
 - `src/app.ts`: creates the Express app, middleware, and top-level routes
 - `src/routes/*.routes.ts`: maps URLs and HTTP verbs
 - `src/controllers/*.controller.ts`: reads the request and shapes the HTTP response
 - `src/services/*.service.ts`: holds business logic
 - `src/schemas/*.schema.ts`: validates input with Zod
 
-Why Express here:
-
-- it is simple to read if you are still learning backend flow
-- it adds very little framework magic, so request flow is easier to trace
-- it fits well for a small monorepo where the frontend and API evolve together
-- it is easy to replace internals later, like moving from in-memory logic to a database or queue
-
 ## Troubleshooting
 
 | Problem | What to check |
 | --- | --- |
-| API fails with `ZodError` on startup | Confirm `apps/api/.env` exists and all required variables are filled in |
-| Frontend cannot load resumes | Confirm `apps/web/.env.local` points to the API base URL |
-| Upload request fails | Confirm R2 credentials, bucket name, and API env values |
+| API fails with `ZodError` on startup | Confirm `apps/api/.env` values match the Zod schema |
+| Frontend cannot connect to API | Confirm `apps/web/.env.local` points to the API base URL |
+| AI extraction returns empty profile | Confirm `gcloud auth application-default login` has been run and `GCP_PROJECT_ID` is set |
+| Upload request fails | Confirm R2 credentials and bucket name if using real R2 |
+| Type errors in `apps/web` tests | Tests are excluded from `tsc`; run `npx vitest` from `apps/web/` instead |
 
 ## Deployment
 
 - The frontend is intended for Vercel deployment.
-- The backend is built and deployed through GitHub Actions.
-- Production infrastructure includes Caddy and Docker-based backend deployment.
+- The backend can be deployed to Google Cloud Run via the included GitHub Actions workflow (`.github/workflows/deploy-cloud-run.yml`).
+- See `GCP_SETUP.md` for one-time GCP project setup instructions.
 
 ## Roadmap Ideas
 
-- authentication and user accounts
-- OCR and text extraction
-- resume parsing pipeline
-- embeddings and semantic search
-- AI-driven resume feedback and scoring
+- Authentication and user accounts
+- OCR and image-based text extraction
+- Embeddings and semantic job matching
+- Collaborative editing
+- More resume templates
 
 ## Repository Goal
 
-This repository is a practical full-stack foundation for turning a simple upload flow into a complete resume analysis platform.
+This repository is a practical full-stack foundation for AI-powered resume creation and analysis.
