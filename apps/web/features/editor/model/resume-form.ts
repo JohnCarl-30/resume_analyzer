@@ -4,6 +4,8 @@ export interface PersonalInfo {
   fullName: string;
   phone: string;
   email: string;
+  summary: string;
+  skills: string;
 }
 
 export interface EducationEntry {
@@ -19,6 +21,7 @@ export interface ExperienceEntry {
   role: string;
   location: string;
   dateRange: string;
+  bullets: string[];
 }
 
 export interface LeadershipEntry {
@@ -54,6 +57,8 @@ export const emptyResumeForm: ResumeForm = {
     fullName: "",
     phone: "",
     email: "",
+    summary: "",
+    skills: "",
   },
   education: [],
   experience: [],
@@ -69,11 +74,13 @@ export function resumeFormFromExtractedProfile(
     return defaultResumeForm;
   }
 
-  return {
+    return {
     personalInfo: {
       fullName: extractedProfile.fullName,
       phone: extractedProfile.phone,
       email: extractedProfile.email,
+      summary: "",
+      skills: "",
     },
     education: extractedProfile.education.map((entry, index) => ({
       id: `edu_ai_${index + 1}`,
@@ -114,44 +121,40 @@ export function resumeFormFromExtractedProfile(
 
 export const defaultResumeForm: ResumeForm = {
   personalInfo: {
-    fullName: "BEA ANGELI C. VICENTE",
-    phone: "+639260295375",
-    email: "beavicente1113@gmail.com",
+    fullName: "Your Full Name",
+    phone: "+1 (555) 000-0000",
+    email: "you@example.com",
+    summary: "",
+    skills: "",
   },
   education: [
     {
       id: "edu_1",
-      institution: "Bulacan State University",
-      degree: "Bachelor of Library and Information Science",
-      location: "Guinhawa, Malolos, Bulacan",
-      dateRange: "Jan 2023 — Present",
-    },
-    {
-      id: "edu_2",
-      institution: "Marcelo H. Del Pilar National High School",
-      degree: "Science, Technology, Engineering, and Mathematics",
-      location: "Bagong Bayan, Malolos, Bulacan",
-      dateRange: "Jan 2021 — Jan 2023",
+      institution: "University Name",
+      degree: "Degree Title",
+      location: "City, State",
+      dateRange: "2020 — 2024",
     },
   ],
   experience: [
     {
       id: "exp_1",
-      role: "Business Entrepreneur",
-      location: "Bagong Bayan, City of Malolos, Bulacan",
-      dateRange: "Jan 2022 — Jan 2023",
+      role: "Job Title",
+      location: "Company Name, Location",
+      dateRange: "Jan 2022 — Present",
+      bullets: [],
     },
   ],
   leadership: [
     {
       id: "lead_1",
-      role: "Member",
-      organization: "Brigade of Library Information Science Students Organization",
-      location: "Bulacan State University",
-      dateRange: "Jan 2023 — Present",
+      role: "Role",
+      organization: "Organization Name",
+      location: "Location",
+      dateRange: "2023 — Present",
     },
   ],
-  awards: ["Dean's Lister - First Semester 2023"],
+  awards: ["Academic Achievement Award"],
   projects: [],
 };
 
