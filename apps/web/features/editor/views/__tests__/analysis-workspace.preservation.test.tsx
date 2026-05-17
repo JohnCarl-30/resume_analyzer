@@ -133,12 +133,7 @@ function renderWorkspace(
 // Helper: open the "Switch Template" modal
 // ---------------------------------------------------------------------------
 function openTemplateModal() {
-  const buttons = screen.getAllByRole("button");
-  const gridButton = buttons.find(
-    (btn) => btn.textContent?.includes("resume") && !btn.textContent?.includes("Back"),
-  );
-  if (!gridButton) throw new Error("Could not find Switch Template button");
-  fireEvent.click(gridButton);
+  fireEvent.click(screen.getByRole("button", { name: /switch template/i }));
 }
 
 // Helper: close the template modal via the "Close modal" icon button (aria-label)
