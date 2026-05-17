@@ -86,8 +86,25 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis, onViewAll }: Dash
         </div>
 
         {isLoading ? (
-          <div className="rounded-[20px] border border-[color:var(--page-line)] bg-white p-6 text-sm text-[color:var(--page-muted)]">
-            Loading analyses...
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex flex-col justify-between overflow-hidden rounded-[24px] border border-[color:var(--page-line)] bg-white p-6">
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div className="h-10 w-10 rounded-xl bg-slate-100 animate-pulse" />
+                    <div className="h-6 w-16 rounded-full bg-slate-100 animate-pulse" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-5 w-3/4 rounded bg-slate-100 animate-pulse" />
+                    <div className="h-4 w-1/2 rounded bg-slate-100 animate-pulse" />
+                  </div>
+                </div>
+                <div className="mt-6 flex items-center justify-between border-t border-[color:var(--page-line)] pt-4">
+                  <div className="h-4 w-24 rounded bg-slate-100 animate-pulse" />
+                  <div className="h-4 w-12 rounded bg-slate-100 animate-pulse" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : error ? (
           <div className="rounded-[20px] border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">
