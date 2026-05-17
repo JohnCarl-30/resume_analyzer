@@ -10,6 +10,7 @@ import { EducationEditor } from "../components/editors/education-editor";
 import { LeadershipEditor } from "../components/editors/leadership-editor";
 import { AwardsEditor } from "../components/editors/awards-editor";
 import { ResumeRenderer } from "../components/resume-renderer";
+import { apiClient } from "../../../lib/api-instance";
 
 import {
   ArrowLeftIcon,
@@ -47,10 +48,12 @@ interface AnalysisWorkspaceProps {
   resumePreviewUrl?: string | null;
   analysisResult: ResumeAnalysisResult | null;
   initialForm?: ResumeForm;
+  createMode?: boolean;
   onBack: () => void;
   onTemplateChange?: (id: ResumeTemplateVariant) => void;
   onAnalysisUpdate?: (result: ResumeAnalysisResult) => void;
   onJobDescriptionChange?: (jd: string) => void;
+  onRename?: (name: string) => void;
 }
 
 const workspaceSections = [
@@ -270,10 +273,12 @@ export function AnalysisWorkspace({
   resumePreviewUrl,
   analysisResult,
   initialForm,
+  createMode = false,
   onBack,
   onTemplateChange,
   onAnalysisUpdate,
   onJobDescriptionChange,
+  onRename,
 }: AnalysisWorkspaceProps) {
   const {
     form,
@@ -286,6 +291,9 @@ export function AnalysisWorkspace({
     updateExperience,
     addExperience,
     removeExperience,
+    addExperienceBullet,
+    updateExperienceBullet,
+    removeExperienceBullet,
     updateLeadership,
     addLeadership,
     removeLeadership,
@@ -293,6 +301,10 @@ export function AnalysisWorkspace({
     addAward,
     removeAward,
     addProject,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
   } = useResumeEditor(initialForm);
   const [activeTemplateId, setActiveTemplateId] = useState(selectedTemplateId);
   const [pendingModalClose, setPendingModalClose] = useState(false);
@@ -303,10 +315,14 @@ export function AnalysisWorkspace({
   const [isUpdatingAnalysis, setIsUpdatingAnalysis] = useState(false);
   const [newJobDescription, setNewJobDescription] = useState(analysisResult?.jobDescription ?? "");
   const [updateError, setUpdateError] = useState("");
+  const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
+  const [showAnnotations, setShowAnnotations] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(resumeFileName);
   const [previewMode, setPreviewMode] = useState<"uploaded" | "structured" | "parsed" | "empty">(
     resumePreviewUrl
       ? "uploaded"
-      : analysisResult?.extractedProfile || initialForm?.personalInfo?.fullName
+      : analysisResult?.extractedProfile || initialForm?.personalInfo?.fullName || createMode
         ? "structured"
         : analysisResult?.parsedResumeText
           ? "parsed"
@@ -314,6 +330,7 @@ export function AnalysisWorkspace({
   );
 
   const resumeTitle =
+    editedTitle.trim() ||
     form.personalInfo.fullName.trim() ||
     analysisResult?.extractedProfile?.fullName.trim() ||
     humanizeFileName(resumeFileName) ||
@@ -345,6 +362,25 @@ export function AnalysisWorkspace({
       setPendingModalClose(false);
     }
   }, [pendingModalClose]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "z") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === "y") {
+        e.preventDefault();
+        redo();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [undo, redo]);
 
   useEffect(() => {
     if (!resumePreviewUrl && previewMode === "uploaded") {
@@ -481,7 +517,12 @@ export function AnalysisWorkspace({
       openProjectModal();
       return;
     }
-    if (optionId === "summary" || optionId === "objective" || optionId === "skills") {
+    if (optionId === "summary" || optionId === "objective") {
+      setActiveSectionId("personal");
+      closeModal();
+      return;
+    }
+    if (optionId === "skills") {
       setActiveSectionId("personal");
       closeModal();
       return;
@@ -516,6 +557,24 @@ export function AnalysisWorkspace({
           onAdd={addExperience}
           onUpdate={updateExperience}
           onRemove={removeExperience}
+          onAddBullet={addExperienceBullet}
+          onUpdateBullet={updateExperienceBullet}
+          onRemoveBullet={removeExperienceBullet}
+          onEnhanceBullets={async (id, role, bullets) => {
+            try {
+              const data = await apiClient.post<string[]>("/api/enhance/bullets", {
+                role,
+                bullets,
+              });
+              setToast({ message: "Bullets enhanced successfully", type: "success" });
+              setTimeout(() => setToast(null), 3000);
+              return data;
+            } catch (err) {
+              setToast({ message: err instanceof Error ? err.message : "Enhancement failed", type: "error" });
+              setTimeout(() => setToast(null), 5000);
+              throw err;
+            }
+          }}
           onBack={() => setActiveSectionId(null)}
         />
       );
@@ -692,45 +751,112 @@ export function AnalysisWorkspace({
     }
   }
 
+  function AnnotationOverlay({ children }: { children: React.ReactNode }) {
+    if (!showAnnotations || !analysisResult) return <>{children}</>;
+
+    const severityStyles = {
+      high: "border-rose-300 bg-rose-50 text-rose-800",
+      medium: "border-amber-300 bg-amber-50 text-amber-800",
+      low: "border-slate-300 bg-slate-50 text-slate-700",
+    };
+
+    const severityLabels = {
+      high: "Critical",
+      medium: "Impact",
+      low: "Edit",
+    };
+
+    return (
+      <div className="relative">
+        {children}
+        <div className="absolute right-0 top-0 z-10 flex w-72 flex-col gap-2 p-2">
+          {analysisResult.suggestions.map((suggestion, index) => (
+            <div
+              key={suggestion.id}
+              className={`rounded-[12px] border px-3 py-2 text-xs shadow-md ${severityStyles[suggestion.severity]}`}
+              style={{ transform: `translateY(${index * 4}px)` }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-semibold">{suggestion.title}</span>
+                <span className="shrink-0 rounded-full bg-white/70 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider">
+                  {severityLabels[suggestion.severity]}
+                </span>
+              </div>
+              <p className="mt-1 leading-4 opacity-90">{suggestion.detail}</p>
+            </div>
+          ))}
+          {analysisResult.missingKeywords.length > 0 && (
+            <div className="rounded-[12px] border border-amber-300 bg-amber-50 px-3 py-2 text-xs shadow-md text-amber-800">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-semibold">Missing Keywords</span>
+                <span className="shrink-0 rounded-full bg-white/70 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider">
+                  Keywords
+                </span>
+              </div>
+              <p className="mt-1 leading-4 opacity-90">{analysisResult.missingKeywords.join(", ")}</p>
+            </div>
+          )}
+          {analysisResult.matchedKeywords.length > 0 && (
+            <div className="rounded-[12px] border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs shadow-md text-emerald-800">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-semibold">Matched Keywords</span>
+                <span className="shrink-0 rounded-full bg-white/70 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider">
+                  Keywords
+                </span>
+              </div>
+              <p className="mt-1 leading-4 opacity-90">{analysisResult.matchedKeywords.join(", ")}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   function renderDocumentPreview() {
     if (previewMode === "uploaded" && resumePreviewUrl) {
       return (
-        <div className="mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white shadow-[0_24px_60px_rgba(26,32,61,0.12)]">
-          <iframe
-            key={`${resumePreviewUrl}-${previewZoom}`}
-            title="Uploaded resume preview"
-            src={`${resumePreviewUrl}#toolbar=0&navpanes=0&scrollbar=0&zoom=${previewZoom}`}
-            className="h-full w-full bg-white"
-          />
-        </div>
+        <AnnotationOverlay>
+          <div className="mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white shadow-[0_24px_60px_rgba(26,32,61,0.12)]">
+            <iframe
+              key={`${resumePreviewUrl}-${previewZoom}`}
+              title="Uploaded resume preview"
+              src={`${resumePreviewUrl}#toolbar=0&navpanes=0&scrollbar=0&zoom=${previewZoom}`}
+              className="h-full w-full bg-white"
+            />
+          </div>
+        </AnnotationOverlay>
       );
     }
 
     if (previewMode === "parsed" && analysisResult?.parsedResumeText) {
       return (
-        <div
-          className="mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white px-10 py-12 shadow-[0_24px_60px_rgba(26,32,61,0.12)] sm:px-14 sm:py-16"
-          style={{
-            transform: `scale(${previewZoom / 100})`,
-            transformOrigin: "top center",
-          }}
-        >
-          <ParsedTextPreview text={analysisResult.parsedResumeText} />
-        </div>
+        <AnnotationOverlay>
+          <div
+            className="print-resume mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white px-10 py-12 shadow-[0_24px_60px_rgba(26,32,61,0.12)] sm:px-14 sm:py-16"
+            style={{
+              transform: `scale(${previewZoom / 100})`,
+              transformOrigin: "top center",
+            }}
+          >
+            <ParsedTextPreview text={analysisResult.parsedResumeText} />
+          </div>
+        </AnnotationOverlay>
       );
     }
 
     if (hasStructuredPreview) {
       return (
-        <div
-          className="mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white px-8 py-10 shadow-[0_24px_60px_rgba(26,32,61,0.12)] sm:px-12 sm:py-14 lg:px-16 lg:py-16"
-          style={{
-            transform: `scale(${previewZoom / 100})`,
-            transformOrigin: "top center",
-          }}
-        >
-          <ResumeRenderer form={form} variantId={activeTemplateId} />
-        </div>
+        <AnnotationOverlay>
+          <div
+            className="print-resume mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white px-8 py-10 shadow-[0_24px_60px_rgba(26,32,61,0.12)] sm:px-12 sm:py-14 lg:px-16 lg:py-16"
+            style={{
+              transform: `scale(${previewZoom / 100})`,
+              transformOrigin: "top center",
+            }}
+          >
+            <ResumeRenderer form={form} variantId={activeTemplateId} />
+          </div>
+        </AnnotationOverlay>
       );
     }
 
@@ -764,6 +890,26 @@ export function AnalysisWorkspace({
           </div>
         </div>
       )}
+      {toast && (
+        <div className="absolute left-1/2 top-4 z-[70] -translate-x-1/2">
+          <div
+            className={`rounded-[14px] px-5 py-3 text-sm font-medium shadow-lg transition ${
+              toast.type === "error"
+                ? "bg-red-50 text-red-700 border border-red-200"
+                : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+            }`}
+          >
+            {toast.message}
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              className="ml-3 text-xs font-semibold uppercase tracking-wider opacity-70 hover:opacity-100"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
       <header className="border-b border-[color:var(--page-line)] bg-white px-5 py-4 sm:px-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-wrap items-center gap-4 text-sm">
@@ -775,19 +921,83 @@ export function AnalysisWorkspace({
               <ArrowLeftIcon />
               Back
             </button>
-            <button
-              type="button"
-              onClick={() => setModalView("templates")}
-              className="group inline-flex items-center gap-2 rounded-[14px] border border-transparent bg-slate-50/50 px-3 py-1 text-xl font-semibold text-[color:var(--page-text)] transition hover:bg-slate-100/80 active:scale-[0.98]"
-            >
-              {resumeTitle}
-              <span className="text-[color:var(--page-muted)] opacity-0 transition group-hover:opacity-100">
-                <ChevronDownIcon />
-              </span>
-            </button>
+            {isEditingTitle ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      setIsEditingTitle(false);
+                      onRename?.(editedTitle);
+                    }
+                    if (e.key === "Escape") {
+                      setIsEditingTitle(false);
+                      setEditedTitle(resumeFileName);
+                    }
+                  }}
+                  autoFocus
+                  className="rounded-[14px] border border-[color:var(--brand)] bg-white px-4 py-2 text-xl font-semibold text-[color:var(--page-text)] outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditingTitle(false);
+                    onRename?.(editedTitle);
+                  }}
+                  className="rounded-lg px-3 py-2 text-sm font-semibold text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)]"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditingTitle(false);
+                    setEditedTitle(resumeFileName);
+                  }}
+                  className="rounded-lg px-3 py-2 text-sm font-semibold text-[color:var(--page-muted)] hover:bg-[color:var(--page-bg)]"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsEditingTitle(true)}
+                className="group inline-flex items-center gap-2 rounded-[14px] border border-transparent bg-slate-50/50 px-3 py-1 text-xl font-semibold text-[color:var(--page-text)] transition hover:bg-slate-100/80 active:scale-[0.98]"
+              >
+                {resumeTitle}
+                <span className="text-[color:var(--page-muted)] opacity-0 transition group-hover:opacity-100">
+                  <PencilIcon />
+                </span>
+              </button>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            <div className="inline-flex items-center gap-1">
+              <button
+                type="button"
+                onClick={undo}
+                disabled={!canUndo}
+                className="inline-flex items-center justify-center rounded-l-[14px] border border-[color:var(--page-line)] bg-white px-3 py-2.5 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Undo"
+                title="Undo"
+              >
+                ↶
+              </button>
+              <button
+                type="button"
+                onClick={redo}
+                disabled={!canRedo}
+                className="inline-flex items-center justify-center rounded-r-[14px] border border-l-0 border-[color:var(--page-line)] bg-white px-3 py-2.5 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Redo"
+                title="Redo"
+              >
+                ↷
+              </button>
+            </div>
             <div className="inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-2.5 text-sm text-[color:var(--page-muted)]">
               <span className="text-emerald-500">
                 <ClockIcon />
@@ -795,18 +1005,21 @@ export function AnalysisWorkspace({
               {lastSavedLabel}
             </div>
 
-            <button
-              type="button"
-              onClick={openTailorModal}
-              className="inline-flex items-center gap-2 rounded-[14px] bg-[color:var(--brand)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(79,107,255,0.22)] transition hover:bg-[color:var(--brand-strong)]"
-            >
-              <EyeIcon />
-              Tailor to Job
-            </button>
+            {!createMode && (
+              <button
+                type="button"
+                onClick={openTailorModal}
+                className="inline-flex items-center gap-2 rounded-[14px] bg-[color:var(--brand)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(79,107,255,0.22)] transition hover:bg-[color:var(--brand-strong)]"
+              >
+                <EyeIcon />
+                Tailor to Job
+              </button>
+            )}
 
             <button
               type="button"
               onClick={() => setModalView("templates")}
+              aria-label="Switch template"
               className="group inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-4 py-2.5 text-sm font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg-soft)] active:scale-[0.98]"
             >
               <GridIcon />
@@ -815,13 +1028,24 @@ export function AnalysisWorkspace({
 
             <button
               type="button"
-              onClick={handleDownloadSource}
-              disabled={!resumeSourceUrl}
-              className="inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-5 py-2.5 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[color:var(--page-line)] disabled:hover:text-[color:var(--page-text)]"
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-5 py-2.5 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
             >
               <DownloadIcon />
-              {resumeSourceUrl ? "Download Source" : "Export PDF"}
+              Print / PDF
             </button>
+
+            {!createMode && (
+              <button
+                type="button"
+                onClick={handleDownloadSource}
+                disabled={!resumeSourceUrl}
+                className="inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-5 py-2.5 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[color:var(--page-line)] disabled:hover:text-[color:var(--page-text)]"
+              >
+                <DownloadIcon />
+                {resumeSourceUrl ? "Download Source" : "Export JSON"}
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -864,6 +1088,23 @@ export function AnalysisWorkspace({
                       AI Template
                     </button>
                   </div>
+
+                  <div className="mx-1 h-8 w-px bg-[color:var(--page-line)]" />
+
+                  {analysisResult && analysisResult.suggestions.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAnnotations((s) => !s)}
+                      className={`inline-flex items-center gap-2 rounded-[9px] px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
+                        showAnnotations
+                          ? "bg-[color:var(--brand-soft)] text-[color:var(--brand)]"
+                          : "text-[color:var(--page-muted)] hover:text-[color:var(--page-text)]"
+                      }`}
+                    >
+                      <EyeIcon />
+                      Suggestions
+                    </button>
+                  )}
 
                   <div className="mx-1 h-8 w-px bg-[color:var(--page-line)]" />
 
@@ -936,24 +1177,24 @@ export function AnalysisWorkspace({
                 </div>
 
                 <div className="px-6 py-6 sm:px-8 sm:py-8">
-                  <div className="grid gap-5 lg:grid-cols-3">
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {addContentOptions.map((option) =>
                       option.interactive ? (
                         <button
                           key={option.id}
                           type="button"
                           onClick={openProjectModal}
-                          className="rounded-[24px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] p-6 text-left transition hover:border-[color:var(--brand)] hover:-translate-y-0.5"
+                          className="rounded-[18px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] p-5 text-left transition hover:border-[color:var(--brand)] hover:-translate-y-0.5"
                         >
-                          <div className="flex items-start gap-5">
-                            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[22px] border border-[color:var(--page-line)] bg-white text-[color:var(--page-muted)]">
+                          <div className="flex items-start gap-4">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[color:var(--page-line)] bg-white text-[color:var(--page-muted)]">
                               {contentOptionIcon(option.icon)}
                             </div>
-                            <div className="space-y-2">
-                              <p className="text-[2rem] font-semibold tracking-tight text-[color:var(--page-text)]">
+                            <div className="space-y-1">
+                              <p className="text-base font-semibold text-[color:var(--page-text)]">
                                 {option.title}
                               </p>
-                              <p className="max-w-[16rem] text-lg leading-9 text-[color:var(--page-muted)]">
+                              <p className="text-sm leading-5 text-[color:var(--page-muted)]">
                                 {option.description}
                               </p>
                             </div>
@@ -964,17 +1205,17 @@ export function AnalysisWorkspace({
                           key={option.id}
                           type="button"
                           onClick={() => handleAddContentOption(option.id)}
-                          className="rounded-[24px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] p-6 text-left transition hover:border-[color:var(--brand)] hover:-translate-y-0.5"
+                          className="rounded-[18px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] p-5 text-left transition hover:border-[color:var(--brand)] hover:-translate-y-0.5"
                         >
-                          <div className="flex items-start gap-5">
-                            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[22px] border border-[color:var(--page-line)] bg-white text-[color:var(--page-muted)]">
+                          <div className="flex items-start gap-4">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[color:var(--page-line)] bg-white text-[color:var(--page-muted)]">
                               {contentOptionIcon(option.icon)}
                             </div>
-                            <div className="space-y-2">
-                              <p className="text-[2rem] font-semibold tracking-tight text-[color:var(--page-text)]">
+                            <div className="space-y-1">
+                              <p className="text-base font-semibold text-[color:var(--page-text)]">
                                 {option.title}
                               </p>
-                              <p className="max-w-[16rem] text-lg leading-9 text-[color:var(--page-muted)]">
+                              <p className="text-sm leading-5 text-[color:var(--page-muted)]">
                                 {option.description}
                               </p>
                             </div>
