@@ -359,6 +359,7 @@ export function AnalysisWorkspace({
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [saveFlash, setSaveFlash] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [previewMode, setPreviewMode] = useState<"uploaded" | "structured" | "parsed" | "empty">(
     resumePreviewUrl
       ? "uploaded"
@@ -421,6 +422,10 @@ export function AnalysisWorkspace({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo, redo]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -746,7 +751,7 @@ export function AnalysisWorkspace({
                     )}
                   </div>
                 </div>
-                {isEmpty && (
+                {mounted && isEmpty && (
                   <div className="ml-11 mt-1 text-xs text-[color:var(--page-muted)] opacity-70">
                     {emptyHints[section.id]}
                   </div>
@@ -1187,7 +1192,7 @@ export function AnalysisWorkspace({
           />
         )}
         <aside className={`shrink-0 border-r border-[color:var(--page-line)] bg-white transition-transform duration-300 ease-in-out
-          fixed inset-y-0 left-0 z-50 w-80 transform ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"} xl:static xl:w-[420px] xl:transform-none xl:translate-x-0`}>
+          fixed inset-y-0 left-0 z-50 w-80 transform ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"} xl:static xl:z-auto xl:w-[420px] xl:transform-none xl:translate-x-0`}>
           <div className="flex h-full flex-col">
             <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-4 py-3 xl:hidden">
               <span className="font-semibold text-[color:var(--page-text)]">Editor</span>
@@ -1737,7 +1742,7 @@ export function AnalysisWorkspace({
                   { keys: "Ctrl + Shift + Z", action: "Redo" },
                   { keys: "Ctrl + P", action: "Print / PDF" },
                 ].map((shortcut) => (
-                  <div key={shortcut.action} className="flex items-center justify-between rounded-[12px] bg-[color:var(--page-bg)] px-4 py-3">
+                  <div key={shortcut.keys} className="flex items-center justify-between rounded-[12px] bg-[color:var(--page-bg)] px-4 py-3">
                     <span className="text-sm text-[color:var(--page-text)]">{shortcut.action}</span>
                     <kbd className="rounded-md border border-[color:var(--page-line)] bg-white px-2 py-1 text-xs font-mono font-semibold text-[color:var(--page-muted)]">
                       {shortcut.keys}
