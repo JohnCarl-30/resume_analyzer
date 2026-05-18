@@ -27,84 +27,86 @@ export function StepTargetRole({
       : "";
 
   return (
-    <section className="section-reveal flex flex-1 px-5 py-10 sm:px-8 lg:px-12 xl:px-14">
-      <div className="grid w-full gap-10 xl:grid-cols-[minmax(0,1.1fr)_25rem] xl:items-center">
-        <div className="flex max-w-3xl flex-col justify-center">
-          <span className="step-pill w-fit">Resume analysis flow</span>
+    <section className="section-reveal flex flex-1 flex-col items-center justify-center px-5 py-8 sm:px-8">
+      <div className="w-full max-w-2xl">
+        <div className="text-center">
+          <span className="step-pill">Resume analysis flow</span>
 
-          <div className="mt-7 space-y-4">
-            <h1 className="font-display text-5xl font-semibold tracking-tight text-[color:var(--page-text)] sm:text-6xl">
-              Build the analysis around one clear target role.
-            </h1>
-            <p className="max-w-2xl text-base leading-7 text-[color:var(--page-muted)]">
-              Start with the position you want, then we&apos;ll guide the upload,
-              comparison, and layout choice around that goal.
-            </p>
-          </div>
-
-          <div className="mt-10 grid gap-4 lg:grid-cols-3">
-            {stepOverview.map((stepItem) => (
-              <div
-                key={stepItem.id}
-                className="rounded-[20px] border border-[color:var(--page-line)] bg-[color:var(--page-bg-strong)] px-4 py-4 shadow-[0_8px_22px_rgba(0,0,0,0.03)]"
-              >
-                <p className="font-mono text-sm font-semibold text-[color:var(--brand)]">
-                  {stepItem.id}
-                </p>
-                <h2 className="mt-3 text-lg font-semibold text-[color:var(--page-text)]">
-                  {stepItem.title}
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-[color:var(--page-muted)]">
-                  {stepItem.description}
-                </p>
-              </div>
-            ))}
-          </div>
+          <h1 className="mt-6 font-display text-4xl font-semibold tracking-tight text-[color:var(--page-text)] sm:text-5xl">
+            What role are you targeting?
+          </h1>
+          <p className="mx-auto mt-4 max-w-lg text-base leading-7 text-[color:var(--page-muted)]">
+            We&apos;ll tailor your resume analysis to this specific position.
+          </p>
         </div>
 
-        <div className="xl:justify-self-end">
-          <section className="w-full rounded-[28px] border border-[color:var(--page-line)] bg-white p-6 text-center shadow-[var(--shadow-md)] sm:p-7">
-            <div className="h-1.5 w-20 rounded-full bg-[color:var(--brand-strong)]" />
+        <div className="mt-10">
+          <div className="rounded-[24px] border border-[color:var(--page-line)] bg-white p-8 shadow-[0_12px_40px_rgba(26,32,61,0.06)] sm:p-10">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[18px] bg-[color:var(--brand-soft)] text-[color:var(--brand)]">
+              <BriefcaseIcon />
+            </div>
 
-            <div className="mt-7 space-y-3">
-              <h2 className="font-display text-4xl font-semibold tracking-tight text-[color:var(--page-text)]">
-                What role are you targeting?
+            <div className="mt-6 text-center">
+              <h2 className="text-2xl font-semibold text-[color:var(--page-text)]">
+                Target Role
               </h2>
-              <p className="text-sm leading-6 text-[color:var(--page-muted)]">
-                We&apos;ll tailor your resume analysis to this specific position.
+              <p className="mt-2 text-sm text-[color:var(--page-muted)]">
+                Enter the position you want to apply for
               </p>
             </div>
 
-            <label
-              className="mt-7 flex items-center gap-3 rounded-[16px] border border-[color:var(--page-line)] bg-[color:var(--page-bg-strong)] px-4 py-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition focus-within:border-[color:var(--brand)] focus-within:bg-white"
-              htmlFor="target-role"
-            >
-              <span className="text-[color:var(--page-muted)]">
-                <BriefcaseIcon />
-              </span>
-              <input
-                id="target-role"
-                value={targetRole}
-                onChange={(event) => {
-                  setTargetRole(event.target.value);
-                }}
-                placeholder="e.g. Senior Frontend Engineer"
-                className="w-full border-none bg-transparent text-[color:var(--page-text)] outline-none placeholder:text-[#b4bfd3]"
-              />
-            </label>
+            <div className="mt-6">
+              <label
+                className="flex items-center gap-3 rounded-[16px] border border-[color:var(--page-line)] bg-[color:var(--page-bg-strong)] px-4 py-3.5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition focus-within:border-[color:var(--brand)] focus-within:bg-white focus-within:ring-2 focus-within:ring-[color:var(--brand-soft)]"
+                htmlFor="target-role"
+              >
+                <span className="text-[color:var(--page-muted)]">
+                  <BriefcaseIcon />
+                </span>
+                <input
+                  id="target-role"
+                  value={targetRole}
+                  onChange={(event) => {
+                    setTargetRole(event.target.value);
+                  }}
+                  placeholder="e.g. Senior Frontend Engineer"
+                  className="w-full border-none bg-transparent text-[color:var(--page-text)] outline-none placeholder:text-[#b4bfd3]"
+                />
+              </label>
 
-            <p className="mt-3 min-h-6 text-sm text-[#e16f62]">{roleError}</p>
+              <p className="mt-2 min-h-5 text-sm text-[#e16f62]">{roleError}</p>
+            </div>
 
             <button
               type="button"
               onClick={onNext}
               disabled={!canContinue}
-              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-[14px] bg-[color:var(--brand)] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(79,107,255,0.24)] transition hover:bg-[color:var(--brand-strong)] disabled:cursor-not-allowed disabled:bg-[#c4ccf0] disabled:shadow-none"
+              className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-[14px] bg-[color:var(--brand)] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(79,107,255,0.24)] transition hover:bg-[color:var(--brand-strong)] disabled:cursor-not-allowed disabled:bg-[#c4ccf0] disabled:shadow-none"
             >
-              Next: Job Details
+              Continue
               <ArrowRightIcon />
             </button>
-          </section>
+          </div>
+        </div>
+
+        {/* Step Overview Cards */}
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          {stepOverview.slice(1).map((stepItem) => (
+            <div
+              key={stepItem.id}
+              className="rounded-[16px] border border-[color:var(--page-line)] bg-white p-4 text-center shadow-[0_4px_12px_rgba(0,0,0,0.03)]"
+            >
+              <p className="font-mono text-xs font-bold text-[color:var(--brand)]">
+                {stepItem.id}
+              </p>
+              <h3 className="mt-2 text-sm font-semibold text-[color:var(--page-text)]">
+                {stepItem.title}
+              </h3>
+              <p className="mt-1 text-xs leading-5 text-[color:var(--page-muted)]">
+                {stepItem.description}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
