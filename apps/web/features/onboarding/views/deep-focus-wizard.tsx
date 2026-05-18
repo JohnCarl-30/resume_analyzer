@@ -370,15 +370,6 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
     };
   }, [analysisIdFromUrl, defaultTemplateId]);
 
-  const backLabel =
-    step === 5
-      ? "Back to Templates"
-      : step === 4
-        ? "Back to Upload"
-        : step === 3
-          ? "Back to Job Description"
-          : "Back";
-
   return (
     <main className="relative min-h-screen bg-[color:var(--page-bg)] text-[color:var(--page-text)]">
       <div className="relative flex min-h-screen w-full">
@@ -404,38 +395,29 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
             />
           ) : (
             <>
-              <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-[color:var(--page-line)] px-4 py-4 sm:px-6">
-                <div className="justify-self-start flex items-center gap-2">
+              <header className="flex items-center justify-between border-b border-[color:var(--page-line)] bg-white px-4 py-3.5 sm:px-6">
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={handleExitToDashboard}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--page-line)] text-[color:var(--page-muted)] transition hover:bg-[color:var(--page-bg-strong)] hover:text-[color:var(--page-text)]"
-                    aria-label="Exit to dashboard"
+                    onClick={step > 1 ? handleBack : handleExitToDashboard}
+                    className="inline-flex items-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-sm font-medium text-[color:var(--page-muted)] transition hover:bg-[color:var(--page-bg-strong)] hover:text-[color:var(--page-text)]"
                   >
                     <ArrowLeftIcon />
+                    {step > 1 ? "Back" : "Exit"}
                   </button>
-                  {step > 1 && (
-                    <button
-                      type="button"
-                      onClick={handleBack}
-                      className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-sm font-medium text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
-                    >
-                      {backLabel}
-                    </button>
-                  )}
                 </div>
 
-                <div className="flex items-center gap-2 justify-self-center text-sm font-semibold text-[color:var(--page-text)]">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--page-text)]">
                   <BrandMark />
                   Deep Focus
                 </div>
 
-                <div className="justify-self-end">
+                <div className="hidden sm:block">
                   <span className="step-pill">{`STEP ${step} OF 5`}</span>
                 </div>
               </header>
 
-              <div className="flex flex-1 flex-col">
+              <div className="flex flex-1 flex-col overflow-hidden">
                 {analysisIdFromUrl && isRestoringAnalysis ? (
                   <div className="flex flex-1 items-center justify-center px-6 py-16">
                     <div className="max-w-md space-y-3 text-center">
@@ -505,6 +487,52 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
                     onBack={handleBack}
                   />
                 ) : null}
+              </div>
+
+              {/* Step Progress Bar */}
+              <div className="shrink-0 border-t border-[color:var(--page-line)] bg-white px-4 py-4 sm:px-6">
+                <div className="mx-auto flex max-w-4xl items-center justify-between">
+                  {stepOverview.map((stepItem, index) => {
+                    const stepNum = index + 1;
+                    const isActive = step === stepNum;
+                    const isCompleted = step > stepNum;
+                    const isLast = index === stepOverview.length - 1;
+
+                    return (
+                      <React.Fragment key={stepItem.id}>
+                        <div className="flex flex-col items-center gap-1.5">
+                          <div
+                            className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition ${
+                              isActive
+                                ? "bg-[color:var(--brand)] text-white shadow-[0_4px_12px_rgba(37,99,235,0.3)]"
+                                : isCompleted
+                                  ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                                  : "bg-[color:var(--page-bg-strong)] text-[color:var(--page-muted)] border border-[color:var(--page-line)]"
+                            }`}
+                          >
+                            {isCompleted ? (
+                              <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+                                <path d="M4 10l4 4 8-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            ) : (
+                              stepNum
+                            )}
+                          </div>
+                          <span
+                            className={`hidden text-xs font-medium sm:block ${
+                              isActive || isCompleted ? "text-[color:var(--page-text)]" : "text-[color:var(--page-muted)]"
+                            }`}
+                          >
+                            {stepItem.title}
+                          </span>
+                        </div>
+                        {!isLast && (
+                          <div className={`mx-2 h-px w-full max-w-[4rem] sm:max-w-[6rem] ${isCompleted ? "bg-emerald-200" : "bg-[color:var(--page-line)]"}`} />
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
               </div>
             </>
           )}
