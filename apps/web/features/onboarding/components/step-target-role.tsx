@@ -83,7 +83,7 @@ export function StepTargetRole({
               disabled={!canContinue}
               className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-[14px] bg-[color:var(--brand)] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(79,107,255,0.24)] transition hover:bg-[color:var(--brand-strong)] disabled:cursor-not-allowed disabled:bg-[#c4ccf0] disabled:shadow-none"
             >
-              Continue
+              Next: Job Details
               <ArrowRightIcon />
             </button>
           </div>
