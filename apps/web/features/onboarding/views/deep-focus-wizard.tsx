@@ -446,7 +446,6 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
                     setTargetRole={setTargetRole}
                     onNext={handleNext}
                     canContinue={canContinueFromTargetRole}
-                    stepOverview={stepOverview}
                   />
                 ) : step === 2 ? (
                   <StepJobDescription
