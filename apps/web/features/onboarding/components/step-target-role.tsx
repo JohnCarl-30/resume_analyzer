@@ -6,11 +6,6 @@ interface StepTargetRoleProps {
   setTargetRole: (role: string) => void;
   onNext: () => void;
   canContinue: boolean;
-  stepOverview: readonly {
-    id: string;
-    title: string;
-    description: string;
-  }[];
 }
 
 export function StepTargetRole({
@@ -18,7 +13,6 @@ export function StepTargetRole({
   setTargetRole,
   onNext,
   canContinue,
-  stepOverview,
 }: StepTargetRoleProps) {
   const trimmedTargetRole = targetRole.trim();
   const roleError =
@@ -89,25 +83,9 @@ export function StepTargetRole({
           </div>
         </div>
 
-        {/* Step Overview Cards */}
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          {stepOverview.slice(1).map((stepItem) => (
-            <div
-              key={stepItem.id}
-              className="rounded-[16px] border border-[color:var(--page-line)] bg-white p-4 text-center shadow-[0_4px_12px_rgba(0,0,0,0.03)]"
-            >
-              <p className="font-mono text-xs font-bold text-[color:var(--brand)]">
-                {stepItem.id}
-              </p>
-              <h3 className="mt-2 text-sm font-semibold text-[color:var(--page-text)]">
-                {stepItem.title}
-              </h3>
-              <p className="mt-1 text-xs leading-5 text-[color:var(--page-muted)]">
-                {stepItem.description}
-              </p>
-            </div>
-          ))}
-        </div>
+        <p className="mt-6 text-center text-xs text-[color:var(--page-muted)]">
+          Next: paste the job description → upload your resume → choose a template → review AI suggestions
+        </p>
       </div>
     </section>
   );
