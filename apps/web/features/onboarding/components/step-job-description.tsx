@@ -27,7 +27,7 @@ export function StepJobDescription({
     <section className="section-reveal flex flex-1 flex-col items-center justify-center px-5 py-8 sm:px-8">
       <div className="w-full max-w-2xl">
         <div className="text-center">
-          <span className="step-pill">Step 2 of 5</span>
+          <span className="step-pill">STEP 2 OF 5</span>
           <h1 className="mt-6 font-display text-4xl font-semibold tracking-tight text-[color:var(--page-text)] sm:text-5xl">
             Paste the job description
           </h1>
@@ -62,7 +62,7 @@ export function StepJobDescription({
             <div className="mt-3 flex items-center justify-between text-sm">
               <p className="min-h-5 text-[#e16f62]">{jobDescriptionError}</p>
               <span className={trimmedLength > MAX_LENGTH * 0.9 ? "text-[#e16f62] font-semibold" : "text-[color:var(--page-muted)]"}>
-                {trimmedLength} / {MAX_LENGTH}
+                {trimmedLength} / {MAX_LENGTH} characters
               </span>
             </div>
 
@@ -72,7 +72,7 @@ export function StepJobDescription({
               disabled={!canContinue}
               className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-[14px] bg-[color:var(--brand)] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(79,107,255,0.22)] transition hover:bg-[color:var(--brand-strong)] disabled:cursor-not-allowed disabled:bg-[#c4ccf0] disabled:shadow-none"
             >
-              Continue to Upload
+              Continue to Resume Upload
               <ArrowRightIcon />
             </button>
           </div>
