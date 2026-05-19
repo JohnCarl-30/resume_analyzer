@@ -370,6 +370,13 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
     };
   }, [analysisIdFromUrl, defaultTemplateId]);
 
+  const backLabel =
+    step === 4
+      ? "Back to Upload"
+      : step === 3
+        ? "Back to Job Description"
+        : "Back";
+
   return (
     <main className="relative min-h-screen bg-[color:var(--page-bg)] text-[color:var(--page-text)]">
       <div className="relative flex min-h-screen w-full">
@@ -403,7 +410,7 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
                     className="inline-flex items-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-sm font-medium text-[color:var(--page-muted)] transition hover:bg-[color:var(--page-bg-strong)] hover:text-[color:var(--page-text)]"
                   >
                     <ArrowLeftIcon />
-                    {step > 1 ? "Back" : "Exit"}
+                    {step > 1 ? backLabel : "Exit"}
                   </button>
                 </div>
 
