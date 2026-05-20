@@ -29,9 +29,15 @@ export function useResumeDashboard() {
           return;
         }
 
-        setAnalyses(fetchedAnalyses);
+        const orderedAnalyses = [...fetchedAnalyses].sort(
+          (a, b) =>
+            new Date(b.createdAt ?? b.generatedAt).getTime() -
+            new Date(a.createdAt ?? a.generatedAt).getTime(),
+        );
 
-        const mapped: ResumeSummary[] = fetchedAnalyses.map((analysis) => ({
+        setAnalyses(orderedAnalyses);
+
+        const mapped: ResumeSummary[] = orderedAnalyses.map((analysis) => ({
           id: analysis.id ?? crypto.randomUUID(),
           candidateName:
             analysis.extractedProfile?.fullName.trim() ||
@@ -40,21 +46,24 @@ export function useResumeDashboard() {
           fileName: analysis.sourceFileName ?? "Uploaded resume",
           status: "analyzed",
           uploadedAt: analysis.createdAt ?? analysis.generatedAt,
+          targetRole: analysis.targetRole,
+          score: analysis.score,
+          missingKeywordCount: analysis.missingKeywords.length,
+          suggestionCount: analysis.suggestions.length,
         }));
 
         setResumes(mapped);
 
         // Compute stats from analyses
         const computedStats: DashboardStats = {
-          totalResumes: fetchedAnalyses.length,
+          totalResumes: orderedAnalyses.length,
           averageMatchRate:
-            fetchedAnalyses.length > 0
+            orderedAnalyses.length > 0
               ? Math.round(
-                  fetchedAnalyses.reduce((sum, a) => sum + a.score, 0) / fetchedAnalyses.length,
+                  orderedAnalyses.reduce((sum, a) => sum + a.score, 0) / orderedAnalyses.length,
                 )
               : 0,
-          // Count analyses with score above 75 or with significant updates (arbitrary threshold)
-          optimizedCount: fetchedAnalyses.filter((a) => a.score > 75).length,
+          optimizedCount: orderedAnalyses.filter((a) => a.score >= 75).length,
         };
 
         setStats(computedStats);
