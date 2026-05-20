@@ -1,15 +1,59 @@
 "use client";
 
 import React from "react";
-import { PlusIcon, SparklesIcon, BriefcaseOutlineIcon, ClockIcon, ArrowRightIcon } from "../../onboarding/components/wizard-icons";
+import {
+  AlertCircle,
+  ArrowUpRight,
+  Briefcase,
+  Clock,
+  FileText,
+  Gauge,
+  Inbox,
+  Plus,
+  Sparkles,
+} from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { ResumeStatusBadge } from "../components/resume-status-badge";
+import type { ResumeSummary } from "../model/resume";
 import { useResumeDashboard } from "../view-models/use-resume-dashboard";
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
   year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
 });
+
+type BadgeVariant = React.ComponentProps<typeof Badge>["variant"];
 
 interface DashboardViewProps {
   onNewAnalysis: () => void;
@@ -17,144 +61,315 @@ interface DashboardViewProps {
   onViewAll: () => void;
 }
 
+function getScoreVariant(score: number): BadgeVariant {
+  if (score >= 75) {
+    return "default";
+  }
+
+  if (score >= 50) {
+    return "secondary";
+  }
+
+  return "destructive";
+}
+
+function formatDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Recent";
+  }
+
+  return dateFormatter.format(date);
+}
+
+function DashboardSkeleton() {
+  return (
+    <>
+      <Card className="hidden md:flex">
+        <CardHeader>
+          <CardTitle>Recent analyses</CardTitle>
+          <CardDescription>Loading saved resume analysis sessions.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          {[1, 2, 3, 4].map((item) => (
+            <div key={item} className="grid grid-cols-[1.4fr_1fr_0.8fr_0.8fr_auto] items-center gap-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <Skeleton className="size-9" />
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </div>
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-5 w-16" />
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="size-8" />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-3 md:hidden">
+        {[1, 2, 3].map((item) => (
+          <Card key={item}>
+            <CardHeader>
+              <div className="flex items-start gap-3">
+                <Skeleton className="size-10" />
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              <Skeleton className="h-2 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function AnalysisMobileCard({
+  resume,
+  onOpenAnalysis,
+}: {
+  resume: ResumeSummary;
+  onOpenAnalysis: (analysisId: string) => void;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+            <FileText aria-hidden="true" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <CardTitle className="truncate">{resume.candidateName || "Untitled Analysis"}</CardTitle>
+            <CardDescription className="truncate">{resume.fileName}</CardDescription>
+          </div>
+        </div>
+        <CardAction>
+          <ResumeStatusBadge status={resume.status} />
+        </CardAction>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="truncate text-sm text-muted-foreground">{resume.targetRole || "Target role not set"}</p>
+          <Badge variant={getScoreVariant(resume.score)}>{resume.score}%</Badge>
+        </div>
+        <Progress value={resume.score} aria-label={`${resume.score}% match rate`} />
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="flex flex-col gap-1">
+            <span className="text-muted-foreground">Missing keywords</span>
+            <span className="font-medium">{resume.missingKeywordCount}</span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-muted-foreground">Suggestions</span>
+            <span className="font-medium">{resume.suggestionCount}</span>
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter className="justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+          <Clock aria-hidden="true" />
+          <span className="truncate">{formatDate(resume.uploadedAt)}</span>
+        </div>
+        <Button type="button" variant="outline" size="sm" onClick={() => onOpenAnalysis(resume.id)}>
+          Open
+          <ArrowUpRight data-icon="inline-end" aria-hidden="true" />
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
 export function DashboardView({ onNewAnalysis, onOpenAnalysis, onViewAll }: DashboardViewProps) {
   const { resumes, isLoading, error, stats } = useResumeDashboard();
-  
+
   const displayStats = [
-    { label: "Total Resumes", value: stats.totalResumes.toString().padStart(2, "0"), icon: <BriefcaseOutlineIcon /> },
-    { label: "Avg. Match Rate", value: `${stats.averageMatchRate}%`, icon: <SparklesIcon /> },
-    { label: "Optimized", value: stats.optimizedCount.toString(), icon: <ClockIcon /> },
+    {
+      label: "Analyses",
+      value: stats.totalResumes.toString(),
+      description: "Saved comparison sessions",
+      icon: Briefcase,
+    },
+    {
+      label: "Average match",
+      value: `${stats.averageMatchRate}%`,
+      description: "Across all saved resumes",
+      icon: Gauge,
+    },
+    {
+      label: "Strong matches",
+      value: stats.optimizedCount.toString(),
+      description: "Scores at 75% or higher",
+      icon: Sparkles,
+    },
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[color:var(--page-bg)]">
-      {/* Hero Section */}
-      <section className="relative border-b border-[color:var(--page-line)] bg-gradient-to-b from-[color:var(--brand-soft)] to-transparent px-6 py-12 sm:px-10 sm:py-16">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
-            <div className="space-y-4">
-              <h1 className="font-display text-4xl font-bold tracking-tight text-[color:var(--page-text)] sm:text-5xl">
-                Ready to land your <span className="text-[color:var(--brand)]">next role</span>?
-              </h1>
-              <p className="max-w-xl text-lg text-[color:var(--page-muted)]">
-                Analyze and optimize your resume against any job description in seconds.
-                Start a focus session to see where you stand.
-              </p>
-            </div>
-            <button
-              onClick={onNewAnalysis}
-              className="group relative inline-flex items-center gap-3 overflow-hidden rounded-2xl bg-[color:var(--brand)] px-8 py-4 text-lg font-semibold text-white shadow-[0_20px_40px_rgba(37,99,235,0.25)] transition hover:bg-[color:var(--brand-strong)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.35)] active:scale-[0.98]"
-            >
-              <PlusIcon />
+    <main className="min-h-screen bg-background text-foreground">
+      <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+        <header className="flex flex-col gap-4 border-b pb-6 md:flex-row md:items-end md:justify-between">
+          <div className="flex max-w-2xl flex-col gap-2">
+            <Badge variant="outline">Resume analysis dashboard</Badge>
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Saved analysis sessions</h1>
+            <p className="text-sm text-muted-foreground sm:text-base">
+              Review match scores, resume gaps, and recent optimization work from one focused workspace.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button type="button" variant="outline" onClick={onViewAll}>
+              View all
+            </Button>
+            <Button type="button" onClick={onNewAnalysis}>
+              <Plus data-icon="inline-start" aria-hidden="true" />
               New Analysis
-              <span className="absolute inset-x-0 bottom-0 h-1 bg-white/20 transition-all group-hover:h-2" />
-            </button>
+            </Button>
           </div>
+        </header>
 
-          <div className="mt-16 grid gap-6 sm:grid-cols-3">
-            {displayStats.map((stat) => (
-              <div
-                key={stat.label}
-                className="group relative overflow-hidden rounded-[24px] border border-[color:var(--page-line)] bg-white p-6 shadow-sm transition hover:shadow-md"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color:var(--brand-soft)] text-[color:var(--brand)] transition group-hover:scale-110">
-                    {stat.icon}
+        <div className="grid gap-3 md:grid-cols-3">
+          {displayStats.map((stat) => (
+            <Card key={stat.label}>
+              <CardHeader>
+                <CardTitle>{stat.label}</CardTitle>
+                <CardDescription>{stat.description}</CardDescription>
+                <CardAction>
+                  <div className="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                    <stat.icon aria-hidden="true" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-[color:var(--page-muted)]">{stat.label}</p>
-                    <p className="text-3xl font-bold tracking-tight text-[color:var(--page-text)]">{stat.value}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Recent Activity */}
-      <section className="mx-auto max-w-6xl px-6 py-12 sm:px-10">
-        <div className="mb-8 flex items-center justify-between">
-          <h2 className="text-2xl font-bold tracking-tight text-[color:var(--page-text)]">Recent Analyses</h2>
-          <button
-            type="button"
-            onClick={onViewAll}
-            className="text-sm font-semibold text-[color:var(--brand)] hover:underline"
-          >
-            View all
-          </button>
-        </div>
-
-        {isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex flex-col justify-between overflow-hidden rounded-[24px] border border-[color:var(--page-line)] bg-white p-6">
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div className="h-10 w-10 rounded-xl bg-slate-100 animate-pulse" />
-                    <div className="h-6 w-16 rounded-full bg-slate-100 animate-pulse" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-5 w-3/4 rounded bg-slate-100 animate-pulse" />
-                    <div className="h-4 w-1/2 rounded bg-slate-100 animate-pulse" />
-                  </div>
-                </div>
-                <div className="mt-6 flex items-center justify-between border-t border-[color:var(--page-line)] pt-4">
-                  <div className="h-4 w-24 rounded bg-slate-100 animate-pulse" />
-                  <div className="h-4 w-12 rounded bg-slate-100 animate-pulse" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : error ? (
-          <div className="rounded-[20px] border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">
-            {error}
-          </div>
-        ) : resumes.length === 0 ? (
-          <div className="rounded-[20px] border border-[color:var(--page-line)] bg-white p-6 text-sm text-[color:var(--page-muted)]">
-            No analyses yet. Start your first one to see it here.
-          </div>
-        ) : null}
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {resumes.map((resume) => (
-            <div
-              key={resume.id}
-              className="group flex flex-col justify-between overflow-hidden rounded-[24px] border border-[color:var(--page-line)] bg-white p-6 transition hover:border-[color:var(--brand-strong)] hover:shadow-lg"
-            >
-              <div className="space-y-4">
-                <div className="flex items-start justify-between">
-                  <div className="h-10 w-10 flex shrink-0 items-center justify-center rounded-xl bg-slate-50 text-[color:var(--page-muted)]">
-                    <BriefcaseOutlineIcon />
-                  </div>
-                  <ResumeStatusBadge status={resume.status as any} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-[color:var(--page-text)] group-hover:text-[color:var(--brand)]">
-                    {resume.candidateName || "Untitled Analysis"}
-                  </h3>
-                  <p className="mt-1 text-sm text-[color:var(--page-muted)]">{resume.fileName}</p>
-                </div>
-              </div>
-
-              <div className="mt-6 flex items-center justify-between border-t border-[color:var(--page-line)] pt-4">
-                <div className="flex items-center gap-2 text-xs text-[color:var(--page-muted)]">
-                  <ClockIcon />
-                  {dateFormatter.format(new Date(resume.uploadedAt))}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onOpenAnalysis(resume.id)}
-                  className="flex items-center gap-2 text-sm font-bold text-[color:var(--page-text)] opacity-0 transition group-hover:opacity-100"
-                >
-                  Open
-                  <ArrowRightIcon />
-                </button>
-              </div>
-            </div>
+                </CardAction>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-semibold tracking-tight">{stat.value}</p>
+              </CardContent>
+            </Card>
           ))}
         </div>
+
+        {error ? (
+          <Alert variant="destructive">
+            <AlertCircle aria-hidden="true" />
+            <AlertTitle>Dashboard unavailable</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        <section className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight">Recent analyses</h2>
+              <p className="text-sm text-muted-foreground">
+                Open an existing analysis to continue editing or export the resume.
+              </p>
+            </div>
+            <Badge variant="secondary">{resumes.length} total</Badge>
+          </div>
+
+          {isLoading ? <DashboardSkeleton /> : null}
+
+          {!isLoading && !error && resumes.length === 0 ? (
+            <Empty className="min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Inbox aria-hidden="true" />
+                </EmptyMedia>
+                <EmptyTitle>No analyses yet</EmptyTitle>
+                <EmptyDescription>
+                  Start a resume analysis to see saved sessions, match scores, and keyword gaps here.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button type="button" onClick={onNewAnalysis}>
+                  <Plus data-icon="inline-start" aria-hidden="true" />
+                  New Analysis
+                </Button>
+              </EmptyContent>
+            </Empty>
+          ) : null}
+
+          {!isLoading && resumes.length > 0 ? (
+            <>
+              <Card className="hidden md:flex">
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Candidate</TableHead>
+                        <TableHead>Target role</TableHead>
+                        <TableHead>Match</TableHead>
+                        <TableHead>Gaps</TableHead>
+                        <TableHead>Updated</TableHead>
+                        <TableHead className="text-right">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {resumes.map((resume) => (
+                        <TableRow key={resume.id}>
+                          <TableCell>
+                            <div className="flex min-w-0 items-center gap-3">
+                              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                                <FileText aria-hidden="true" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="truncate font-medium">{resume.candidateName || "Untitled Analysis"}</p>
+                                <p className="truncate text-muted-foreground">{resume.fileName}</p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-56 truncate">{resume.targetRole || "Target role not set"}</TableCell>
+                          <TableCell>
+                            <div className="flex min-w-32 items-center gap-3">
+                              <Progress value={resume.score} aria-label={`${resume.score}% match rate`} />
+                              <Badge variant={getScoreVariant(resume.score)}>{resume.score}%</Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">{resume.missingKeywordCount} missing</Badge>
+                              <Badge variant="secondary">{resume.suggestionCount} suggestions</Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell>{formatDate(resume.uploadedAt)}</TableCell>
+                          <TableCell>
+                            <div className="flex justify-end">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onOpenAnalysis(resume.id)}
+                              >
+                                Open
+                                <ArrowUpRight data-icon="inline-end" aria-hidden="true" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+                <Separator />
+                <CardFooter className="justify-between gap-3">
+                  <p className="text-sm text-muted-foreground">Status reflects the latest saved analysis result.</p>
+                  <ResumeStatusBadge status="analyzed" />
+                </CardFooter>
+              </Card>
+
+              <div className="grid gap-3 md:hidden">
+                {resumes.map((resume) => (
+                  <AnalysisMobileCard key={resume.id} resume={resume} onOpenAnalysis={onOpenAnalysis} />
+                ))}
+              </div>
+            </>
+          ) : null}
+        </section>
       </section>
-    </div>
+    </main>
   );
 }
