@@ -1,11 +1,11 @@
+import type React from "react";
 import type { ResumeSummary } from "../model/resume";
+import { Badge } from "@/components/ui/badge";
 
-const statusClasses: Record<ResumeSummary["status"], string> = {
-  uploaded: "border-white/10 bg-white/[0.04] text-[color:var(--app-text)]",
-  processing:
-    "border-[rgba(217,255,181,0.22)] bg-[rgba(217,255,181,0.08)] text-[color:var(--app-accent-strong)]",
-  analyzed:
-    "border-[rgba(152,229,195,0.3)] bg-[rgba(152,229,195,0.1)] text-[color:var(--app-accent)]",
+const statusVariant: Record<ResumeSummary["status"], React.ComponentProps<typeof Badge>["variant"]> = {
+  uploaded: "outline",
+  processing: "secondary",
+  analyzed: "default",
 };
 
 export function ResumeStatusBadge({ status }: { status: ResumeSummary["status"] }) {
@@ -15,11 +15,5 @@ export function ResumeStatusBadge({ status }: { status: ResumeSummary["status"] 
     analyzed: "Analyzed",
   } satisfies Record<ResumeSummary["status"], string>;
 
-  return (
-    <span
-      className={`rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] ${statusClasses[status]}`}
-    >
-      {label[status]}
-    </span>
-  );
+  return <Badge variant={statusVariant[status]}>{label[status]}</Badge>;
 }
