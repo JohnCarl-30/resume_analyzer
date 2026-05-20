@@ -144,7 +144,7 @@ function AnalysisMobileCard({
     <Card>
       <CardHeader>
         <div className="flex min-w-0 items-start gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
             <FileText aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1">
@@ -216,7 +216,7 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis, onViewAll }: Dash
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
         <header className="flex flex-col gap-4 border-b pb-6 md:flex-row md:items-end md:justify-between">
           <div className="flex max-w-2xl flex-col gap-2">
-            <Badge variant="outline">Resume analysis dashboard</Badge>
+            <Badge variant="secondary">Resume analysis dashboard</Badge>
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Saved analysis sessions</h1>
             <p className="text-sm text-muted-foreground sm:text-base">
               Review match scores, resume gaps, and recent optimization work from one focused workspace.
@@ -240,7 +240,7 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis, onViewAll }: Dash
                 <CardTitle>{stat.label}</CardTitle>
                 <CardDescription>{stat.description}</CardDescription>
                 <CardAction>
-                  <div className="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  <div className="flex size-9 items-center justify-center rounded-lg bg-accent text-accent-foreground">
                     <stat.icon aria-hidden="true" />
                   </div>
                 </CardAction>
@@ -313,7 +313,7 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis, onViewAll }: Dash
                         <TableRow key={resume.id}>
                           <TableCell>
                             <div className="flex min-w-0 items-center gap-3">
-                              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
                                 <FileText aria-hidden="true" />
                               </div>
                               <div className="min-w-0">
