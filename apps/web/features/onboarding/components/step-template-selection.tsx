@@ -1,7 +1,20 @@
 import React from "react";
+import { ArrowRight, CheckCircle2, FileCheck2, SearchCheck, Sparkles } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
 import { sampleTemplates, type ResumeTemplate } from "../../templates/model/template";
 import { TemplateRealPreview } from "../../templates/components/template-preview";
-import { ArrowRightIcon } from "./wizard-icons";
 
 interface StepTemplateSelectionProps {
   selectedTemplateId: ResumeTemplate["id"];
@@ -26,179 +39,193 @@ export function StepTemplateSelection({
   isSubmitting = false,
   errorMessage,
 }: StepTemplateSelectionProps) {
+  const selectedTemplate = sampleTemplates.find((template) => template.id === selectedTemplateId);
+  const atsChecks = [
+    "Uses familiar section names.",
+    "Keeps contact details as readable text.",
+    "Avoids graphics that resume scanners may miss.",
+    "Checks job keywords before the editor opens.",
+  ];
+
   return (
-    <section key="step-3" className="section-reveal flex flex-1 flex-col px-5 py-8 sm:px-8 lg:px-10">
-      <div className="w-full">
-        <div className="space-y-3 text-left sm:text-center">
-          <div className="sm:flex sm:justify-center">
-            <span className="step-pill">STEP 4 OF 5</span>
-          </div>
-          <h1 className="font-display text-4xl font-semibold tracking-tight text-[color:var(--page-text)]">
-            Select a Template
+    <section className="section-reveal flex flex-1 flex-col bg-background px-4 py-6 sm:px-8 lg:px-10">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6">
+        <div className="flex flex-col gap-3 text-left sm:items-center sm:text-center">
+          <Badge variant="secondary">STEP 4 OF 5</Badge>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
+            Pick a scanner-friendly layout
           </h1>
-          <p className="max-w-[42rem] text-sm leading-6 text-[color:var(--page-muted)] sm:mx-auto">
-            Choose from a smaller set of finished layouts so the preview and final resume
-            view stay consistent.
+          <p className="max-w-2xl text-base leading-7 text-muted-foreground">
+            Some companies use resume scanners. This layout keeps your resume easy for scanners and people to read.
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 xl:grid-cols-[minmax(0,1fr)_19rem]">
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        <Alert>
+          <SearchCheck aria-hidden="true" />
+          <AlertTitle>Works with company resume scanners</AlertTitle>
+          <AlertDescription>
+            Applicant Tracking Systems, often called ATS, read resumes before a person sees them. We keep the
+            default layout simple so those systems can understand it.
+          </AlertDescription>
+        </Alert>
+
+        {hasResumeFile ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Use your resume or start fresh?</CardTitle>
+              <CardDescription>Choose whether to check your uploaded resume or begin with sample text.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ToggleGroup
+                type="single"
+                value={useTemplateContent ? "template" : "resume"}
+                onValueChange={(value) => {
+                  if (value === "template") {
+                    setUseTemplateContent(true);
+                  }
+                  if (value === "resume") {
+                    setUseTemplateContent(false);
+                  }
+                }}
+                className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2"
+                variant="outline"
+              >
+                <ToggleGroupItem value="resume" className="h-auto justify-start px-4 py-3 text-left whitespace-normal">
+                  <span className="flex flex-col gap-1">
+                    <span>Use my uploaded resume</span>
+                    <span className="text-xs font-normal text-muted-foreground">Check the resume you added.</span>
+                  </span>
+                </ToggleGroupItem>
+                <ToggleGroupItem value="template" className="h-auto justify-start px-4 py-3 text-left whitespace-normal">
+                  <span className="flex flex-col gap-1">
+                    <span>Start fresh</span>
+                    <span className="text-xs font-normal text-muted-foreground">Use sample resume text first.</span>
+                  </span>
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="grid w-full grid-cols-1 items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {sampleTemplates.map((template) => {
               const isSelected = template.id === selectedTemplateId;
 
               return (
                 <button
-                  key={template.id}
                   type="button"
-                  onClick={() => {
-                    setSelectedTemplateId(template.id);
-                  }}
-                  className={`group relative overflow-hidden rounded-[18px] border bg-white text-left shadow-[0_12px_28px_rgba(59,75,138,0.07)] transition ${
+                  key={template.id}
+                  aria-pressed={isSelected}
+                  onClick={() => setSelectedTemplateId(template.id)}
+                  className={cn(
+                    "block min-w-0 rounded-xl text-left outline-none transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                     isSelected
-                      ? "border-[color:var(--brand)] ring-2 ring-[color:var(--brand-soft)]"
-                      : "border-[color:var(--page-line)] hover:-translate-y-0.5 hover:border-[color:var(--page-line-strong)]"
-                  }`}
+                      ? "ring-2 ring-primary/20"
+                      : "hover:-translate-y-0.5",
+                  )}
                 >
-                  <div className={`h-[13.5rem] border-b border-[color:var(--page-line)] p-4 overflow-hidden ${template.thumbnailClass}`}>
-                    <TemplateRealPreview variantId={template.id} />
-                  </div>
-                  <div className="space-y-2 px-4 py-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-lg font-bold text-[color:var(--page-text)]">
-                            {template.name}
-                          </p>
-                          {template.isPremium && (
-                            <span className="inline-flex rounded-full bg-[color:var(--brand)] px-2 py-0.5 text-[0.6rem] font-black tracking-widest text-white uppercase transform scale-90 origin-left">
-                              PRO
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-1 flex items-center gap-2 text-xs font-medium text-[color:var(--page-muted)]">
-                          <span className={`h-2 w-2 rounded-full ${isSelected ? "bg-[color:var(--brand)]" : "bg-[color:var(--page-line-strong)]"}`} />
-                          {template.atsLabel ?? "ATS-Friendly"}
+                  <Card
+                    className={cn(
+                      "group h-full min-w-0 overflow-hidden transition-all",
+                      isSelected ? "border-primary" : "border-border hover:bg-accent/40",
+                    )}
+                  >
+                    <div className={cn("h-56 overflow-hidden border-b p-4", template.thumbnailClass)}>
+                      <TemplateRealPreview variantId={template.id} />
+                    </div>
+                    <div className="flex flex-col gap-2 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="text-base font-semibold text-foreground">{template.name}</p>
+                        <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+                          {template.atsRecommended ? <Badge variant="secondary">Recommended</Badge> : null}
+                          {template.isPremium ? <Badge>PRO</Badge> : null}
                         </div>
                       </div>
+                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                        {isSelected ? (
+                          <CheckCircle2 aria-hidden="true" className="text-primary" />
+                        ) : (
+                          <span className="size-2 rounded-full bg-border" />
+                        )}
+                        {template.atsLabel ?? "ATS-Friendly"}
+                      </div>
                     </div>
-                  </div>
+                  </Card>
                 </button>
               );
             })}
           </div>
 
-          {hasResumeFile && (
-            <div className="mb-6 rounded-[16px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] p-5">
-              <p className="text-sm font-semibold text-[color:var(--page-text)] mb-3">
-                How would you like to proceed?
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  type="button"
-                  onClick={() => setUseTemplateContent(false)}
-                  className={`flex-1 rounded-[12px] border px-4 py-3 text-left transition ${
-                    !useTemplateContent
-                      ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)] text-[color:var(--brand)]"
-                      : "border-[color:var(--page-line)] text-[color:var(--page-text)] hover:border-[color:var(--page-line-strong)]"
-                  }`}
-                >
-                  <span className="text-sm font-medium">Apply to my resume</span>
-                  <span className="block text-xs opacity-75">Use your uploaded resume content</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUseTemplateContent(true)}
-                  className={`flex-1 rounded-[12px] border px-4 py-3 text-left transition ${
-                    useTemplateContent
-                      ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)] text-[color:var(--brand)]"
-                      : "border-[color:var(--page-line)] text-[color:var(--page-text)] hover:border-[color:var(--page-line-strong)]"
-                  }`}
-                >
-                  <span className="text-sm font-medium">Start fresh</span>
-                  <span className="block text-xs opacity-75">Use template sample content</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          <aside className="rounded-[24px] border border-[color:var(--page-line)] bg-[color:var(--page-bg-strong)] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
-            <p className="text-[0.7rem] font-black uppercase tracking-[0.25em] text-[color:var(--brand)]">
-              Current Selection
-            </p>
-            <div className="mt-6 space-y-8">
-              {(() => {
-                const selectedTemplate = sampleTemplates.find((t) => t.id === selectedTemplateId);
-                if (!selectedTemplate) return null;
-
-                return (
-                  <div className="space-y-6">
-                    <div className={`aspect-[1/1.25] rounded-[20px] border border-[color:var(--page-line)] p-5 shadow-[0_12px_36px_rgba(0,0,0,0.08)] bg-white overflow-hidden ${selectedTemplate.thumbnailClass} transition-all duration-500`}>
+          <aside>
+            <Card>
+              <CardHeader>
+                <Badge variant="secondary">Selected layout</Badge>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-5">
+                {selectedTemplate ? (
+                  <>
+                    <div className={cn("aspect-[1/1.25] overflow-hidden rounded-xl border bg-background p-4", selectedTemplate.thumbnailClass)}>
                       <TemplateRealPreview variantId={selectedTemplate.id} />
                     </div>
-                    <div className="px-1 text-center sm:text-left">
-                      <div className="flex items-center gap-2 mb-1 justify-center sm:justify-start">
-                        <h4 className="text-xl font-bold text-[color:var(--page-text)] tracking-tight">
-                          {selectedTemplate.name}
-                        </h4>
-                        {selectedTemplate.isPremium && (
-                          <span className="rounded-full bg-[color:var(--brand-soft)] px-2 py-0.5 text-[0.6rem] font-bold text-[color:var(--brand)] uppercase">
-                            Premium
-                          </span>
-                        )}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h4 className="text-xl font-semibold tracking-tight text-foreground">{selectedTemplate.name}</h4>
+                        {selectedTemplate.isPremium ? <Badge variant="secondary">Premium</Badge> : null}
                       </div>
-                      <p className="text-sm leading-relaxed text-[color:var(--page-muted)] mb-4">
-                        {selectedTemplate.description}
-                      </p>
-                      <div className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[color:var(--brand)] border border-[color:var(--page-line)] shadow-sm">
-                        <div className="h-1.5 w-1.5 rounded-full bg-[color:var(--brand)] animate-pulse" />
+                      <p className="text-sm leading-6 text-muted-foreground">{selectedTemplate.description}</p>
+                      <Badge variant="outline" className="w-fit">
+                        <Sparkles aria-hidden="true" />
                         {selectedTemplate.atsLabel}
-                      </div>
+                      </Badge>
+                    </div>
+                  </>
+                ) : null}
+                <div className="rounded-lg border border-dashed bg-accent/40 p-4">
+                  <div className="flex items-start gap-3">
+                    <FileCheck2 aria-hidden="true" className="mt-0.5 shrink-0 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Scanner-friendly checklist</p>
+                      <ul className="mt-2 flex flex-col gap-1.5 text-sm leading-6 text-muted-foreground">
+                        {atsChecks.map((item) => (
+                          <li key={item} className="flex gap-2">
+                            <CheckCircle2 aria-hidden="true" className="mt-1 shrink-0 text-primary" />
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
-                );
-              })()}
-              
-              <div className="rounded-[20px] border border-dashed border-[color:var(--page-line-strong)] bg-[color:var(--brand-soft)]/30 p-5">
-                <p className="text-xs font-medium text-[color:var(--page-text)] text-center leading-relaxed italic opacity-80 decoration-[color:var(--brand-soft)]">
-                  &quot;The layout dynamically adapts to your content while maintaining high-fidelity design tokens.&quot;
-                </p>
-              </div>
-            </div>
+                </div>
+              </CardContent>
+            </Card>
           </aside>
         </div>
       </div>
 
-      <div className="mt-auto border-t border-[color:var(--page-line)] pt-6">
-        <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
+      <Card className="mx-auto mt-6 w-full max-w-6xl">
+        <CardFooter className="flex-col gap-3 sm:flex-row sm:justify-end">
           {errorMessage ? (
-            <p className="mr-auto text-sm text-[color:#b42318]">{errorMessage}</p>
+            <Alert variant="destructive" className="mr-auto">
+              <AlertTitle>Resume check failed</AlertTitle>
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
           ) : (
-            <p className="mr-auto text-sm text-[color:var(--page-muted)]">
+            <p className="mr-auto text-sm leading-6 text-muted-foreground">
               {useTemplateContent
-                ? "Using template sample content. The analysis will run against sample data."
-                : "The analysis now runs through the Express backend before opening the workspace."}
+                ? "Using sample resume text. The resume check will run against sample data."
+                : "We'll check for missing job keywords, familiar section names, and stronger bullet points."}
             </p>
           )}
-          <button
-            type="button"
-            onClick={onSkipTemplate}
-            disabled={isSubmitting}
-            className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-white px-6 py-3 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg-strong)] disabled:cursor-wait disabled:opacity-50"
-          >
-            Skip Template & View Analysis
-          </button>
-          <button
-            type="button"
-            onClick={onNext}
-            disabled={isSubmitting}
-            className="inline-flex items-center justify-center gap-2 rounded-[12px] bg-[color:var(--brand)] px-8 py-3 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(79,107,255,0.22)] transition hover:bg-[color:var(--brand-strong)] disabled:cursor-wait disabled:opacity-70"
-          >
-            {isSubmitting ? "Generating Analysis..." : "Generate Analysis"}
-            <ArrowRightIcon />
-          </button>
-        </div>
-      </div>
+          <Button type="button" variant="outline" onClick={onSkipTemplate} disabled={isSubmitting}>
+            Use Default Layout
+          </Button>
+          <Button type="button" onClick={onNext} disabled={isSubmitting}>
+            {isSubmitting ? "Checking Resume..." : "Check My Resume"}
+            <ArrowRight data-icon="inline-end" aria-hidden="true" />
+          </Button>
+        </CardFooter>
+      </Card>
     </section>
   );
 }
