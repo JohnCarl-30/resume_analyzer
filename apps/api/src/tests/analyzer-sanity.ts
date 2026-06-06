@@ -1,6 +1,9 @@
+import assert from "node:assert/strict";
+
 import { analyzeKeywords } from "../analyzers/keyword.analyzer.js";
 import { analyzeWritingQuality } from "../analyzers/writing.analyzer.js";
 import { analyzeImpactMetrics } from "../analyzers/impact.analyzer.js";
+import { analyzeAtsAlignment } from "../analyzers/ats.analyzer.js";
 import { computeScore } from "../scoring/score.js";
 
 const mockResumeText = `
@@ -29,7 +32,26 @@ async function runSanityCheck() {
   const impactResult = analyzeImpactMetrics(mockResumeText);
   console.log("Impact Result:", impactResult);
 
-  // 4. Score Computation
+  // 4. ATS role/JD alignment analyzer
+  const atsResult = analyzeAtsAlignment({
+    resumeText: mockResumeText,
+    targetRole: "Frontend Engineer",
+    jdKeywords: mockJdKeywords,
+    matchedKeywords: keywordResult.matchedKeywords,
+    missingKeywords: keywordResult.missingKeywords,
+    requiredSkills: mockRequiredSkills,
+  });
+  console.log("ATS Result:", atsResult);
+  assert.ok(
+    atsResult.some((suggestion) => suggestion.id === "ats-target-role-alignment"),
+    "Expected target-role ATS suggestion when role title is missing from the resume.",
+  );
+  assert.ok(
+    atsResult.some((suggestion) => suggestion.detail.includes("Frontend Engineer")),
+    "Expected ATS suggestions to mention the target role.",
+  );
+
+  // 5. Score Computation
   const scoring = computeScore({
     keywordScore: keywordResult.keywordScore,
     requiredSkillsMatched: 3, // Mocked for test
