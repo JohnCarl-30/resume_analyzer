@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ExperienceEntry } from "../../model/resume-form";
+import { SectionEditorHeader } from "./section-editor-header";
 
 interface ExperienceEditorProps {
   entries: ExperienceEntry[];
@@ -45,24 +46,7 @@ export function ExperienceEditor({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-3 border-b border-[color:var(--page-line)] px-6 py-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="p-1 rounded-full text-[color:var(--page-muted)] hover:bg-[color:var(--page-bg)] hover:text-[color:var(--page-text)] transition"
-        >
-          <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
-            <path
-              d="M12.5 15L7.5 10L12.5 5"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-        <h3 className="text-xl font-bold text-[color:var(--page-text)] tracking-tight">Work Experience</h3>
-      </div>
+      <SectionEditorHeader title="Work Experience" onBack={onBack} />
 
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
         {entries.map((entry, index) => (
@@ -149,6 +133,7 @@ export function ExperienceEditor({
                       type="button"
                       onClick={() => onRemoveBullet(entry.id, bulletIndex)}
                       className="mt-2 text-rose-500 hover:text-rose-600 transition"
+                      aria-label="Remove achievement bullet"
                     >
                       <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-4 w-4">
                         <path d="M5.75 6.5h8.5M8 6.5V5.2c0-.66.54-1.2 1.2-1.2h1.6c.66 0 1.2.54 1.2 1.2v1.3M7.1 8.25v6M10 8.25v6M12.9 8.25v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -186,6 +171,7 @@ export function ExperienceEditor({
                       }
                     }}
                     className="mt-2 text-[color:var(--brand)] hover:text-[color:var(--brand-strong)] transition"
+                    aria-label="Add achievement bullet"
                   >
                     <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
                       <path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
