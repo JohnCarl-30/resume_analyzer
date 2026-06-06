@@ -60,12 +60,8 @@ describe(
               );
               expect(expectedTemplate).toBeDefined();
 
-              // Assert the selected card has the ring/border highlight class.
-              // The selected button has `ring-2` applied; unselected buttons do not.
-              const allCards = iterContainer.querySelectorAll("button[type='button']");
-              const selectedCard = Array.from(allCards).find((btn) =>
-                btn.className.includes("ring-2"),
-              );
+              // Assert the selected template button is exposed as pressed.
+              const selectedCard = iterContainer.querySelector("button[aria-pressed='true']");
               expect(selectedCard).toBeTruthy();
 
               // The selected card should contain the template's name
