@@ -41,7 +41,7 @@ describe("StepJobDescription unit tests", () => {
    */
   it("Continue button is disabled when job description is empty", () => {
     renderStep("");
-    const btn = screen.getByRole("button", { name: /continue to resume upload/i });
+    const btn = screen.getByRole("button", { name: /next: add resume/i });
     expect(btn).toBeDisabled();
   });
 
@@ -74,7 +74,7 @@ describe("StepJobDescription unit tests", () => {
    */
   it("Continue button is enabled at exactly 30 characters", () => {
     renderStep("a".repeat(30));
-    const btn = screen.getByRole("button", { name: /continue to resume upload/i });
+    const btn = screen.getByRole("button", { name: /next: add resume/i });
     expect(btn).not.toBeDisabled();
   });
 
