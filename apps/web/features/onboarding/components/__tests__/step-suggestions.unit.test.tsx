@@ -60,7 +60,7 @@ describe("StepSuggestions unit tests", () => {
     renderStep(makeAnalysisResult({ suggestions: [] }));
     expect(
       screen.getByText(
-        "No suggestions — your resume looks well-matched to this role.",
+        "No suggestions — your resume already looks well-matched to this job.",
       ),
     ).toBeTruthy();
   });
@@ -81,7 +81,7 @@ describe("StepSuggestions unit tests", () => {
     expect(totals.length).toBeGreaterThan(0);
   });
 
-  it("displays critical suggestion count in summary bar", () => {
+  it("displays important suggestion count in summary bar", () => {
     const result = makeAnalysisResult({
       suggestions: [
         { id: "1", title: "Add metrics", detail: "Use numbers", severity: "high", category: "impact" },
@@ -89,7 +89,7 @@ describe("StepSuggestions unit tests", () => {
       ],
     });
     renderStep(result);
-    // Critical count = 1 (only the "high" severity one)
+    // Important count = 1 (only the "high" severity one)
     const ones = screen.getAllByText("1");
     expect(ones.length).toBeGreaterThan(0);
   });
@@ -136,12 +136,12 @@ describe("StepSuggestions unit tests", () => {
   });
 
   /**
-   * Enter Editor button calls onEnterEditor
+   * Open Resume Editor button calls onEnterEditor
    */
-  it("Enter Editor button calls onEnterEditor", async () => {
+  it("Open Resume Editor button calls onEnterEditor", async () => {
     const user = userEvent.setup();
     const { onEnterEditor } = renderStep();
-    await user.click(screen.getByRole("button", { name: /enter editor/i }));
+    await user.click(screen.getByRole("button", { name: /open resume editor/i }));
     expect(onEnterEditor).toHaveBeenCalledTimes(1);
   });
 });
