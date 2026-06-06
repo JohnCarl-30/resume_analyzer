@@ -19,6 +19,9 @@ const stopWords = new Set([
   "good", "great", "well", "also", "including", "experience", "role",
   "team", "ability", "skills", "knowledge", "understanding", "using",
   "use", "used", "across", "within", "while", "able", "own",
+  "need", "needs", "needed", "candidate", "candidates", "requirement",
+  "requirements", "responsibility", "responsibilities", "engineer",
+  "developer", "manager", "analyst", "specialist",
 ]);
 
 /**
@@ -37,6 +40,11 @@ export function extractJdKeywords(jobDescription: string): string[] {
   const tokens = normalized
     .replace(/[^a-z0-9./#+ ]/g, " ")
     .split(/\s+/)
+    .map((token) =>
+      token
+        .replace(/^[^a-z0-9+#]+|[^a-z0-9+#]+$/g, "")
+        .replace(/\.$/, ""),
+    )
     .filter((token) => token.length >= 3 && !stopWords.has(token));
 
   const combined = [...multiWordPatterns.map((t) => t.toLowerCase()), ...tokens];
@@ -84,7 +92,7 @@ export function analyzeKeywords(
     }
   }
 
-  // Normalize score relative to how many JD keywords exist
+  // Normalize score relative to how many job post keywords exist.
   const maxPossible = jdKeywords.length * 11;
   const normalized = maxPossible > 0 ? (keywordScore / maxPossible) * 100 : 0;
 
