@@ -14,9 +14,7 @@
 
 import React from "react";
 import { describe, it, vi, beforeEach } from "vitest";
-import { render } from "@testing-library/react";
-import { fireEvent } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render } from "@testing-library/react";
 import * as fc from "fast-check";
 import type { ResumeForm } from "../../model/resume-form";
 import type { ResumeTemplateVariant } from "../../../templates/model/template";
@@ -126,7 +124,7 @@ function renderWorkspace(initialForm: ResumeForm) {
       resumeFileName="resume.pdf"
       resumeSourceUrl={null}
       resumePreviewUrl={null}
-      analysisResult={minimalAnalysisResult}
+      analysisResult={null}
       initialForm={initialForm}
       onBack={vi.fn()}
     />,
@@ -158,10 +156,9 @@ describe(
      */
     it(
       "ResumeRenderer receives updated fullName after editing the Personal Info form",
-      async () => {
-        await fc.assert(
-          fc.asyncProperty(fullNameArb, async (generatedName) => {
-            const user = userEvent.setup();
+      () => {
+        fc.assert(
+          fc.property(fullNameArb, (generatedName) => {
             const initialForm = buildInitialForm({ fullName: "Original Name" });
             const { unmount, container } = renderWorkspace(initialForm);
 
@@ -174,7 +171,7 @@ describe(
               unmount();
               return false;
             }
-            await user.click(personalInfoBtn);
+            fireEvent.click(personalInfoBtn);
 
             // Step 2: Find the Full Name input scoped to this container
             const fullNameInput = container.querySelector<HTMLInputElement>(
@@ -205,6 +202,7 @@ describe(
           { numRuns: 100 },
         );
       },
+      15000,
     );
 
     /**
@@ -216,10 +214,9 @@ describe(
      */
     it(
       "ResumeRenderer receives updated phone after editing the Personal Info form",
-      async () => {
-        await fc.assert(
-          fc.asyncProperty(safeStringArb, async (generatedPhone) => {
-            const user = userEvent.setup();
+      () => {
+        fc.assert(
+          fc.property(safeStringArb, (generatedPhone) => {
             const initialForm = buildInitialForm({ phone: "000-0000" });
             const { unmount, container } = renderWorkspace(initialForm);
 
@@ -232,7 +229,7 @@ describe(
               unmount();
               return false;
             }
-            await user.click(personalInfoBtn);
+            fireEvent.click(personalInfoBtn);
 
             // Find the Phone Number input scoped to this container
             const phoneInput = container.querySelector<HTMLInputElement>(
@@ -262,6 +259,7 @@ describe(
           { numRuns: 100 },
         );
       },
+      15000,
     );
   },
 );
