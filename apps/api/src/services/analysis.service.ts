@@ -16,6 +16,7 @@ import { postgresAnalysisRepository } from "../repositories/postgres-analysis.re
 import { analyzeKeywords } from "../analyzers/keyword.analyzer.js";
 import { analyzeWritingQuality } from "../analyzers/writing.analyzer.js";
 import { analyzeImpactMetrics } from "../analyzers/impact.analyzer.js";
+import { analyzeAtsAlignment } from "../analyzers/ats.analyzer.js";
 
 // Vertex AI-powered JD extraction
 import { jdExtractionService } from "./jd-extraction.service.js";
@@ -59,7 +60,20 @@ export const analysisService = {
     ).length;
 
     // Step 4: Collect all suggestions
+    const atsSuggestions = analyzeAtsAlignment({
+      resumeText: payload.resumeText,
+      targetRole: jdExtraction.targetRoleTitle || payload.targetRole,
+      jdKeywords: jdExtraction.keywords.length > 0 ? jdExtraction.keywords : [
+        ...keywordResult.matchedKeywords,
+        ...keywordResult.missingKeywords,
+      ],
+      matchedKeywords: keywordResult.matchedKeywords,
+      missingKeywords: keywordResult.missingKeywords,
+      requiredSkills: jdExtraction.requiredSkills,
+    });
+
     const allSuggestions: AnalysisSuggestion[] = [
+      ...atsSuggestions,
       ...buildKeywordSuggestions(keywordResult.missingKeywords, jdExtraction.requiredSkills),
       ...writingResult.suggestions,
       ...impactResult.suggestions,
@@ -218,7 +232,7 @@ export const analysisService = {
 
 /**
  * Builds keyword suggestions, distinguishing between missing required skills
- * (high severity) and missing general JD keywords (medium severity).
+ * (high severity) and missing general job post keywords (medium severity).
  */
 function buildKeywordSuggestions(
   missingKeywords: string[],
@@ -240,7 +254,7 @@ function buildKeywordSuggestions(
     suggestions.push({
       id: "missing-required-skills",
       title: "Missing required skills",
-      detail: `These skills are explicitly required in the JD but absent from your resume: ${missingRequired.slice(0, 5).join(", ")}${missingRequired.length > 5 ? ` (+${missingRequired.length - 5} more)` : ""}.`,
+      detail: `These skills are listed as required in the job post but are missing from your resume: ${missingRequired.slice(0, 5).join(", ")}${missingRequired.length > 5 ? ` (+${missingRequired.length - 5} more)` : ""}.`,
       severity: "high",
       category: "keywords",
     });
@@ -249,7 +263,7 @@ function buildKeywordSuggestions(
   if (missingOptional.length > 0) {
     suggestions.push({
       id: "missing-keywords",
-      title: "Add relevant JD keywords",
+      title: "Add relevant job post words",
       detail: `Consider naturally incorporating: ${missingOptional.slice(0, 4).join(", ")} to improve alignment with the role.`,
       severity: "medium",
       category: "keywords",
