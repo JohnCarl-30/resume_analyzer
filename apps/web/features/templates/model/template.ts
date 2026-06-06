@@ -17,6 +17,7 @@ export interface ResumeTemplate {
   description: string;
   thumbnailClass: string;
   atsLabel?: string;
+  atsRecommended?: boolean;
   previewVariant: ResumeTemplateVariant;
   isPremium?: boolean;
 }
@@ -26,9 +27,10 @@ export const sampleTemplates: ResumeTemplate[] = [
     id: "minimalist-grid",
     name: "Minimalist Grid",
     description:
-      "Balanced two-column structure for general ATS-safe applications. Best when you want a versatile layout with fast scanning.",
+      "Clean section structure with standard headings, readable spacing, and no graphics that can confuse resume scanners.",
     thumbnailClass: "bg-gradient-to-br from-zinc-50 to-zinc-200",
-    atsLabel: "ATS-Friendly",
+    atsLabel: "ATS Default",
+    atsRecommended: true,
     previewVariant: "minimalist-grid",
   },
   {
