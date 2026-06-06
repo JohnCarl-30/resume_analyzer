@@ -1,16 +1,27 @@
 import React, { useEffect, useState } from "react";
 import type { ResumeAnalysisResult } from "../model/resume-analysis";
-import type { ResumeForm } from "../model/resume-form";
+import { emptyResumeForm, type ResumeForm } from "../model/resume-form";
 import { sampleTemplates, type ResumeTemplateVariant } from "../../templates/model/template";
 import { TemplateCard } from "../../templates/components/template-card";
 import { useResumeEditor } from "../view-models/use-resume-editor";
+import { getCreateResumeGuideState, type BuilderGuideAction } from "../view-models/create-resume-guide";
+import { getAnalysisNextStepsState, type AnalysisNextStepAction } from "../view-models/analysis-next-steps";
 import { PersonalInfoEditor } from "../components/editors/personal-info-editor";
 import { ExperienceEditor } from "../components/editors/experience-editor";
 import { EducationEditor } from "../components/editors/education-editor";
 import { LeadershipEditor } from "../components/editors/leadership-editor";
 import { AwardsEditor } from "../components/editors/awards-editor";
 import { ResumeRenderer } from "../components/resume-renderer";
+import { CreateResumeGuide } from "../components/workspace/create-resume-guide";
+import { AnalysisNextSteps } from "../components/workspace/analysis-next-steps";
 import { apiClient } from "../../../lib/api-instance";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 import {
   ArrowLeftIcon,
@@ -54,11 +65,13 @@ interface AnalysisWorkspaceProps {
   analysisResult: ResumeAnalysisResult | null;
   initialForm?: ResumeForm;
   createMode?: boolean;
+  autosaveKey?: string | null;
   onBack: () => void;
   onTemplateChange?: (id: ResumeTemplateVariant) => void;
   onAnalysisUpdate?: (result: ResumeAnalysisResult) => void;
   onJobDescriptionChange?: (jd: string) => void;
   onRename?: (name: string) => void;
+  onResetDraft?: () => void;
 }
 
 const workspaceSections = [
@@ -70,6 +83,9 @@ const workspaceSections = [
 ] as const;
 
 type ContentModalView = "content" | "project" | "templates" | "tailor" | null;
+type MobileCreateView = "editor" | "preview";
+type AwardsEditorMode = "awards" | "credentials" | "publications";
+type LeadershipEditorMode = "leadership" | "research";
 
 type ContentOptionId =
   | "summary"
@@ -130,7 +146,7 @@ const addContentOptions: ContentOption[] = [
   {
     id: "certifications",
     title: "Certifications",
-    description: "Professional certifications and licenses",
+    description: "Professional credentials, certifications, and licenses",
     icon: "badge",
   },
   {
@@ -158,12 +174,83 @@ const emptyProjectDraft: ProjectDraft = {
   bullets: [],
 };
 
+const awardsEditorCopy: Record<
+  AwardsEditorMode,
+  { title: string; addLabel: string; placeholder: string }
+> = {
+  awards: {
+    title: "Awards & Honors",
+    addLabel: "Add Award",
+    placeholder: "e.g. Dean's Lister - 2023",
+  },
+  credentials: {
+    title: "Credentials & Certifications",
+    addLabel: "Add Credential",
+    placeholder: "e.g. AWS Certified Cloud Practitioner - Amazon, 2025",
+  },
+  publications: {
+    title: "Publications",
+    addLabel: "Add Publication",
+    placeholder: "e.g. Article Title - Publication, 2025",
+  },
+};
+
+const leadershipEditorCopy: Record<
+  LeadershipEditorMode,
+  {
+    title: string;
+    addLabel: string;
+    roleLabel: string;
+    rolePlaceholder: string;
+    organizationLabel: string;
+    organizationPlaceholder: string;
+    locationLabel: string;
+    locationPlaceholder: string;
+    dateLabel: string;
+    datePlaceholder: string;
+  }
+> = {
+  leadership: {
+    title: "Leadership",
+    addLabel: "Add another Entry",
+    roleLabel: "Leadership Role",
+    rolePlaceholder: "President",
+    organizationLabel: "Organization",
+    organizationPlaceholder: "Student Council",
+    locationLabel: "Location",
+    locationPlaceholder: "City, Province",
+    dateLabel: "Date Range",
+    datePlaceholder: "Jan 2023 — Present",
+  },
+  research: {
+    title: "Research",
+    addLabel: "Add Research Entry",
+    roleLabel: "Research Title",
+    rolePlaceholder: "Undergraduate Researcher",
+    organizationLabel: "Institution / Lab",
+    organizationPlaceholder: "Human-Computer Interaction Lab",
+    locationLabel: "Location",
+    locationPlaceholder: "City, Country",
+    dateLabel: "Date Range",
+    datePlaceholder: "2024 — Present",
+  },
+};
+
 function humanizeFileName(fileName: string) {
   return fileName
     .replace(/\.[^.]+$/, "")
     .replace(/[_-]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function slugifyFileName(value: string) {
+  const slug = humanizeFileName(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return slug || "resume";
 }
 
 function relativeTimeLabel(timestamp?: string) {
@@ -311,11 +398,13 @@ export function AnalysisWorkspace({
   analysisResult,
   initialForm,
   createMode = false,
+  autosaveKey = null,
   onBack,
   onTemplateChange,
   onAnalysisUpdate,
   onJobDescriptionChange,
   onRename,
+  onResetDraft,
 }: AnalysisWorkspaceProps) {
   const {
     form,
@@ -342,23 +431,29 @@ export function AnalysisWorkspace({
     redo,
     canUndo,
     canRedo,
-  } = useResumeEditor(initialForm);
+    resetForm,
+  } = useResumeEditor(initialForm, { storageKey: autosaveKey, autosave: Boolean(autosaveKey) });
   const [activeTemplateId, setActiveTemplateId] = useState(selectedTemplateId);
   const [pendingModalClose, setPendingModalClose] = useState(false);
   const [modalView, setModalView] = useState<ContentModalView>(null);
   const [projectDraft, setProjectDraft] = useState<ProjectDraft>(emptyProjectDraft);
   const [projectFormError, setProjectFormError] = useState("");
+  const [awardsEditorMode, setAwardsEditorMode] = useState<AwardsEditorMode>("awards");
+  const [leadershipEditorMode, setLeadershipEditorMode] = useState<LeadershipEditorMode>("leadership");
   const [previewZoom, setPreviewZoom] = useState(100);
   const [isUpdatingAnalysis, setIsUpdatingAnalysis] = useState(false);
   const [newJobDescription, setNewJobDescription] = useState(analysisResult?.jobDescription ?? "");
   const [updateError, setUpdateError] = useState("");
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
-  const [showAnnotations, setShowAnnotations] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(resumeFileName);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [saveFlash, setSaveFlash] = useState(false);
+  const [draftStatus, setDraftStatus] = useState<"saved" | "saving" | "unsaved">(
+    createMode && autosaveKey ? "saved" : "unsaved",
+  );
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mobileCreateView, setMobileCreateView] = useState<MobileCreateView>("editor");
   const [mounted, setMounted] = useState(false);
   const [previewMode, setPreviewMode] = useState<"uploaded" | "structured" | "parsed" | "empty">(
     resumePreviewUrl
@@ -375,10 +470,28 @@ export function AnalysisWorkspace({
     form.personalInfo.fullName.trim() ||
     analysisResult?.extractedProfile?.fullName.trim() ||
     humanizeFileName(resumeFileName) ||
-    "Uploaded Resume";
+    (createMode ? "New Resume" : "Uploaded Resume");
   const hasStructuredPreview = previewMode === "structured";
   const canZoomDocument = previewMode !== "uploaded";
+  const hasSourcePreviewChoice = Boolean(resumePreviewUrl || analysisResult?.parsedResumeText);
   const lastSavedLabel = relativeTimeLabel(analysisResult?.generatedAt);
+  const defaultTemplateId = sampleTemplates[0]?.id ?? "minimalist-grid";
+  const selectedTemplate = sampleTemplates.find((template) => template.id === activeTemplateId) ?? sampleTemplates[0];
+  const createResumeGuide = getCreateResumeGuideState(form, {
+    hasSelectedTemplate: Boolean(selectedTemplate),
+  });
+  const analysisNextSteps =
+    !createMode && analysisResult ? getAnalysisNextStepsState(form, analysisResult, targetRole) : null;
+  const draftStatusLabel =
+    createMode && autosaveKey
+      ? draftStatus === "saving"
+        ? "Saving..."
+        : draftStatus === "unsaved"
+          ? "Unsaved"
+          : "Saved locally"
+      : saveFlash
+        ? "Saved"
+        : lastSavedLabel;
   const editorSections = [
     ...workspaceSections,
     ...(form.projects.length > 0
@@ -428,12 +541,22 @@ export function AnalysisWorkspace({
   }, []);
 
   useEffect(() => {
+    if (createMode && autosaveKey) {
+      setDraftStatus("saving");
+      const timeout = setTimeout(() => {
+        setDraftStatus("saved");
+        setSaveFlash(true);
+        setTimeout(() => setSaveFlash(false), 1200);
+      }, 900);
+      return () => clearTimeout(timeout);
+    }
+
     const timeout = setTimeout(() => {
       setSaveFlash(true);
       setTimeout(() => setSaveFlash(false), 1200);
     }, 800);
     return () => clearTimeout(timeout);
-  }, [form]);
+  }, [autosaveKey, createMode, form]);
 
   useEffect(() => {
     if (!resumePreviewUrl && previewMode === "uploaded") {
@@ -562,7 +685,45 @@ export function AnalysisWorkspace({
       openProjectModal();
       return;
     }
+    if (sectionId === "leadership") {
+      setLeadershipEditorMode("leadership");
+    }
+    if (sectionId === "awards") {
+      setAwardsEditorMode("awards");
+    }
     setActiveSectionId(sectionId);
+  }
+
+  function handleSectionAdd(sectionId: string) {
+    if (sectionId === "projects") {
+      openProjectModal();
+      return;
+    }
+    if (sectionId === "personal") {
+      setActiveSectionId("personal");
+      return;
+    }
+    if (sectionId === "education") {
+      addEducation();
+      setActiveSectionId("education");
+      return;
+    }
+    if (sectionId === "experience") {
+      addExperience();
+      setActiveSectionId("experience");
+      return;
+    }
+    if (sectionId === "leadership") {
+      setLeadershipEditorMode("leadership");
+      addLeadership();
+      setActiveSectionId("leadership");
+      return;
+    }
+    if (sectionId === "awards") {
+      setAwardsEditorMode("awards");
+      addAward();
+      setActiveSectionId("awards");
+    }
   }
 
   function handleAddContentOption(optionId: ContentOptionId) {
@@ -581,16 +742,101 @@ export function AnalysisWorkspace({
       return;
     }
     if (optionId === "research") {
+      setLeadershipEditorMode("research");
       addLeadership();
       setActiveSectionId("leadership");
       closeModal();
       return;
     }
-    if (optionId === "certifications" || optionId === "publications") {
+    if (optionId === "certifications") {
+      setAwardsEditorMode("credentials");
+      addAward();
+      setActiveSectionId("awards");
+      closeModal();
+      return;
+    }
+    if (optionId === "publications") {
+      setAwardsEditorMode("publications");
       addAward();
       setActiveSectionId("awards");
       closeModal();
     }
+  }
+
+  function handleGuideAction(action: BuilderGuideAction) {
+    if (action !== "template") {
+      setModalView(null);
+    }
+
+    if (action === "personal") {
+      setMobileCreateView("editor");
+      setActiveSectionId("personal");
+      return;
+    }
+
+    if (action === "education") {
+      if (form.education.length === 0) {
+        addEducation();
+      }
+      setMobileCreateView("editor");
+      setActiveSectionId("education");
+      return;
+    }
+
+    if (action === "experience") {
+      if (form.experience.length === 0) {
+        addExperience();
+      }
+      setMobileCreateView("editor");
+      setActiveSectionId("experience");
+      return;
+    }
+
+    if (action === "template") {
+      setModalView("templates");
+      return;
+    }
+
+    setPreviewMode("structured");
+    setMobileCreateView("preview");
+  }
+
+  function handleAnalysisStepAction(action: AnalysisNextStepAction) {
+    if (action === "personal" || action === "skills") {
+      setActiveSectionId("personal");
+      return;
+    }
+
+    if (action === "experience") {
+      if (form.experience.length === 0) {
+        addExperience();
+      }
+      setActiveSectionId("experience");
+      return;
+    }
+
+    if (action === "education") {
+      if (form.education.length === 0) {
+        addEducation();
+      }
+      setActiveSectionId("education");
+      return;
+    }
+
+    setMobileSidebarOpen(false);
+    setModalView("tailor");
+  }
+
+  function handleResetCreateDraft() {
+    resetForm(emptyResumeForm);
+    setEditedTitle("New Resume");
+    setActiveTemplateId(defaultTemplateId);
+    setPreviewMode("structured");
+    setMobileCreateView("editor");
+    setDraftStatus(autosaveKey ? "saved" : "unsaved");
+    onRename?.("New Resume");
+    onTemplateChange?.(defaultTemplateId);
+    onResetDraft?.();
   }
 
   function renderEditor() {
@@ -644,6 +890,7 @@ export function AnalysisWorkspace({
       );
     }
     if (activeSectionId === "leadership") {
+      const copy = leadershipEditorCopy[leadershipEditorMode];
       return (
         <LeadershipEditor
           entries={form.leadership}
@@ -651,10 +898,21 @@ export function AnalysisWorkspace({
           onUpdate={updateLeadership}
           onRemove={removeLeadership}
           onBack={() => setActiveSectionId(null)}
+          title={copy.title}
+          addLabel={copy.addLabel}
+          roleLabel={copy.roleLabel}
+          rolePlaceholder={copy.rolePlaceholder}
+          organizationLabel={copy.organizationLabel}
+          organizationPlaceholder={copy.organizationPlaceholder}
+          locationLabel={copy.locationLabel}
+          locationPlaceholder={copy.locationPlaceholder}
+          dateLabel={copy.dateLabel}
+          datePlaceholder={copy.datePlaceholder}
         />
       );
     }
     if (activeSectionId === "awards") {
+      const copy = awardsEditorCopy[awardsEditorMode];
       return (
         <AwardsEditor
           entries={form.awards}
@@ -662,23 +920,43 @@ export function AnalysisWorkspace({
           onUpdate={updateAwards}
           onRemove={removeAward}
           onBack={() => setActiveSectionId(null)}
+          title={copy.title}
+          addLabel={copy.addLabel}
+          placeholder={copy.placeholder}
         />
       );
     }
 
     return (
-      <div className="flex flex-col h-full">
-        <div className="border-b border-[color:var(--page-line)] px-6 py-5">
-          <h2 className="text-2xl font-semibold tracking-tight text-[color:var(--page-text)]">
-            Resume Sections
-          </h2>
-          <p className="mt-2 text-base text-[color:var(--page-muted)]">Click any section to edit</p>
-          <div className="mt-4 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-3 text-sm text-[color:var(--page-muted)]">
-            Source: <span className="font-medium text-[color:var(--page-text)]">{resumeFileName}</span>
+      <div className="flex h-full min-h-0 flex-col">
+        <div className="border-b border-[color:var(--page-line)] px-5 py-4">
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-[color:var(--page-text)]">
+              {createMode ? "Resume Builder" : "Resume Sections"}
+            </h2>
+            <p className="mt-1 truncate text-xs text-[color:var(--page-muted)]">
+              {createMode ? "Local draft" : resumeTitle}
+            </p>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-3">
+        <div className={`min-h-0 flex-1 overflow-y-auto px-3 py-2 ${createMode ? "pb-6 xl:pb-3" : ""}`}>
+          {createMode && (
+            <div className="mb-4">
+              <CreateResumeGuide
+                guide={createResumeGuide}
+                onAction={handleGuideAction}
+                onPrint={() => window.print()}
+                onBackupDraft={handleExportJson}
+                onResetDraft={handleResetCreateDraft}
+              />
+            </div>
+          )}
+          {analysisNextSteps && (
+            <div className="mb-3">
+              <AnalysisNextSteps guide={analysisNextSteps} onAction={handleAnalysisStepAction} />
+            </div>
+          )}
           {editorSections.map((section, index) => {
             const isEmpty =
               section.id === "education" ? form.education.length === 0 :
@@ -698,7 +976,7 @@ export function AnalysisWorkspace({
             return (
               <div
                 key={section.id}
-                className={`${index === 0 ? "" : "border-t border-[color:var(--page-line)]"} px-2 py-4`}
+                className={`${index === 0 ? "" : "border-t border-[color:var(--page-line)]"} rounded-[10px] px-2 py-3 transition hover:bg-[color:var(--page-bg)]`}
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
@@ -713,7 +991,7 @@ export function AnalysisWorkspace({
                     <button
                       type="button"
                       onClick={() => handleSectionOpen(section.id)}
-                      className="text-[1.05rem] font-medium text-[color:var(--page-text)] hover:text-[color:var(--brand)] transition"
+                      className="text-sm font-medium text-[color:var(--page-text)] transition hover:text-[color:var(--brand)]"
                     >
                       {section.label}
                     </button>
@@ -733,7 +1011,7 @@ export function AnalysisWorkspace({
                       <>
                         <button
                           type="button"
-                          onClick={() => handleSectionOpen(section.id)}
+                          onClick={() => handleSectionAdd(section.id)}
                           className="text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)]"
                           aria-label="Add item"
                         >
@@ -752,31 +1030,64 @@ export function AnalysisWorkspace({
                   </div>
                 </div>
                 {mounted && isEmpty && (
-                  <div className="ml-11 mt-1 text-xs text-[color:var(--page-muted)] opacity-70">
+                  <div className="ml-11 mt-1 truncate text-xs text-[color:var(--page-muted)] opacity-70">
                     {emptyHints[section.id]}
                   </div>
                 )}
               </div>
             );
           })}
+          {createMode && (
+            <div className="px-2 pb-5 pt-2">
+              <button
+                type="button"
+                onClick={openAddContentModal}
+                className="inline-flex w-full items-center justify-center gap-3 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] px-4 py-3 text-base font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
+              >
+                <PlusIcon />
+                Add Section
+              </button>
+            </div>
+          )}
         </div>
 
-        <div className="border-t border-[color:var(--page-line)] px-4 py-4 mt-auto">
-          <button
-            type="button"
-            onClick={openAddContentModal}
-            className="inline-flex w-full items-center justify-center gap-3 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] px-4 py-3.5 text-lg font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
-          >
-            <PlusIcon />
-            Add Section
-          </button>
-        </div>
+        {!createMode && (
+          <div className="mt-auto border-t border-[color:var(--page-line)] px-3 py-3">
+            <button
+              type="button"
+              onClick={openAddContentModal}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] px-3 py-2.5 text-sm font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
+            >
+              <PlusIcon />
+              Add Section
+            </button>
+          </div>
+        )}
       </div>
     );
   }
 
   function adjustPreviewZoom(delta: number) {
     setPreviewZoom((currentZoom) => Math.max(70, Math.min(160, currentZoom + delta)));
+  }
+
+  function handleExportJson() {
+    const payload = {
+      title: resumeTitle,
+      selectedTemplateId: activeTemplateId,
+      selectedTemplateName: selectedTemplate?.name ?? activeTemplateId,
+      form,
+      exportedAt: new Date().toISOString(),
+    };
+    const fallback = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+    const fallbackUrl = URL.createObjectURL(fallback);
+    const anchor = document.createElement("a");
+    anchor.href = fallbackUrl;
+    anchor.download = `${slugifyFileName(resumeTitle)}-draft.json`;
+    anchor.click();
+    URL.revokeObjectURL(fallbackUrl);
   }
 
   function handleExportResume() {
@@ -788,15 +1099,7 @@ export function AnalysisWorkspace({
       return;
     }
 
-    const fallback = new Blob([JSON.stringify(form, null, 2)], {
-      type: "application/json",
-    });
-    const fallbackUrl = URL.createObjectURL(fallback);
-    const anchor = document.createElement("a");
-    anchor.href = fallbackUrl;
-    anchor.download = `${humanizeFileName(resumeFileName) || "resume"}-export.json`;
-    anchor.click();
-    URL.revokeObjectURL(fallbackUrl);
+    handleExportJson();
   }
 
   function handleDownloadSource() {
@@ -824,96 +1127,6 @@ export function AnalysisWorkspace({
     } finally {
       setIsUpdatingAnalysis(false);
     }
-  }
-
-  function SuggestionSidebar() {
-    if (!showAnnotations || !analysisResult) return null;
-
-    const severityStyles = {
-      high: "border-rose-200 bg-rose-50/80 text-rose-800 hover:border-rose-300",
-      medium: "border-amber-200 bg-amber-50/80 text-amber-800 hover:border-amber-300",
-      low: "border-slate-200 bg-slate-50/80 text-slate-700 hover:border-slate-300",
-    };
-
-    const severityLabels = {
-      high: "Critical",
-      medium: "Impact",
-      low: "Edit",
-    };
-
-    return (
-      <div className="hidden lg:flex w-80 shrink-0 border-l border-[color:var(--page-line)] bg-white overflow-y-auto">
-        <div className="border-b border-[color:var(--page-line)] px-4 py-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-sm text-[color:var(--page-text)]">Suggestions</h3>
-            <button
-              type="button"
-              onClick={() => setShowAnnotations(false)}
-              className="rounded-lg p-1 text-[color:var(--page-muted)] hover:bg-[color:var(--page-bg)] hover:text-[color:var(--page-text)]"
-            >
-              <CloseIcon />
-            </button>
-          </div>
-          <div className="mt-2 flex gap-2 text-xs">
-            <span className="rounded-full bg-rose-100 px-2 py-0.5 text-rose-700 font-medium">{analysisResult.suggestions.filter(s => s.severity === "high").length} Critical</span>
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700 font-medium">{analysisResult.suggestions.filter(s => s.severity === "medium").length} Impact</span>
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 p-3">
-          {analysisResult.suggestions.map((suggestion) => (
-            <button
-              key={suggestion.id}
-              type="button"
-              onClick={() => {
-                if (suggestion.category === "keywords") setActiveSectionId("personal");
-                else if (suggestion.title.toLowerCase().includes("summary")) setActiveSectionId("personal");
-                else if (suggestion.title.toLowerCase().includes("experience")) setActiveSectionId("experience");
-                else if (suggestion.title.toLowerCase().includes("education")) setActiveSectionId("education");
-                else if (suggestion.title.toLowerCase().includes("bullet")) setActiveSectionId("experience");
-                else setActiveSectionId("personal");
-                setShowAnnotations(false);
-              }}
-              className={`rounded-[12px] border px-3 py-2.5 text-left text-xs transition shadow-sm ${severityStyles[suggestion.severity]}`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-semibold">{suggestion.title}</span>
-                <span className="shrink-0 rounded-full bg-white/70 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider">
-                  {severityLabels[suggestion.severity]}
-                </span>
-              </div>
-              <p className="mt-1 leading-4 opacity-90">{suggestion.detail}</p>
-              <span className="mt-2 inline-block text-[0.65rem] font-semibold text-[color:var(--brand)] opacity-70">Click to edit →</span>
-            </button>
-          ))}
-          {analysisResult.missingKeywords.length > 0 && (
-            <div className="rounded-[12px] border border-amber-200 bg-amber-50/60 px-3 py-2.5 text-xs shadow-sm">
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <span className="font-semibold text-amber-800">Missing Keywords</span>
-                <span className="shrink-0 rounded-full bg-white/70 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-amber-700">Keywords</span>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {analysisResult.missingKeywords.map((kw) => (
-                  <span key={kw} className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[0.65rem] font-medium text-amber-700">{kw}</span>
-                ))}
-              </div>
-            </div>
-          )}
-          {analysisResult.matchedKeywords.length > 0 && (
-            <div className="rounded-[12px] border border-emerald-200 bg-emerald-50/60 px-3 py-2.5 text-xs shadow-sm">
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <span className="font-semibold text-emerald-800">Matched Keywords</span>
-                <span className="shrink-0 rounded-full bg-white/70 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-emerald-700">Keywords</span>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {analysisResult.matchedKeywords.map((kw) => (
-                  <span key={kw} className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[0.65rem] font-medium text-emerald-700">{kw}</span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
   }
 
   function renderDocumentPreview() {
@@ -979,12 +1192,14 @@ export function AnalysisWorkspace({
   const openTailorModal = () => setModalView("tailor");
 
   return (
-    <div className="relative flex h-full min-h-0 flex-1 flex-col bg-[color:var(--page-surface)] text-[color:var(--page-text)]">
+    <div className="relative flex h-[100dvh] max-h-[100dvh] min-h-0 flex-1 flex-col overflow-hidden bg-[color:var(--page-surface)] text-[color:var(--page-text)]">
       {isUpdatingAnalysis && (
         <div className="absolute inset-0 z-[60] flex items-center justify-center bg-white/70 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-4">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-[color:var(--brand)] border-t-transparent"></div>
-            <p className="text-lg font-medium text-[color:var(--page-text)]">Tailoring analysis to new job...</p>
+            <p className="text-lg font-medium text-[color:var(--page-text)]">
+              Checking your resume against the new job post...
+            </p>
           </div>
         </div>
       )}
@@ -1008,27 +1223,30 @@ export function AnalysisWorkspace({
           </div>
         </div>
       )}
-      <header className="border-b border-[color:var(--page-line)] bg-white px-5 py-4 sm:px-6">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex flex-wrap items-center gap-4 text-sm">
-            <button
-              type="button"
-              onClick={() => setMobileSidebarOpen(true)}
-              className="inline-flex items-center justify-center rounded-[14px] border border-[color:var(--page-line)] bg-white px-3 py-2.5 text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-soft)] xl:hidden"
-              aria-label="Open editor menu"
-            >
-              <MenuIcon />
-            </button>
+      <header className="shrink-0 border-b border-[color:var(--page-line)] bg-white px-3 py-2 sm:px-4 sm:py-2.5">
+        <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex min-w-0 items-center gap-2 text-sm sm:gap-3">
+            {!createMode && (
+              <button
+                type="button"
+                onClick={() => setMobileSidebarOpen(true)}
+                className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[12px] border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-sm font-medium text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-soft)] xl:hidden"
+                aria-label="Open resume editor"
+              >
+                <MenuIcon />
+                Edit
+              </button>
+            )}
             <button
               type="button"
               onClick={onBack}
-              className="inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-4 py-2.5 text-sm font-medium text-[color:var(--page-muted)] transition hover:border-[color:var(--page-line-strong)] hover:text-[color:var(--page-text)]"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-[12px] border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-xs font-medium text-[color:var(--page-muted)] transition hover:border-[color:var(--page-line-strong)] hover:text-[color:var(--page-text)] sm:px-3 sm:text-sm"
             >
               <ArrowLeftIcon />
               Back
             </button>
             {isEditingTitle ? (
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                 <input
                   type="text"
                   value={editedTitle}
@@ -1044,7 +1262,7 @@ export function AnalysisWorkspace({
                     }
                   }}
                   autoFocus
-                  className="rounded-[14px] border border-[color:var(--brand)] bg-white px-4 py-2 text-xl font-semibold text-[color:var(--page-text)] outline-none"
+                  className="min-w-[12rem] flex-1 rounded-[14px] border border-[color:var(--brand)] bg-white px-3 py-2 text-base font-semibold text-[color:var(--page-text)] outline-none sm:px-4 sm:text-xl"
                 />
                 <button
                   type="button"
@@ -1071,33 +1289,51 @@ export function AnalysisWorkspace({
               <button
                 type="button"
                 onClick={() => setIsEditingTitle(true)}
-                className="group inline-flex items-center gap-2 rounded-[14px] border border-transparent bg-slate-50/50 px-3 py-1 text-xl font-semibold text-[color:var(--page-text)] transition hover:bg-slate-100/80 active:scale-[0.98]"
+                className="group inline-flex min-w-0 flex-1 items-center gap-2 rounded-[12px] border border-transparent bg-slate-50/50 px-2.5 py-1 text-sm font-semibold text-[color:var(--page-text)] transition hover:bg-slate-100/80 active:scale-[0.98] sm:flex-none sm:px-3 sm:text-base xl:max-w-[22rem]"
+                aria-label={createMode ? "Edit draft title" : "Edit resume title"}
               >
-                {resumeTitle}
+                <span className="truncate">{resumeTitle}</span>
                 <span className="text-[color:var(--page-muted)] opacity-0 transition group-hover:opacity-100">
                   <PencilIcon />
                 </span>
               </button>
             )}
+            {createMode && (
+              <div className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-2.5 py-1 text-[0.68rem] font-medium text-[color:var(--brand)] sm:hidden">
+                <span className={draftStatusLabel === "Saving..." ? "text-[color:var(--page-muted)]" : "text-emerald-600"}>
+                  {draftStatusLabel === "Saving..." ? <ClockIcon /> : <CheckCircleIcon />}
+                </span>
+                <span>{draftStatusLabel}</span>
+              </div>
+            )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div
+            className={`items-center gap-2 ${
+              createMode
+                ? "-mx-3 flex overflow-x-auto px-3 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0 [&::-webkit-scrollbar]:hidden"
+                : "flex flex-nowrap"
+            }`}
+          >
             {!createMode && analysisResult && (
-              <div className="inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-3 py-2">
-                <ScoreRing score={analysisResult.score} size={40} />
+              <div className="hidden shrink-0 items-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-white px-2.5 py-1.5 sm:inline-flex">
+                <ScoreRing score={analysisResult.score} size={34} />
                 <div className="text-xs leading-tight">
-                  <div className="font-bold text-[color:var(--page-text)]">{Math.round(analysisResult.score)}% Match</div>
-                  <div className="text-[color:var(--page-muted)]">{analysisResult.matchedKeywords.length} keywords</div>
+                  <div className="font-bold text-[color:var(--page-text)]">{Math.round(analysisResult.score)}% match</div>
+                  <div className="text-[color:var(--page-muted)]">
+                    {analysisResult.matchedKeywords.length}{" "}
+                    {analysisResult.matchedKeywords.length === 1 ? "keyword" : "keywords"} found
+                  </div>
                 </div>
               </div>
             )}
 
-            <div className="inline-flex items-center gap-1">
+            <div className={`shrink-0 items-center gap-1 ${createMode ? "hidden" : "hidden md:inline-flex"}`}>
               <button
                 type="button"
                 onClick={undo}
                 disabled={!canUndo}
-                className="inline-flex items-center justify-center rounded-l-[14px] border border-[color:var(--page-line)] bg-white px-3 py-2.5 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex items-center justify-center rounded-l-[14px] border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-soft)] disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:py-2.5"
                 aria-label="Undo"
                 title="Undo"
               >
@@ -1107,32 +1343,30 @@ export function AnalysisWorkspace({
                 type="button"
                 onClick={redo}
                 disabled={!canRedo}
-                className="inline-flex items-center justify-center rounded-r-[14px] border border-l-0 border-[color:var(--page-line)] bg-white px-3 py-2.5 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex items-center justify-center rounded-r-[14px] border border-l-0 border-[color:var(--page-line)] bg-white px-2.5 py-2 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-soft)] disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:py-2.5"
                 aria-label="Redo"
                 title="Redo"
               >
                 <RedoIcon />
               </button>
             </div>
-            <div className="inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-2.5 text-sm text-[color:var(--page-muted)]">
-              <span className={`transition-opacity duration-500 ${saveFlash ? "opacity-100" : "opacity-0"} text-emerald-500`}>
-                <CheckCircleIcon />
+            <div className={`min-w-[6.5rem] shrink-0 items-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-2.5 py-2 text-xs text-[color:var(--page-muted)] sm:px-3 sm:text-sm ${
+              createMode ? "hidden sm:inline-flex" : "hidden sm:inline-flex"
+            }`}>
+              <span className={draftStatusLabel === "Saving..." ? "text-[color:var(--page-muted)]" : "text-emerald-500"}>
+                {draftStatusLabel === "Saving..." ? <ClockIcon /> : <CheckCircleIcon />}
               </span>
-              <span className={`transition-opacity duration-500 ${saveFlash ? "opacity-0" : "opacity-100"}`}>
-                <ClockIcon />
-              </span>
-              <span className={`transition-opacity duration-500 ${saveFlash ? "opacity-0" : "opacity-100"}`}>
-                {lastSavedLabel}
-              </span>
-              <span className={`absolute transition-opacity duration-500 ${saveFlash ? "opacity-100" : "opacity-0"} text-emerald-600 font-medium`}>
-                Saved
+              <span className={draftStatusLabel === "Saved locally" || draftStatusLabel === "Saved" ? "font-medium text-emerald-600" : ""}>
+                {draftStatusLabel}
               </span>
             </div>
 
             <button
               type="button"
               onClick={() => setShowShortcuts(true)}
-              className="inline-flex items-center justify-center rounded-[14px] border border-[color:var(--page-line)] bg-white px-3 py-2.5 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-soft)]"
+              className={`shrink-0 items-center justify-center rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-soft)] ${
+                createMode ? "hidden" : "hidden 2xl:inline-flex"
+              }`}
               aria-label="Keyboard shortcuts"
               title="Keyboard shortcuts"
             >
@@ -1143,10 +1377,12 @@ export function AnalysisWorkspace({
               <button
                 type="button"
                 onClick={openTailorModal}
-                className="inline-flex items-center gap-2 rounded-[14px] bg-[color:var(--brand)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(79,107,255,0.22)] transition hover:bg-[color:var(--brand-strong)]"
+                aria-label="Check Job Match"
+                className="inline-flex shrink-0 items-center gap-2 rounded-[12px] bg-[color:var(--brand)] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(79,107,255,0.22)] transition hover:bg-[color:var(--brand-strong)]"
               >
                 <EyeIcon />
-                Tailor to Job
+                <span aria-hidden="true" className="hidden sm:inline">Check Job Match</span>
+                <span aria-hidden="true" className="sm:hidden">Check Match</span>
               </button>
             )}
 
@@ -1154,19 +1390,27 @@ export function AnalysisWorkspace({
               type="button"
               onClick={() => setModalView("templates")}
               aria-label="Switch template"
-              className="group inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-4 py-2.5 text-sm font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg-soft)] active:scale-[0.98]"
+              className="group hidden max-w-[9rem] shrink-0 items-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-xs font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg-soft)] active:scale-[0.98] sm:inline-flex sm:max-w-none sm:text-sm"
             >
-              <GridIcon />
-              {humanizeFileName(resumeFileName)}
+              <span className={createMode ? "hidden sm:inline-flex" : "inline-flex"}>
+                <GridIcon />
+              </span>
+              <span className="truncate">
+                {createMode ? (selectedTemplate?.name ?? "Switch template") : `Layout: ${selectedTemplate?.name ?? "Choose"}`}
+              </span>
             </button>
 
             <button
               type="button"
               onClick={() => window.print()}
-              className="inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-5 py-2.5 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
+              aria-label="Print Resume"
+              className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-xs font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] sm:px-4 sm:text-sm"
             >
-              <DownloadIcon />
-              Print / PDF
+              <span className={createMode ? "hidden sm:inline-flex" : "inline-flex"}>
+                <DownloadIcon />
+              </span>
+              <span aria-hidden="true" className="hidden sm:inline">Print Resume</span>
+              <span aria-hidden="true" className="sm:hidden">Print</span>
             </button>
 
             {!createMode && (
@@ -1174,27 +1418,58 @@ export function AnalysisWorkspace({
                 type="button"
                 onClick={handleDownloadSource}
                 disabled={!resumeSourceUrl}
-                className="inline-flex items-center gap-2 rounded-[14px] border border-[color:var(--page-line)] bg-white px-5 py-2.5 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[color:var(--page-line)] disabled:hover:text-[color:var(--page-text)]"
+                className="hidden shrink-0 items-center gap-2 whitespace-nowrap rounded-[12px] border border-[color:var(--page-line)] bg-white px-4 py-2 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[color:var(--page-line)] disabled:hover:text-[color:var(--page-text)] 2xl:inline-flex"
               >
                 <DownloadIcon />
-                {resumeSourceUrl ? "Download Source" : "Export JSON"}
+                {resumeSourceUrl ? "Download Original" : "Backup Copy"}
               </button>
             )}
           </div>
         </div>
       </header>
 
+      {createMode && (
+        <div className="border-b border-[color:var(--page-line)] bg-white px-4 py-3 xl:hidden">
+          <ToggleGroup
+            type="single"
+            value={mobileCreateView}
+            onValueChange={(value) => {
+              if (value === "editor" || value === "preview") {
+                setMobileCreateView(value);
+              }
+            }}
+            variant="outline"
+            size="lg"
+            className="grid w-full grid-cols-2"
+          >
+            <ToggleGroupItem value="editor" aria-label="Show editor" className="w-full">
+              Editor
+            </ToggleGroupItem>
+            <ToggleGroupItem value="preview" aria-label="Show preview" className="w-full">
+              Preview
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+      )}
+
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        {mobileSidebarOpen && (
+        {!createMode && mobileSidebarOpen && (
           <div
             className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm xl:hidden"
             onClick={() => setMobileSidebarOpen(false)}
           />
         )}
-        <aside className={`shrink-0 border-r border-[color:var(--page-line)] bg-white transition-transform duration-300 ease-in-out
-          fixed inset-y-0 left-0 z-50 w-80 transform ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"} xl:static xl:z-auto xl:w-[420px] xl:transform-none xl:translate-x-0`}>
+        <aside
+          className={`shrink-0 border-r border-[color:var(--page-line)] bg-white transition-transform duration-300 ease-in-out ${
+            createMode
+              ? `${mobileCreateView === "editor" ? "flex" : "hidden"} w-full border-r-0 xl:flex xl:w-[390px] xl:border-r`
+              : `fixed inset-y-0 left-0 z-50 w-80 transform ${
+                  mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+                } xl:static xl:z-auto xl:w-[360px] xl:transform-none xl:translate-x-0 2xl:w-[400px]`
+          }`}
+        >
           <div className="flex h-full flex-col">
-            <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-4 py-3 xl:hidden">
+            <div className={`${createMode ? "hidden" : "flex"} items-center justify-between border-b border-[color:var(--page-line)] px-4 py-3 xl:hidden`}>
               <span className="font-semibold text-[color:var(--page-text)]">Editor</span>
               <button
                 type="button"
@@ -1210,118 +1485,114 @@ export function AnalysisWorkspace({
           </div>
         </aside>
 
-        <section className="min-h-0 flex flex-1 overflow-hidden bg-[color:var(--page-bg-strong)]">
+        <section
+          className={`${createMode && mobileCreateView === "editor" ? "hidden xl:flex" : "flex"} min-h-0 flex-1 overflow-hidden bg-[#f7f9fc]`}
+        >
           <div className="flex h-full flex-1 gap-0">
-            <div className="relative min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-[linear-gradient(180deg,#f4f7fc_0%,#eef3fb_100%)] m-2 sm:m-4 xl:m-8">
-              <div className="pointer-events-none absolute left-1/2 top-5 z-20 -translate-x-1/2">
-                <div className="pointer-events-auto inline-flex items-center gap-2 rounded-[16px] border border-[color:var(--page-line)] bg-white px-2.5 py-2.5 shadow-[0_14px_30px_rgba(26,32,61,0.1)]">
-                  <div className="flex items-center gap-1 rounded-[12px] bg-slate-50 p-1">
-                    {resumePreviewUrl && (
+            <div className="relative min-h-0 flex-1 overflow-hidden bg-[#f7f9fc]">
+              <div className="pointer-events-none absolute inset-x-2 top-3 z-20 flex justify-center">
+                <div className="pointer-events-auto flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-[color:var(--page-line)] bg-white/95 px-2 py-1.5 shadow-sm [scrollbar-width:none] sm:gap-2 sm:px-2.5 [&::-webkit-scrollbar]:hidden">
+                  {hasSourcePreviewChoice ? (
+                    <div className="flex shrink-0 items-center gap-1 rounded-full bg-slate-50 p-0.5">
+                      {resumePreviewUrl ? (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewMode("uploaded")}
+                          className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-xs font-medium transition ${
+                            previewMode === "uploaded"
+                              ? "bg-white text-[color:var(--brand)] shadow-sm"
+                              : "text-[color:var(--page-muted)] hover:text-[color:var(--page-text)]"
+                          }`}
+                        >
+                          <FileIcon />
+                          Original
+                        </button>
+                      ) : null}
                       <button
                         type="button"
-                        onClick={() => setPreviewMode("uploaded")}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-[9px] transition ${
-                          previewMode === "uploaded"
-                            ? "bg-white text-[color:var(--brand)] shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
+                        onClick={() => setPreviewMode("structured")}
+                        className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-xs font-medium transition ${
+                          previewMode === "structured"
+                            ? "bg-white text-[color:var(--brand)] shadow-sm"
                             : "text-[color:var(--page-muted)] hover:text-[color:var(--page-text)]"
                         }`}
                       >
-                        <FileIcon />
-                        Original
+                        <SparklesIcon />
+                        Layout
                       </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setPreviewMode("structured")}
-                      className={`inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-[9px] transition ${
-                        previewMode === "structured"
-                          ? "bg-white text-[color:var(--brand)] shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
-                          : "text-[color:var(--page-muted)] hover:text-[color:var(--page-text)]"
-                      }`}
-                    >
-                      <SparklesIcon />
-                      AI Template
-                    </button>
-                  </div>
+                    </div>
+                  ) : null}
 
-                  <div className="mx-1 h-8 w-px bg-[color:var(--page-line)]" />
-
-                  {analysisResult && analysisResult.suggestions.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setShowAnnotations((s) => !s)}
-                      className={`inline-flex items-center gap-2 rounded-[9px] px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
-                        showAnnotations
-                          ? "bg-[color:var(--brand-soft)] text-[color:var(--brand)]"
-                          : "text-[color:var(--page-muted)] hover:text-[color:var(--page-text)]"
-                      }`}
-                    >
-                      <EyeIcon />
-                      Suggestions
-                    </button>
+                  {hasSourcePreviewChoice && (
+                    <div className="mx-0.5 h-7 w-px shrink-0 bg-[color:var(--page-line)] sm:mx-1" />
                   )}
-
-                  <div className="mx-1 h-8 w-px bg-[color:var(--page-line)]" />
 
                   <button
                     type="button"
                     onClick={() => adjustPreviewZoom(-10)}
                     disabled={!canZoomDocument}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--page-line)] text-[color:var(--page-muted)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-40"
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[color:var(--page-muted)] transition hover:bg-[color:var(--brand-soft)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label="Zoom out"
                   >
                     <SearchIcon />
                   </button>
-                  <span className="min-w-12 text-center text-sm font-semibold text-[color:var(--page-muted)]">
+                  <span className="min-w-10 shrink-0 text-center text-xs font-semibold text-[color:var(--page-muted)]">
                     {previewZoom}%
                   </span>
                   <button
                     type="button"
                     onClick={() => adjustPreviewZoom(10)}
                     disabled={!canZoomDocument}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--page-line)] text-[color:var(--page-muted)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-40"
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[color:var(--page-muted)] transition hover:bg-[color:var(--brand-soft)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label="Zoom in"
                   >
                     <PlusIcon />
                   </button>
-                  <div className="mx-1 h-8 w-px bg-[color:var(--page-line)]" />
-                  <button
-                    type="button"
-                    onClick={handleDownloadSource}
-                    disabled={!resumeSourceUrl}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--page-line)] text-[color:var(--page-muted)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Download source file"
-                  >
-                    <DownloadIcon />
-                  </button>
+                  {!createMode && (
+                    <>
+                      <div className="mx-1 h-7 w-px bg-[color:var(--page-line)]" />
+                      <button
+                        type="button"
+                        onClick={handleDownloadSource}
+                        disabled={!resumeSourceUrl}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[color:var(--page-muted)] transition hover:bg-[color:var(--brand-soft)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-40"
+                        aria-label="Download source file"
+                      >
+                        <DownloadIcon />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
-              <div className="h-full overflow-auto px-5 pb-10 pt-24 sm:px-8">
-                <div className="mx-auto mb-4 max-w-[860px] rounded-[18px] border border-[color:var(--page-line)] bg-white/75 px-4 py-3 text-center text-sm text-[color:var(--page-muted)] backdrop-blur-sm">
-                  {previewMode === "uploaded"
-                    ? "Viewing your original uploaded resume. Use the 'AI Template' toggle to see enhanced layouts."
-                    : previewMode === "parsed"
-                      ? "Showing a draft preview from the parsed text."
-                      : "Previewing your content in the selected AI layout. Changes here reflect in your exported PDF."}
-                </div>
+              <div className="h-full overflow-auto px-4 pb-8 pt-16 sm:px-6 sm:pt-[4.5rem]">
                 {renderDocumentPreview()}
               </div>
             </div>
-            <SuggestionSidebar />
           </div>
         </section>
       </div>
 
-      {modalView ? (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-[rgba(15,23,42,0.35)] p-4 sm:p-6">
-          <div className="max-h-[92vh] w-full max-w-6xl overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]">
+      <Dialog
+        open={Boolean(modalView)}
+        onOpenChange={(open) => {
+          if (!open) closeModal();
+        }}
+      >
+        {modalView ? (
+          <DialogContent
+            showCloseButton={false}
+            className="max-h-[92vh] max-w-[calc(100%-2rem)] gap-0 overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white p-0 text-[color:var(--page-text)] shadow-[0_28px_80px_rgba(15,23,42,0.22)] sm:max-w-6xl"
+          >
             {modalView === "content" ? (
               <>
                 <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-6 py-5 sm:px-8">
-                  <h2 className="text-[2rem] font-semibold tracking-tight text-[color:var(--page-text)]">
+                  <DialogTitle className="text-[2rem] font-semibold tracking-tight text-[color:var(--page-text)]">
                     Add Content
-                  </h2>
+                  </DialogTitle>
+                  <DialogDescription className="sr-only">
+                    Choose optional resume sections or content blocks to add to your resume.
+                  </DialogDescription>
                   <button
                     type="button"
                     onClick={closeModal}
@@ -1385,9 +1656,12 @@ export function AnalysisWorkspace({
             ) : modalView === "project" ? (
               <>
                 <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-6 py-5 sm:px-8">
-                  <h2 className="text-[2rem] font-semibold tracking-tight text-[color:var(--page-text)]">
+                  <DialogTitle className="text-[2rem] font-semibold tracking-tight text-[color:var(--page-text)]">
                     Add Projects
-                  </h2>
+                  </DialogTitle>
+                  <DialogDescription className="sr-only">
+                    Add a project with technologies, dates, links, and bullet details.
+                  </DialogDescription>
                   <button
                     type="button"
                     onClick={closeModal}
@@ -1590,12 +1864,12 @@ export function AnalysisWorkspace({
               <>
                 <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-6 py-5 sm:px-8">
                   <div className="space-y-1">
-                    <h2 className="text-[2rem] font-semibold tracking-tight text-[color:var(--page-text)]">
-                      Tailor to Job
-                    </h2>
-                    <p className="text-lg text-[color:var(--page-muted)]">
-                      Paste a specific job description to re-calculate your match score.
-                    </p>
+                    <DialogTitle className="text-[2rem] font-semibold tracking-tight text-[color:var(--page-text)]">
+                      Check Another Job Post
+                    </DialogTitle>
+                    <DialogDescription className="text-lg text-[color:var(--page-muted)]">
+                      Paste a new job post and we&apos;ll refresh the tips for that role.
+                    </DialogDescription>
                   </div>
                   <button
                     type="button"
@@ -1612,7 +1886,7 @@ export function AnalysisWorkspace({
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-semibold tracking-wide text-[color:var(--page-text)]">
-                          Job Description
+                          Job Post
                         </label>
                         <span className="text-xs text-[color:var(--page-muted)]">
                           {newJobDescription.trim().length} characters
@@ -1621,12 +1895,12 @@ export function AnalysisWorkspace({
                       <textarea
                         value={newJobDescription}
                         onChange={(e) => setNewJobDescription(e.target.value)}
-                        placeholder="Paste the full job description here..."
+                        placeholder="Paste the full job post here..."
                         className="min-h-[400px] w-full resize-none rounded-[24px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-6 py-5 text-lg leading-8 text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)]"
                       />
                       {newJobDescription.length < 30 && newJobDescription.length > 0 && (
                         <p className="text-xs text-[#e16f62]">
-                          Paste at least 30 characters from the job description.
+                          Paste at least 30 characters from the job post.
                         </p>
                       )}
                     </div>
@@ -1665,7 +1939,7 @@ export function AnalysisWorkspace({
                         onClick={handleTailorToJob}
                         className="inline-flex h-16 items-center justify-center gap-3 rounded-[18px] bg-[color:var(--brand)] px-10 text-lg font-semibold text-white shadow-[0_12px_32px_rgba(37,99,235,0.25)] transition hover:bg-[color:var(--brand-strong)] hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
                       >
-                        {isUpdatingAnalysis ? "Analyzing..." : "Update Analysis"}
+                        {isUpdatingAnalysis ? "Checking..." : "Check Resume"}
                         {!isUpdatingAnalysis && <SparklesIcon />}
                       </button>
                     </div>
@@ -1676,9 +1950,12 @@ export function AnalysisWorkspace({
               <div className="flex h-full flex-col">
                 <header className="flex h-[112px] shrink-0 items-center justify-between border-b border-[color:var(--page-line)] px-8 sm:px-12">
                   <div className="space-y-1">
-                    <h2 className="text-4xl font-semibold tracking-tight text-[color:var(--page-text)]">
+                    <DialogTitle className="text-4xl font-semibold tracking-tight text-[color:var(--page-text)]">
                       Switch Template
-                    </h2>
+                    </DialogTitle>
+                    <DialogDescription className="sr-only">
+                      Choose a resume template and preview your content in that layout.
+                    </DialogDescription>
                     <p className="text-xl text-[color:var(--page-muted)]">Instant layout preview with your content</p>
                   </div>
                   <button
@@ -1717,9 +1994,9 @@ export function AnalysisWorkspace({
                 </div>
               </div>
             ) : null}
-          </div>
-        </div>
-      ) : null}
+          </DialogContent>
+        ) : null}
+      </Dialog>
 
       {showShortcuts && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-[rgba(15,23,42,0.35)] p-4 sm:p-6">
@@ -1740,7 +2017,7 @@ export function AnalysisWorkspace({
                   { keys: "Ctrl + Z", action: "Undo" },
                   { keys: "Ctrl + Y", action: "Redo" },
                   { keys: "Ctrl + Shift + Z", action: "Redo" },
-                  { keys: "Ctrl + P", action: "Print / PDF" },
+                  { keys: "Ctrl + P", action: "Print resume" },
                 ].map((shortcut) => (
                   <div key={shortcut.keys} className="flex items-center justify-between rounded-[12px] bg-[color:var(--page-bg)] px-4 py-3">
                     <span className="text-sm text-[color:var(--page-text)]">{shortcut.action}</span>
