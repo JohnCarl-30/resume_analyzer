@@ -4,7 +4,7 @@
  * Feature: resume-editor-flow, Property 8: Suggestion summary counts
  *
  * For any array of AnalysisSuggestion objects, the summary bar should display
- * a total count equal to the array length and a critical count equal to the
+ * a total count equal to the array length and an important count equal to the
  * number of suggestions with severity === "high".
  *
  * Validates: Requirements 4.3
@@ -43,13 +43,13 @@ describe(
   "Feature: resume-editor-flow, Property 8: Suggestion summary counts",
   () => {
     /**
-     * Property 8: Summary bar total count equals array length and critical count
+     * Property 8: Summary bar total count equals array length and important count
      * equals the number of suggestions with severity === "high".
      *
      * Validates: Requirements 4.3
      */
     it(
-      "displays total count equal to suggestions.length and critical count equal to high-severity count",
+      "displays total count equal to suggestions.length and important count equal to high-severity count",
       () => {
         fc.assert(
           fc.property(
@@ -58,7 +58,7 @@ describe(
             }),
             (suggestions) => {
               const expectedTotal = suggestions.length;
-              const expectedCritical = suggestions.filter((s) => s.severity === "high").length;
+              const expectedImportant = suggestions.filter((s) => s.severity === "high").length;
 
               const analysisResult = buildAnalysisResult(suggestions);
 
@@ -76,24 +76,24 @@ describe(
 
               // The summary bar is a grid of 4 stat tiles. We locate it by its
               // grid class and then scope queries within it to avoid collisions
-              // with "Critical" badge text that may appear in suggestion cards.
+              // with "Important" badge text that may appear in suggestion cards.
               const summaryBar = container.querySelector(
                 ".grid.grid-cols-2",
               ) as HTMLElement;
               expect(summaryBar).not.toBeNull();
 
-              const totalLabel = within(summaryBar).getByText("Total", { exact: false });
-              const criticalLabel = within(summaryBar).getByText("Critical", { exact: false });
+              const totalLabel = within(summaryBar).getByText("Suggestions", { exact: false });
+              const importantLabel = within(summaryBar).getByText("Important", { exact: false });
 
               // The number is the previous sibling <p> element of the label <p>.
               const totalNumber = totalLabel.previousElementSibling;
-              const criticalNumber = criticalLabel.previousElementSibling;
+              const importantNumber = importantLabel.previousElementSibling;
 
               expect(totalNumber).not.toBeNull();
-              expect(criticalNumber).not.toBeNull();
+              expect(importantNumber).not.toBeNull();
 
               expect(Number(totalNumber!.textContent)).toBe(expectedTotal);
-              expect(Number(criticalNumber!.textContent)).toBe(expectedCritical);
+              expect(Number(importantNumber!.textContent)).toBe(expectedImportant);
 
               unmount();
               document.body.removeChild(container);
