@@ -1,18 +1,22 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ResumeForm, defaultResumeForm } from "../model/resume-form";
 
+interface ResumeEditorOptions {
+  storageKey?: string | null;
+  autosave?: boolean;
+}
+
 interface HistoryState {
   past: ResumeForm[];
   future: ResumeForm[];
 }
 
-const STORAGE_KEY = "resume-editor:auto-save";
 const HISTORY_LIMIT = 50;
 
-function loadSavedForm(): ResumeForm | null {
-  if (typeof window === "undefined") return null;
+function loadSavedForm(storageKey?: string | null): ResumeForm | null {
+  if (!storageKey || typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey);
     if (raw) return JSON.parse(raw) as ResumeForm;
   } catch {
     // ignore parse errors
@@ -20,27 +24,63 @@ function loadSavedForm(): ResumeForm | null {
   return null;
 }
 
-function saveForm(form: ResumeForm) {
-  if (typeof window === "undefined") return;
+function saveForm(storageKey: string | null | undefined, form: ResumeForm) {
+  if (!storageKey || typeof window === "undefined") return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(form));
+    localStorage.setItem(storageKey, JSON.stringify(form));
   } catch {
     // ignore quota errors
   }
 }
 
-export function useResumeEditor(initialForm: ResumeForm = defaultResumeForm) {
-  const saved = loadSavedForm();
-  const [form, setForm] = useState<ResumeForm>(saved ?? initialForm);
+function clearSavedForm(storageKey?: string | null) {
+  if (!storageKey || typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(storageKey);
+  } catch {
+    // ignore quota errors
+  }
+}
+
+export function useResumeEditor(
+  initialForm: ResumeForm = defaultResumeForm,
+  options: ResumeEditorOptions = {},
+) {
+  const storageKey = options.storageKey ?? null;
+  const autosave = options.autosave ?? storageKey !== null;
+  const [form, setForm] = useState<ResumeForm>(initialForm);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryState>({ past: [], future: [] });
   const isUndoRedo = useRef(false);
+  const skipNextAutosave = useRef(false);
+  const hasLoadedSavedForm = useRef(storageKey === null);
+
+  useEffect(() => {
+    if (!storageKey) {
+      hasLoadedSavedForm.current = true;
+      return;
+    }
+
+    hasLoadedSavedForm.current = false;
+    const savedForm = loadSavedForm(storageKey);
+    hasLoadedSavedForm.current = true;
+    if (savedForm) {
+      setForm(savedForm);
+    }
+  }, [storageKey]);
 
   // Auto-save to localStorage
   useEffect(() => {
-    const timeout = setTimeout(() => saveForm(form), 800);
+    if (!autosave || !storageKey) return;
+    if (!hasLoadedSavedForm.current) return;
+    if (skipNextAutosave.current) {
+      skipNextAutosave.current = false;
+      return;
+    }
+
+    const timeout = setTimeout(() => saveForm(storageKey, form), 800);
     return () => clearTimeout(timeout);
-  }, [form]);
+  }, [autosave, form, storageKey]);
 
   const pushHistory = useCallback((prevForm: ResumeForm) => {
     setHistory((h) => ({
@@ -100,6 +140,18 @@ export function useResumeEditor(initialForm: ResumeForm = defaultResumeForm) {
 
   const canUndo = history.past.length > 0;
   const canRedo = history.future.length > 0;
+
+  const resetForm = useCallback(
+    (nextForm: ResumeForm = initialForm) => {
+      isUndoRedo.current = false;
+      skipNextAutosave.current = true;
+      clearSavedForm(storageKey);
+      setForm(nextForm);
+      setActiveSectionId(null);
+      setHistory({ past: [], future: [] });
+    },
+    [initialForm, storageKey],
+  );
 
   const updatePersonalInfo = (data: Partial<ResumeForm["personalInfo"]>) => {
     setFormWithHistory((prev) => ({
@@ -259,5 +311,6 @@ export function useResumeEditor(initialForm: ResumeForm = defaultResumeForm) {
     redo,
     canUndo,
     canRedo,
+    resetForm,
   };
 }
