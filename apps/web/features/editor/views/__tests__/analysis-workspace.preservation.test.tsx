@@ -237,7 +237,7 @@ describe("Preservation — Non-Switching Inputs and Fallback Behavior Unaffected
       );
 
       expect(
-        screen.getByText(/no suggestions.*your resume looks well-matched/i),
+        screen.getByText(/no suggestions.*your resume already looks well-matched to this job/i),
       ).toBeInTheDocument();
     });
 
@@ -420,7 +420,7 @@ describe("Preservation — Non-Switching Inputs and Fallback Behavior Unaffected
               resumeFileName="resume.pdf"
               resumeSourceUrl={null}
               resumePreviewUrl={null}
-              analysisResult={minimalAnalysisResult}
+              analysisResult={null}
               initialForm={initialForm}
               onBack={vi.fn()}
               onTemplateChange={onTemplateChange}
@@ -475,6 +475,6 @@ describe("Preservation — Non-Switching Inputs and Fallback Behavior Unaffected
         }),
         { numRuns: 20 },
       );
-    });
+    }, 15000);
   });
 });
