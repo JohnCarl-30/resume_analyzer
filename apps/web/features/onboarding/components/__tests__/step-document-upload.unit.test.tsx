@@ -76,7 +76,7 @@ describe("StepDocumentUpload unit tests", () => {
    */
   it("calls setIsDragActive(true) on dragOver", () => {
     const { setIsDragActive } = renderStep();
-    const label = screen.getByText(/drag.*drop/i).closest("label")!;
+    const label = screen.getByText(/drag your resume here/i).closest("label")!;
     label.dispatchEvent(new Event("dragover", { bubbles: true }));
     // The handler is wired; verify the prop was passed (label exists in DOM)
     expect(label).toBeTruthy();
@@ -85,7 +85,7 @@ describe("StepDocumentUpload unit tests", () => {
 
   it("calls setIsDragActive(false) on dragLeave", () => {
     const { setIsDragActive } = renderStep();
-    const label = screen.getByText(/drag.*drop/i).closest("label")!;
+    const label = screen.getByText(/drag your resume here/i).closest("label")!;
     label.dispatchEvent(new Event("dragleave", { bubbles: true }));
     expect(label).toBeTruthy();
     expect(setIsDragActive).toBeDefined();
@@ -93,7 +93,7 @@ describe("StepDocumentUpload unit tests", () => {
 
   it("handleDrop prop is wired to the drop zone label", () => {
     const { handleDrop } = renderStep();
-    const label = screen.getByText(/drag.*drop/i).closest("label")!;
+    const label = screen.getByText(/drag your resume here/i).closest("label")!;
     // Verify the label element exists and the handler is provided
     expect(label).toBeTruthy();
     expect(handleDrop).toBeDefined();
@@ -104,7 +104,7 @@ describe("StepDocumentUpload unit tests", () => {
    */
   it("Continue button is disabled when no file is selected", () => {
     renderStep({ canContinue: false });
-    const btn = screen.getByRole("button", { name: /continue to templates/i });
+    const btn = screen.getByRole("button", { name: /next: pick layout/i });
     expect(btn).toBeDisabled();
   });
 
@@ -114,7 +114,7 @@ describe("StepDocumentUpload unit tests", () => {
   it("Continue button is enabled when a valid PDF is selected", () => {
     const file = makeFile("resume.pdf", 1024 * 1024, "application/pdf");
     renderStep({ resumeFile: file, canContinue: true });
-    const btn = screen.getByRole("button", { name: /continue to templates/i });
+    const btn = screen.getByRole("button", { name: /next: pick layout/i });
     expect(btn).not.toBeDisabled();
   });
 
@@ -125,7 +125,7 @@ describe("StepDocumentUpload unit tests", () => {
     const file = makeFile("my-resume.pdf", 2 * 1024 * 1024, "application/pdf");
     renderStep({ resumeFile: file, canContinue: true });
     expect(screen.getByText("my-resume.pdf")).toBeTruthy();
-    expect(screen.getByText(/2\.0 MB ready for analysis/i)).toBeTruthy();
+    expect(screen.getByText(/2\.0 MB ready to check/i)).toBeTruthy();
   });
 
   /**
