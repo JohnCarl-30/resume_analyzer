@@ -1,5 +1,6 @@
 import React from "react";
 import { LeadershipEntry } from "../../model/resume-form";
+import { SectionEditorHeader } from "./section-editor-header";
 
 interface LeadershipEditorProps {
   entries: LeadershipEntry[];
@@ -7,29 +8,38 @@ interface LeadershipEditorProps {
   onUpdate: (id: string, data: Partial<LeadershipEntry>) => void;
   onRemove: (id: string) => void;
   onBack: () => void;
+  title?: string;
+  addLabel?: string;
+  roleLabel?: string;
+  rolePlaceholder?: string;
+  organizationLabel?: string;
+  organizationPlaceholder?: string;
+  locationLabel?: string;
+  locationPlaceholder?: string;
+  dateLabel?: string;
+  datePlaceholder?: string;
 }
 
-export function LeadershipEditor({ entries, onAdd, onUpdate, onRemove, onBack }: LeadershipEditorProps) {
+export function LeadershipEditor({
+  entries,
+  onAdd,
+  onUpdate,
+  onRemove,
+  onBack,
+  title = "Leadership",
+  addLabel = "Add another Entry",
+  roleLabel = "Leadership Role",
+  rolePlaceholder = "President",
+  organizationLabel = "Organization",
+  organizationPlaceholder = "Student Council",
+  locationLabel = "Location",
+  locationPlaceholder = "City, Province",
+  dateLabel = "Date Range",
+  datePlaceholder = "Jan 2023 — Present",
+}: LeadershipEditorProps) {
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-3 border-b border-[color:var(--page-line)] px-6 py-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="p-1 rounded-full text-[color:var(--page-muted)] hover:bg-[color:var(--page-bg)] hover:text-[color:var(--page-text)] transition"
-        >
-          <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
-            <path
-              d="M12.5 15L7.5 10L12.5 5"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-        <h3 className="text-xl font-bold text-[color:var(--page-text)] tracking-tight">Leadership</h3>
-      </div>
+      <SectionEditorHeader title={title} onBack={onBack} />
 
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
         {entries.map((entry, index) => (
@@ -45,53 +55,53 @@ export function LeadershipEditor({ entries, onAdd, onUpdate, onRemove, onBack }:
             
             <div className="space-y-2">
               <label className="text-sm font-semibold text-[color:var(--page-muted)] uppercase tracking-wider">
-                Leadership Role
+                {roleLabel}
               </label>
               <input
                 type="text"
                 value={entry.role}
                 onChange={(e) => onUpdate(entry.id, { role: e.target.value })}
                 className="w-full rounded-xl border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-3 text-base text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)] focus:bg-white"
-                placeholder="President"
+                placeholder={rolePlaceholder}
               />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-semibold text-[color:var(--page-muted)] uppercase tracking-wider">
-                Organization
+                {organizationLabel}
               </label>
               <input
                 type="text"
                 value={entry.organization}
                 onChange={(e) => onUpdate(entry.id, { organization: e.target.value })}
                 className="w-full rounded-xl border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-3 text-base text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)] focus:bg-white"
-                placeholder="Student Council"
+                placeholder={organizationPlaceholder}
               />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-semibold text-[color:var(--page-muted)] uppercase tracking-wider">
-                Location
+                {locationLabel}
               </label>
               <input
                 type="text"
                 value={entry.location}
                 onChange={(e) => onUpdate(entry.id, { location: e.target.value })}
                 className="w-full rounded-xl border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-3 text-base text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)] focus:bg-white"
-                placeholder="City, Province"
+                placeholder={locationPlaceholder}
               />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-semibold text-[color:var(--page-muted)] uppercase tracking-wider">
-                Date Range
+                {dateLabel}
               </label>
               <input
                 type="text"
                 value={entry.dateRange}
                 onChange={(e) => onUpdate(entry.id, { dateRange: e.target.value })}
                 className="w-full rounded-xl border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-3 text-base text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)] focus:bg-white"
-                placeholder="Jan 2023 — Present"
+                placeholder={datePlaceholder}
               />
             </div>
           </div>
@@ -105,7 +115,7 @@ export function LeadershipEditor({ entries, onAdd, onUpdate, onRemove, onBack }:
           <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-5 w-5">
             <path d="M10 4V16M4 10H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
-          Add another Entry
+          {addLabel}
         </button>
       </div>
     </div>
