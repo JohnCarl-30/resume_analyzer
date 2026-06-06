@@ -100,23 +100,23 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
   const stepOverview = [
     {
       id: "01",
-      title: "Target role",
-      description: "Choose the exact role this resume should be optimized for.",
+      title: "Job title",
+      description: "Choose the job this resume should match.",
     },
     {
       id: "02",
-      title: "Paste job description",
-      description: "Anchor the entire session to the role you're targeting.",
+      title: "Paste job post",
+      description: "Add the post so we know what the company wants.",
     },
     {
       id: "03",
-      title: "Upload your resume",
-      description: "Provide the PDF so the system can parse and analyze your content.",
+      title: "Add resume",
+      description: "Upload a file or start with a blank resume.",
     },
     {
       id: "04",
-      title: "Choose a template",
-      description: "Select the visual layout for your final resume output.",
+      title: "Pick layout",
+      description: "Choose a clean layout for the final resume.",
     },
     {
       id: "05",
@@ -125,9 +125,13 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
     },
   ] as const;
 
-  function replaceAnalysisParam(analysisId: string | null) {
+  function replaceAnalysisParam(analysisId: string | null, options?: { soft?: boolean }) {
     if (analysisId) {
-      router.replace(`/analysis/${analysisId}`);
+      if (options?.soft && typeof window !== "undefined") {
+        window.history.replaceState(null, "", `/analysis/${analysisId}`);
+      } else {
+        router.replace(`/analysis/${analysisId}`);
+      }
     } else {
       router.replace("/analysis/new");
     }
@@ -269,7 +273,7 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
       setSelectedTemplateId(
         normalizeTemplateId(nextAnalysis.selectedTemplateId, templateIdToUse),
       );
-      replaceAnalysisParam(nextAnalysis.id ?? null);
+      replaceAnalysisParam(nextAnalysis.id ?? null, { soft: true });
       setStep(5);
     } catch (error) {
       setAnalysisError(
@@ -372,9 +376,9 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
 
   const backLabel =
     step === 4
-      ? "Back to Upload"
+      ? "Back to Resume"
       : step === 3
-        ? "Back to Job Description"
+        ? "Back to Job Post"
         : "Back";
 
   return (
