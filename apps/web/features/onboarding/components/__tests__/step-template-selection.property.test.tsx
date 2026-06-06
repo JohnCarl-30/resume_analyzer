@@ -78,7 +78,7 @@ describe(
 
             // Total number of template card buttons equals sampleTemplates.length
             const allButtons = screen.getAllByRole("button");
-            // Filter to template card buttons (exclude the "Generate Analysis" button)
+            // Filter to template card buttons (exclude the "Check My Resume" button)
             const templateCardButtons = allButtons.filter((btn) =>
               sampleTemplates.some((t) => btn.textContent?.includes(t.name)),
             );
