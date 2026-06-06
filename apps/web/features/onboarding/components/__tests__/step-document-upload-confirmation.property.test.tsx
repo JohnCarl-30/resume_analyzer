@@ -80,9 +80,9 @@ describe(
               });
               expect(nameElements.length).toBeGreaterThan(0);
 
-              // Formatted size must be visible (component appends " ready for analysis")
+              // Formatted size must be visible (component appends " ready to check")
               const sizeElements = screen.getAllByText(
-                `${formattedSize} ready for analysis`,
+                `${formattedSize} ready to check`,
                 { normalizer: exactNormalizer },
               );
               expect(sizeElements.length).toBeGreaterThan(0);
