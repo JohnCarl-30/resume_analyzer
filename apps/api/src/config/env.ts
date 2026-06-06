@@ -27,6 +27,7 @@ const envSchema = z.object({
   GCP_PROJECT_ID: optionalString,
   GCP_LOCATION: z.string().min(1).default("us-central1"),
   AI_EXTRACTION_MODEL: z.string().min(1).default("gemini-2.5-flash"),
+  OPENAI_API_KEY: optionalString,
   R2_BUCKET_NAME: optionalString,
   R2_PUBLIC_BASE_URL: optionalUrl,
 });
