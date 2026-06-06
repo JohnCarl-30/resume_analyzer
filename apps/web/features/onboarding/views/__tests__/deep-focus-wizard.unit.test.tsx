@@ -112,14 +112,14 @@ async function advanceToStep2() {
   fireEvent.change(targetRoleInput, {
     target: { value: "Software Engineer" },
   });
-  const targetRoleNext = screen.getByRole("button", { name: /next: job details/i });
+  const targetRoleNext = screen.getByRole("button", { name: /next: paste job post/i });
   fireEvent.click(targetRoleNext);
 
   const textarea = screen.getByRole("textbox");
   fireEvent.change(textarea, {
     target: { value: "We need a senior TypeScript engineer with React experience." },
   });
-  const continueBtn = screen.getByRole("button", { name: /continue to resume upload/i });
+  const continueBtn = screen.getByRole("button", { name: /next: add resume/i });
   fireEvent.click(continueBtn);
 }
 
@@ -133,7 +133,7 @@ async function advanceToStep3() {
   Object.defineProperty(fileInput, "files", { value: [pdfFile], configurable: true });
   fireEvent.change(fileInput);
 
-  const continueBtn = screen.getByRole("button", { name: /continue to templates/i });
+  const continueBtn = screen.getByRole("button", { name: /next: pick layout/i });
   fireEvent.click(continueBtn);
 }
 
@@ -165,9 +165,9 @@ describe("DeepFocusWizard unit tests", () => {
       // Navigate to step 3
       await advanceToStep3();
 
-      // Template step is shown — click "Generate Analysis"
+      // Template step is shown — click "Check My Resume"
       expect(hasStepPill("STEP 4 OF 5")).toBe(true);
-      const generateBtn = screen.getByRole("button", { name: /generate analysis/i });
+      const generateBtn = screen.getByRole("button", { name: /check my resume/i });
       fireEvent.click(generateBtn);
 
       // Wait for the API call to resolve and suggestions step to appear
@@ -175,8 +175,8 @@ describe("DeepFocusWizard unit tests", () => {
         expect(hasStepPill("STEP 5 OF 5")).toBe(true);
       });
 
-      // Click "Enter Editor" to go to workspace
-      const enterEditorBtn = screen.getByRole("button", { name: /enter editor/i });
+      // Click "Open Resume Editor" to go to workspace
+      const enterEditorBtn = screen.getByRole("button", { name: /open resume editor/i });
       fireEvent.click(enterEditorBtn);
 
       // Workspace should be shown
@@ -230,7 +230,7 @@ describe("DeepFocusWizard unit tests", () => {
   // Validates: Requirement 6.3
   // -------------------------------------------------------------------------
   describe("handleGenerateAnalysis transitions step 4 -> step 5 on success", () => {
-    it("shows step 5 (STEP 5 OF 5) after Generate Analysis succeeds", async () => {
+    it("shows step 5 (STEP 5 OF 5) after Check My Resume succeeds", async () => {
       mockCreateResumeAnalysis.mockResolvedValue(minimalAnalysisResult);
 
       render(<DeepFocusWizard />);
@@ -241,8 +241,8 @@ describe("DeepFocusWizard unit tests", () => {
       // Confirm we are on template step
       expect(hasStepPill("STEP 4 OF 5")).toBe(true);
 
-      // Click "Generate Analysis"
-      const generateBtn = screen.getByRole("button", { name: /generate analysis/i });
+      // Click "Check My Resume"
+      const generateBtn = screen.getByRole("button", { name: /check my resume/i });
       fireEvent.click(generateBtn);
 
       // Wait for suggestions step to appear
@@ -254,14 +254,14 @@ describe("DeepFocusWizard unit tests", () => {
       expect(mockCreateResumeAnalysis).toHaveBeenCalledTimes(1);
     });
 
-    it("stays on template step and shows error when Generate Analysis fails", async () => {
+    it("stays on template step and shows error when Check My Resume fails", async () => {
       mockCreateResumeAnalysis.mockRejectedValue(new Error("Server error"));
 
       render(<DeepFocusWizard />);
 
       await advanceToStep3();
 
-      const generateBtn = screen.getByRole("button", { name: /generate analysis/i });
+      const generateBtn = screen.getByRole("button", { name: /check my resume/i });
       fireEvent.click(generateBtn);
 
       // Should remain on template step with an error message
@@ -281,14 +281,14 @@ describe("DeepFocusWizard unit tests", () => {
 
       await advanceToStep3();
 
-      const generateBtn = screen.getByRole("button", { name: /generate analysis/i });
+      const generateBtn = screen.getByRole("button", { name: /check my resume/i });
       fireEvent.click(generateBtn);
 
       await waitFor(() => {
         expect(hasStepPill("STEP 5 OF 5")).toBe(true);
       });
 
-      const enterEditorBtn = screen.getByRole("button", { name: /enter editor/i });
+      const enterEditorBtn = screen.getByRole("button", { name: /open resume editor/i });
       fireEvent.click(enterEditorBtn);
 
       await waitFor(() => {
