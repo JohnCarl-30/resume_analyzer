@@ -8,7 +8,7 @@
  *
  * - Steps 2 and 3: the back button lives in the DeepFocusWizard header
  *   (`{step > 1 && <button>...{backLabel}</button>}`).
- * - Step 4: the wizard header renders "Back to Upload".
+ * - Step 4: the wizard header renders "Back to Resume".
  *
  * Testing strategy:
  * - Steps 2, 3, and 4 are tested by rendering DeepFocusWizard and navigating to
@@ -36,7 +36,7 @@ vi.mock("next/navigation", () => ({
 async function navigateToStep2(container: HTMLElement, user: ReturnType<typeof userEvent.setup>) {
   const targetRoleInput = within(container).getByPlaceholderText(/senior frontend engineer/i);
   await user.type(targetRoleInput, "Software Engineer");
-  const nextButton = within(container).getByRole("button", { name: /next: job details/i });
+  const nextButton = within(container).getByRole("button", { name: /next: paste job post/i });
   await user.click(nextButton);
 }
 
@@ -45,7 +45,7 @@ async function navigateToStep3(container: HTMLElement, user: ReturnType<typeof u
   const jobDescriptionInput = within(container).getByRole("textbox");
   await user.type(jobDescriptionInput, "A".repeat(30));
   const continueButton = within(container).getByRole("button", {
-    name: /continue to resume upload/i,
+    name: /next: add resume/i,
   });
   await user.click(continueButton);
 }
@@ -56,7 +56,7 @@ async function navigateToStep4(container: HTMLElement, user: ReturnType<typeof u
   const pdfFile = new File(["pdf content"], "resume.pdf", { type: "application/pdf" });
   await user.upload(fileInput, pdfFile);
   const continueToTemplates = within(container).getByRole("button", {
-    name: /continue to templates/i,
+    name: /next: pick layout/i,
   });
   await user.click(continueToTemplates);
 }
@@ -85,7 +85,7 @@ describe("Feature: resume-editor-flow, Property 15: Back button presence", () =>
       const { unmount: unmount3 } = render(<DeepFocusWizard />, { container: step3Container });
       await navigateToStep3(step3Container, user3);
       const step3BackButton = within(step3Container).getByRole("button", {
-        name: /back to job description/i,
+        name: /back to job post/i,
       });
 
       // --- Step 4: render DeepFocusWizard and navigate to step 4 ---
@@ -95,7 +95,7 @@ describe("Feature: resume-editor-flow, Property 15: Back button presence", () =>
       const { unmount: unmount4 } = render(<DeepFocusWizard />, { container: step4Container });
       await navigateToStep4(step4Container, user4);
       const step4BackButton = within(step4Container).getByRole("button", {
-        name: /back to upload/i,
+        name: /back to resume/i,
       });
 
       const backButtonByStep: Record<2 | 3 | 4, HTMLElement> = {
