@@ -1,6 +1,21 @@
 import React from "react";
+import { ArrowRight, CheckCircle2, FileText, Lightbulb, SearchCheck, Target, TriangleAlert } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import type { ResumeAnalysisResult, AnalysisSuggestion } from "../../editor/model/resume-analysis";
-import { ArrowRightIcon } from "./wizard-icons";
 
 export interface StepSuggestionsProps {
   analysisResult: ResumeAnalysisResult;
@@ -10,44 +25,37 @@ export interface StepSuggestionsProps {
 
 function SeverityBadge({ severity }: { severity: AnalysisSuggestion["severity"] }) {
   if (severity === "high") {
-    return (
-      <span className="rounded-full bg-rose-100 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-rose-700">
-        Critical
-      </span>
-    );
+    return <Badge variant="destructive">Important</Badge>;
   }
   if (severity === "medium") {
-    return (
-      <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-amber-700">
-        Impact
-      </span>
-    );
+    return <Badge variant="secondary">Helpful</Badge>;
   }
-  return (
-    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-600">
-      Edit
-    </span>
-  );
+  return <Badge variant="outline">Optional</Badge>;
 }
 
 function SuggestionCard({ suggestion }: { suggestion: AnalysisSuggestion }) {
-  const accentClass =
-    suggestion.severity === "high"
-      ? "border-rose-300 bg-rose-50/70"
-      : suggestion.severity === "medium"
-        ? "border-amber-300 bg-amber-50/80"
-        : "border-slate-200 bg-slate-50/80";
+  const Icon = suggestion.severity === "high" ? TriangleAlert : suggestion.severity === "medium" ? Target : Lightbulb;
 
   return (
-    <article
-      className={`rounded-[18px] border px-4 py-4 shadow-[0_10px_24px_rgba(26,32,61,0.05)] ${accentClass}`}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="text-base font-semibold text-[color:var(--page-text)]">{suggestion.title}</h3>
-        <SeverityBadge severity={suggestion.severity} />
-      </div>
-      <p className="mt-2 text-sm leading-7 text-[color:var(--page-muted)]">{suggestion.detail}</p>
-    </article>
+    <Card role="article">
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+              <Icon aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-base font-semibold tracking-tight text-foreground">{suggestion.title}</h3>
+              <span className="text-sm text-muted-foreground">{suggestion.category}</span>
+            </div>
+          </div>
+          <SeverityBadge severity={suggestion.severity} />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm leading-7 text-muted-foreground">{suggestion.detail}</p>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -55,60 +63,100 @@ export function StepSuggestions({ analysisResult, onEnterEditor, onBack }: StepS
   const { suggestions, matchedKeywords, missingKeywords } = analysisResult;
   const totalCount = suggestions.length;
   const criticalCount = suggestions.filter((s) => s.severity === "high").length;
+  const atsReadiness = [
+    {
+      label: matchedKeywords.length > 0 ? `${matchedKeywords.length} job keywords found` : "Add job keywords from the description",
+      complete: matchedKeywords.length > 0,
+    },
+    {
+      label: missingKeywords.length === 0 ? "No missing keywords flagged" : `${missingKeywords.length} keywords still missing`,
+      complete: missingKeywords.length === 0,
+    },
+    {
+      label: criticalCount === 0 ? "No urgent scanner issues" : `${criticalCount} important improvement${criticalCount === 1 ? "" : "s"} to fix`,
+      complete: criticalCount === 0,
+    },
+  ];
+
+  const summaryItems = [
+    { label: "Suggestions", value: totalCount, icon: FileText },
+    { label: "Important", value: criticalCount, icon: TriangleAlert },
+    { label: "Found", value: matchedKeywords.length, icon: CheckCircle2 },
+    { label: "Missing", value: missingKeywords.length, icon: Target },
+  ];
 
   return (
-    <section className="section-reveal flex flex-1 flex-col px-5 py-8 sm:px-8 lg:px-12">
-      <div className="w-full flex-1 flex flex-col">
-        <div className="space-y-3 text-left sm:text-center">
-          <div className="sm:flex sm:justify-center">
-            <span className="step-pill">STEP 5 OF 5</span>
-          </div>
-          <h1 className="font-display text-4xl font-semibold tracking-tight text-[color:var(--page-text)]">
-            Your improvement suggestions
+    <section className="section-reveal flex flex-1 flex-col bg-background px-4 py-6 sm:px-8 lg:px-10">
+      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6">
+        <div className="flex flex-col gap-3 text-left sm:items-center sm:text-center">
+          <Badge variant="secondary">STEP 5 OF 5</Badge>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
+            Your resume improvement plan
           </h1>
-          <p className="max-w-[42rem] text-sm leading-6 text-[color:var(--page-muted)] sm:mx-auto">
-            Review the AI-generated recommendations below. When you&apos;re ready, enter the editor to apply them.
+          <p className="max-w-2xl text-base leading-7 text-muted-foreground">
+            These are the changes that can help your resume match this job and pass company resume scanners.
           </p>
         </div>
 
-        {/* Summary bar */}
-        <div className="mx-auto mt-8 w-full max-w-2xl grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-[16px] border border-[color:var(--page-line)] bg-white px-4 py-3 text-center shadow-[0_4px_12px_rgba(26,32,61,0.05)]">
-            <p className="text-2xl font-semibold text-[color:var(--page-text)]">{totalCount}</p>
-            <p className="mt-0.5 text-xs font-medium uppercase tracking-[0.12em] text-[color:var(--page-muted)]">
-              Total
-            </p>
-          </div>
-          <div className="rounded-[16px] border border-rose-200 bg-rose-50/60 px-4 py-3 text-center shadow-[0_4px_12px_rgba(26,32,61,0.05)]">
-            <p className="text-2xl font-semibold text-rose-700">{criticalCount}</p>
-            <p className="mt-0.5 text-xs font-medium uppercase tracking-[0.12em] text-rose-500">
-              Critical
-            </p>
-          </div>
-          <div className="rounded-[16px] border border-emerald-200 bg-emerald-50/60 px-4 py-3 text-center shadow-[0_4px_12px_rgba(26,32,61,0.05)]">
-            <p className="text-2xl font-semibold text-emerald-700">{matchedKeywords.length}</p>
-            <p className="mt-0.5 text-xs font-medium uppercase tracking-[0.12em] text-emerald-600">
-              Matched
-            </p>
-          </div>
-          <div className="rounded-[16px] border border-amber-200 bg-amber-50/60 px-4 py-3 text-center shadow-[0_4px_12px_rgba(26,32,61,0.05)]">
-            <p className="text-2xl font-semibold text-amber-700">{missingKeywords.length}</p>
-            <p className="mt-0.5 text-xs font-medium uppercase tracking-[0.12em] text-amber-600">
-              Missing
-            </p>
-          </div>
+        <Card>
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                <SearchCheck aria-hidden="true" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold tracking-tight text-foreground">Job match and scanner check</h2>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Suggestions are based on the {analysisResult.targetRole} job and the job post you pasted.
+                  The editor keeps familiar sections and readable text so the final PDF stays easy to scan.
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-2 sm:min-w-72">
+              {atsReadiness.map((item) => (
+                <div key={item.label} className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <CheckCircle2
+                    aria-hidden="true"
+                    className={item.complete ? "text-primary" : "text-muted-foreground"}
+                  />
+                  <span>{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {summaryItems.map((item) => (
+            <Card key={item.label}>
+              <CardContent className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-3xl font-semibold tracking-tight text-foreground">{item.value}</p>
+                  <p className="mt-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{item.label}</p>
+                </div>
+                <div className="flex size-9 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                  <item.icon aria-hidden="true" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* Suggestion list */}
-        <div className="mx-auto mt-6 w-full max-w-2xl flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto">
           {suggestions.length === 0 ? (
-            <div className="flex items-center justify-center rounded-[20px] border border-[color:var(--page-line)] bg-white px-6 py-12 text-center shadow-[0_4px_12px_rgba(26,32,61,0.04)]">
-              <p className="text-sm leading-6 text-[color:var(--page-muted)]">
-                No suggestions — your resume looks well-matched to this role.
-              </p>
-            </div>
+            <Empty className="min-h-64 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CheckCircle2 aria-hidden="true" />
+                </EmptyMedia>
+                <EmptyTitle>No suggestions</EmptyTitle>
+                <EmptyDescription>
+                  No suggestions — your resume already looks well-matched to this job.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
-            <div className="space-y-3 pb-4">
+            <div className="grid gap-3">
               {suggestions.map((suggestion) => (
                 <SuggestionCard key={suggestion.id} suggestion={suggestion} />
               ))}
@@ -117,26 +165,17 @@ export function StepSuggestions({ analysisResult, onEnterEditor, onBack }: StepS
         </div>
       </div>
 
-      {/* Footer actions */}
-      <div className="mt-auto border-t border-[color:var(--page-line)] pt-6">
-        <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-white px-5 py-3 text-sm font-semibold text-[color:var(--page-muted)] transition hover:border-[color:var(--page-line-strong)] hover:text-[color:var(--page-text)]"
-          >
+      <Card className="mx-auto mt-6 w-full max-w-5xl">
+        <CardFooter className="flex-col gap-3 sm:flex-row sm:justify-between">
+          <Button type="button" variant="outline" onClick={onBack}>
             Back
-          </button>
-          <button
-            type="button"
-            onClick={onEnterEditor}
-            className="inline-flex items-center justify-center gap-2 rounded-[12px] bg-[color:var(--brand)] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(79,107,255,0.22)] transition hover:bg-[color:var(--brand-strong)]"
-          >
-            Enter Editor
-            <ArrowRightIcon />
-          </button>
-        </div>
-      </div>
+          </Button>
+          <Button type="button" onClick={onEnterEditor}>
+            Open Resume Editor
+            <ArrowRight data-icon="inline-end" aria-hidden="true" />
+          </Button>
+        </CardFooter>
+      </Card>
     </section>
   );
 }
