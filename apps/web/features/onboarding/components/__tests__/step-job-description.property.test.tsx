@@ -48,7 +48,7 @@ describe(
             const { canContinue } = renderStep(jobDescription);
 
             const continueButton = screen.getByRole("button", {
-              name: /continue to resume upload/i,
+              name: /next: add resume/i,
             });
 
             if (canContinue) {
