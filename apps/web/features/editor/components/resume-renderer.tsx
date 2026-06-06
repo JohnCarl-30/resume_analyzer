@@ -7,6 +7,35 @@ interface ResumeRendererProps {
   variantId: ResumeTemplateVariant;
 }
 
+function contactItems(form: ResumeForm) {
+  return [form.personalInfo.phone, form.personalInfo.email].filter((item) => item.trim().length > 0);
+}
+
+function ContactLine({
+  items,
+  className,
+  separator = "|",
+}: {
+  items: string[];
+  className: string;
+  separator?: string;
+}) {
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={className}>
+      {items.map((item, index) => (
+        <React.Fragment key={`${item}-${index}`}>
+          {index > 0 ? <span className="opacity-40">{separator}</span> : null}
+          <span>{item}</span>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
 export function ResumeRenderer({ form, variantId }: ResumeRendererProps) {
   if (variantId === "minimalist-grid") {
     return <MinimalistGridLayout form={form} />;
@@ -32,13 +61,12 @@ function HarvardClassicLayout({ form }: { form: ResumeForm }) {
     <div className="font-serif text-[#0f172a] h-full">
       <header className="text-center mb-8 border-b border-gray-300 pb-6">
         <h1 className="text-4xl font-bold uppercase tracking-tight mb-3">
-          {form.personalInfo.fullName}
+          {form.personalInfo.fullName || "Your Name"}
         </h1>
-        <div className="flex justify-center gap-4 text-[0.95rem] text-gray-600">
-          <span>{form.personalInfo.phone}</span>
-          <span className="opacity-40">|</span>
-          <span>{form.personalInfo.email}</span>
-        </div>
+        <ContactLine
+          items={contactItems(form)}
+          className="flex flex-wrap justify-center gap-3 text-[0.95rem] text-gray-600"
+        />
         {form.personalInfo.summary && (
           <p className="mt-4 text-[0.95rem] text-gray-700 leading-relaxed max-w-2xl mx-auto">{form.personalInfo.summary}</p>
         )}
@@ -163,15 +191,14 @@ function ModernSansLayout({ form }: { form: ResumeForm }) {
     <div className="font-sans text-[#1e293b] h-full">
       <header className="mb-10 flex justify-between items-end border-b-2 border-slate-900 pb-8">
         <div>
-          <h1 className="text-5xl font-extrabold tracking-tighter uppercase leading-none mb-2">
-            {form.personalInfo.fullName.split(" ")[0]}
-            <br />
-            <span className="text-slate-500">{form.personalInfo.fullName.split(" ").slice(1).join(" ")}</span>
+          <h1 className="text-5xl font-extrabold tracking-tighter uppercase leading-none mb-2 text-slate-900">
+            {form.personalInfo.fullName || "Your Name"}
           </h1>
         </div>
-        <div className="text-right text-sm space-y-1 font-medium text-slate-600">
-          <div>{form.personalInfo.phone}</div>
-          <div>{form.personalInfo.email}</div>
+        <div className="text-right text-sm font-medium text-slate-600">
+          {contactItems(form).map((item) => (
+            <div key={item}>{item}</div>
+          ))}
         </div>
       </header>
 
@@ -265,7 +292,7 @@ function ModernSansLayout({ form }: { form: ResumeForm }) {
         {form.projects.length > 0 && (
           <section>
             <div className="flex items-center gap-4 mb-5">
-              <h2 className="text-sm font-black uppercase tracking-[0.2em] whitespace-nowrap">Key Projects</h2>
+              <h2 className="text-sm font-black uppercase tracking-[0.2em] whitespace-nowrap">Projects</h2>
               <div className="h-[2px] w-full bg-slate-100" />
             </div>
             <div className="space-y-8">
@@ -274,10 +301,9 @@ function ModernSansLayout({ form }: { form: ResumeForm }) {
                   <div>
                     <div className="font-bold text-lg">{project.name}</div>
                     <div className="text-slate-500 text-sm mb-3 font-mono">{project.technologies}</div>
-                    <ul className="space-y-2 ml-1">
+                    <ul className="mt-2 ml-4 list-disc space-y-2">
                       {project.bullets.map((bullet, i) => (
-                        <li key={i} className="flex gap-3 text-[0.95rem] text-slate-700">
-                          <span className="text-slate-300 font-black">/</span>
+                        <li key={i} className="text-[0.95rem] text-slate-700">
                           {bullet}
                         </li>
                       ))}
@@ -320,12 +346,12 @@ function RubyAccentLayout({ form }: { form: ResumeForm }) {
     <div className="font-serif text-[#1a1a1a] h-full">
       <header className="text-center mb-10">
         <h1 className="text-4xl font-bold tracking-tight mb-4" style={{ color: accentColor }}>
-          {form.personalInfo.fullName.toUpperCase()}
+          {(form.personalInfo.fullName || "Your Name").toUpperCase()}
         </h1>
-        <div className="flex justify-center gap-6 text-sm font-medium text-gray-500">
-          <span>{form.personalInfo.phone}</span>
-          <span>{form.personalInfo.email}</span>
-        </div>
+        <ContactLine
+          items={contactItems(form)}
+          className="flex flex-wrap justify-center gap-3 text-sm font-medium text-gray-500"
+        />
         {form.personalInfo.summary && (
           <p className="mt-4 text-[0.95rem] text-gray-700 leading-relaxed max-w-2xl mx-auto">{form.personalInfo.summary}</p>
         )}
@@ -412,7 +438,7 @@ function RubyAccentLayout({ form }: { form: ResumeForm }) {
         {form.projects.length > 0 && (
           <section>
             <div className="flex items-baseline gap-3 mb-4">
-              <h2 className="text-sm font-bold uppercase tracking-[0.15em]" style={{ color: accentColor }}>Selected Projects</h2>
+              <h2 className="text-sm font-bold uppercase tracking-[0.15em]" style={{ color: accentColor }}>Projects</h2>
               <div className="h-[1px] flex-1" style={{ backgroundColor: `${accentColor}20` }} />
             </div>
             <div className="space-y-6">
@@ -462,11 +488,11 @@ function MinimalistGridLayout({ form }: { form: ResumeForm }) {
         <h1 className="text-4xl font-bold tracking-tight text-[color:var(--page-text)] uppercase text-center">
           {form.personalInfo.fullName || "Your Name"}
         </h1>
-        <div className="flex justify-center gap-5 text-sm text-[color:var(--page-muted)]">
-          <span>{form.personalInfo.phone}</span>
-          <span className="opacity-40">•</span>
-          <span>{form.personalInfo.email}</span>
-        </div>
+        <ContactLine
+          items={contactItems(form)}
+          separator="•"
+          className="flex flex-wrap justify-center gap-3 text-sm text-[color:var(--page-muted)]"
+        />
         {form.personalInfo.summary && (
           <p className="text-center text-[0.95rem] text-[color:var(--page-muted)] leading-relaxed max-w-2xl mx-auto">{form.personalInfo.summary}</p>
         )}
@@ -503,7 +529,7 @@ function MinimalistGridLayout({ form }: { form: ResumeForm }) {
         {form.experience.length > 0 && (
           <section className="space-y-5">
             <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
-              Professional Experience
+              Experience
             </h2>
             <div className="space-y-6">
               {form.experience.map((exp) => (
@@ -531,7 +557,7 @@ function MinimalistGridLayout({ form }: { form: ResumeForm }) {
         {form.leadership.length > 0 && (
           <section className="space-y-5">
             <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
-              Leadership & Volunteers
+              Leadership
             </h2>
             <div className="space-y-6">
               {form.leadership.map((lead) => (
