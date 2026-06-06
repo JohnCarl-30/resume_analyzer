@@ -28,12 +28,22 @@ export function TemplateCard({ template, isSelected, onSelect }: TemplateCardPro
       <div className="space-y-3 px-5 py-5">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium text-[color:var(--app-text)]">{template.name}</h3>
-          {template.isPremium && (
-            <span className="rounded-full border border-[rgba(217,255,181,0.18)] bg-[rgba(217,255,181,0.08)] px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--app-accent-strong)]">
-              PRO
-            </span>
-          )}
+          <div className="flex flex-wrap justify-end gap-1.5">
+            {template.atsRecommended ? (
+              <span className="rounded-full border border-[rgba(152,229,195,0.28)] bg-[rgba(152,229,195,0.12)] px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--app-accent)]">
+                ATS
+              </span>
+            ) : null}
+            {template.isPremium && (
+              <span className="rounded-full border border-[rgba(217,255,181,0.18)] bg-[rgba(217,255,181,0.08)] px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--app-accent-strong)]">
+                PRO
+              </span>
+            )}
+          </div>
         </div>
+        <span className="inline-flex w-fit rounded-full border border-white/10 px-2 py-0.5 text-xs font-medium text-[color:var(--app-muted)]">
+          {template.atsLabel ?? "ATS-Friendly"}
+        </span>
         <p className="text-sm leading-6 text-[color:var(--app-muted)]">{template.description}</p>
       </div>
 
