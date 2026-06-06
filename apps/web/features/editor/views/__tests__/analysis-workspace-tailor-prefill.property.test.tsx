@@ -3,8 +3,8 @@
  *
  * Feature: resume-editor-flow, Property 16: Tailor modal pre-fill
  *
- * For any current job description string, opening the "Tailor to Job" modal
- * should pre-fill the job description input with that exact string.
+ * For any current job post string, opening the "Check Job Match" modal
+ * should pre-fill the job post input with that exact string.
  *
  * Validates: Requirements 8.2
  *
@@ -14,8 +14,7 @@
 
 import React from "react";
 import { describe, it, vi } from "vitest";
-import { render } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import * as fc from "fast-check";
 import type { ResumeForm } from "../../model/resume-form";
 import type { ResumeTemplateVariant } from "../../../templates/model/template";
@@ -78,23 +77,22 @@ describe(
     /**
      * **Validates: Requirements 8.2**
      *
-     * For any job description string (minLength: 30), opening the "Tailor to Job"
+     * For any job post string (minLength: 30), opening the "Check Job Match"
      * modal pre-fills the textarea with the exact jobDescription string.
      *
      * Strategy:
      * 1. Render AnalysisWorkspace with an analysisResult that has a jobDescription
-     * 2. Click the "Tailor to Job" button in the header to open the modal
+     * 2. Click the "Check Job Match" button in the header to open the modal
      * 3. Assert the textarea in the modal has value equal to the jobDescription
      */
     it(
-      "pre-fills the tailor modal textarea with the exact current job description",
-      async () => {
-        await fc.assert(
-          fc.asyncProperty(fc.string({ minLength: 30 }), async (jobDescription) => {
-            const user = userEvent.setup();
+      "pre-fills the tailor modal textarea with the exact current job post",
+      () => {
+        fc.assert(
+          fc.property(fc.string({ minLength: 30 }), (jobDescription) => {
             const analysisResult = buildAnalysisResult(jobDescription);
 
-            const { unmount, container } = render(
+            const { unmount } = render(
               <AnalysisWorkspace
                 targetRole="Software Engineer"
                 selectedTemplateId="minimalist-grid"
@@ -106,24 +104,12 @@ describe(
               />,
             );
 
-            // Find and click the "Tailor to Job" button in the header
-            const tailorButton = Array.from(container.querySelectorAll("button")).find(
-              (btn) => btn.textContent?.trim() === "Tailor to Job",
-            );
-            if (!tailorButton) {
-              unmount();
-              return false;
-            }
-            await user.click(tailorButton);
+            fireEvent.click(screen.getByRole("button", { name: /check job match/i }));
 
-            // Find the textarea inside the tailor modal
-            const textarea = container.querySelector<HTMLTextAreaElement>(
-              "textarea[placeholder='Paste the full job description here...']",
+            const dialog = screen.getByRole("dialog", { name: /check another job post/i });
+            const textarea = within(dialog).getByPlaceholderText<HTMLTextAreaElement>(
+              "Paste the full job post here...",
             );
-            if (!textarea) {
-              unmount();
-              return false;
-            }
 
             const prefillOk = textarea.value === jobDescription;
 
@@ -133,6 +119,7 @@ describe(
           { numRuns: 100 },
         );
       },
+      30000,
     );
   },
 );
