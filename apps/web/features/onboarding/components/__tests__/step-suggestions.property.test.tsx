@@ -8,9 +8,9 @@
  * label corresponds to the severity value.
  *
  * Severity badge mapping:
- *   "high"   → "Critical"
- *   "medium" → "Impact"
- *   "low"    → "Edit"
+ *   "high"   → "Important"
+ *   "medium" → "Helpful"
+ *   "low"    → "Optional"
  *
  * Validates: Requirements 4.2
  */
@@ -24,9 +24,9 @@ import type { ResumeAnalysisResult, AnalysisSuggestion } from "../../../editor/m
 
 /** Maps severity to the expected badge label. */
 function expectedBadgeLabel(severity: AnalysisSuggestion["severity"]): string {
-  if (severity === "high") return "Critical";
-  if (severity === "medium") return "Impact";
-  return "Edit";
+  if (severity === "high") return "Important";
+  if (severity === "medium") return "Helpful";
+  return "Optional";
 }
 
 /** Builds a minimal ResumeAnalysisResult containing a single suggestion. */
@@ -80,7 +80,7 @@ describe(
               );
 
               // Scope all assertions to the suggestion card <article> element
-              // to avoid collisions with the summary bar (which also shows "Critical").
+              // to avoid collisions with the summary bar (which also shows "Important").
               const card = within(iterContainer).getByRole("article");
 
               // Assert title is rendered inside the card via the <h3> element
