@@ -3,7 +3,7 @@
  *
  * Feature: resume-editor-flow, Property 9: Keyword counts display
  *
- * For any ResumeAnalysisResult, the suggestions panel should display a matched
+ * For any ResumeAnalysisResult, the suggestions panel should display a found
  * keyword count equal to matchedKeywords.length and a missing keyword count
  * equal to missingKeywords.length.
  *
@@ -37,13 +37,13 @@ describe(
   "Feature: resume-editor-flow, Property 9: Keyword counts display",
   () => {
     /**
-     * Property 9: Summary bar matched count equals matchedKeywords.length and
+     * Property 9: Summary bar found count equals matchedKeywords.length and
      * missing count equals missingKeywords.length.
      *
      * Validates: Requirements 4.6
      */
     it(
-      "displays matched count equal to matchedKeywords.length and missing count equal to missingKeywords.length",
+      "displays found count equal to matchedKeywords.length and missing count equal to missingKeywords.length",
       () => {
         fc.assert(
           fc.property(
@@ -73,7 +73,7 @@ describe(
               ) as HTMLElement;
               expect(summaryBar).not.toBeNull();
 
-              const matchedLabel = within(summaryBar).getByText("Matched", { exact: false });
+              const matchedLabel = within(summaryBar).getByText("Found", { exact: false });
               const missingLabel = within(summaryBar).getByText("Missing", { exact: false });
 
               // The count is the previous sibling <p> element of the label <p>.
