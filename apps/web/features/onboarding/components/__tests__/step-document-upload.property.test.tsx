@@ -99,7 +99,7 @@ describe(
               expect(canContinue).toBe(expectedAccepted);
 
               const continueButton = screen.getByRole("button", {
-                name: /continue to templates/i,
+                name: /next: pick layout/i,
               });
 
               if (expectedAccepted) {
