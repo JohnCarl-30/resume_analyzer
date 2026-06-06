@@ -1,11 +1,26 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { Geist, Geist_Mono, Lora } from "next/font/google";
 
 import "./globals.css";
-import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geistSans = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist-sans",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+});
+
+const lora = Lora({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-lora",
+});
 
 export const metadata: Metadata = {
   title: "Deep Focus | Resume Analyzer",
@@ -14,8 +29,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
-      <body>{children}</body>
+    <html lang="en" className={cn(geistSans.variable, geistMono.variable, lora.variable)}>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
