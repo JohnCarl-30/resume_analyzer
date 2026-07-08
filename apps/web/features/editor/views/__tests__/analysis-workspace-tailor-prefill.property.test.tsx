@@ -3,7 +3,7 @@
  *
  * Feature: resume-editor-flow, Property 16: Tailor modal pre-fill
  *
- * For any current job post string, opening the "Check Job Match" modal
+ * For any current job post string, opening the "Check resume again" modal
  * should pre-fill the job post input with that exact string.
  *
  * Validates: Requirements 8.2
@@ -77,12 +77,12 @@ describe(
     /**
      * **Validates: Requirements 8.2**
      *
-     * For any job post string (minLength: 30), opening the "Check Job Match"
+     * For any job post string (minLength: 30), opening the "Check resume again"
      * modal pre-fills the textarea with the exact jobDescription string.
      *
      * Strategy:
      * 1. Render AnalysisWorkspace with an analysisResult that has a jobDescription
-     * 2. Click the "Check Job Match" button in the header to open the modal
+     * 2. Click the "Check resume again" button in the header to open the modal
      * 3. Assert the textarea in the modal has value equal to the jobDescription
      */
     it(
@@ -104,9 +104,9 @@ describe(
               />,
             );
 
-            fireEvent.click(screen.getByRole("button", { name: /check job match/i }));
+            fireEvent.click(screen.getByRole("button", { name: /check resume again/i }));
 
-            const dialog = screen.getByRole("dialog", { name: /check another job post/i });
+            const dialog = screen.getByRole("dialog", { name: /check a different job post/i });
             const textarea = within(dialog).getByPlaceholderText<HTMLTextAreaElement>(
               "Paste the full job post here...",
             );

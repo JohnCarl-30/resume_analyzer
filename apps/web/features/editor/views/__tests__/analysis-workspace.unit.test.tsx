@@ -4,7 +4,7 @@
  * Tests:
  * 1. Download button present in header
  * 2. Source download button disabled when no source URL
- * 3. "Check Job Match" button present
+ * 3. "Check again" button present
  * 4. Loading overlay shown when isUpdatingAnalysis=true
  * 5. Error shown in tailor modal on failure
  * 6. Right suggestions column is absent from the rendered output
@@ -150,7 +150,7 @@ describe("AnalysisWorkspace — unit tests (task 7.7)", () => {
     expect(downloadButton).toBeDisabled();
   });
 
-  it("renders the download button as enabled with 'Download Original' label when resumeSourceUrl is provided", () => {
+  it("renders the download button as enabled with 'Download original' label when resumeSourceUrl is provided", () => {
     const { container } = renderWorkspace({ resumeSourceUrl: "https://example.com/resume.pdf" });
 
     const header = container.querySelector("header");
@@ -163,46 +163,46 @@ describe("AnalysisWorkspace — unit tests (task 7.7)", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Test 3: "Check Job Match" button present
+  // Test 3: "Check again" button present
   // Validates: Requirements 8.1
   // -------------------------------------------------------------------------
-  it("renders a 'Check Job Match' button in the header", () => {
+  it("renders a 'Check again' button in the header", () => {
     renderWorkspace();
 
-    const tailorButton = screen.getByRole("button", { name: /check job match/i });
+    const tailorButton = screen.getByRole("button", { name: /check resume again/i });
     expect(tailorButton).toBeInTheDocument();
   });
 
-  it("renders plain-language ATS next steps and opens the matching editor sections", () => {
+  it("renders plain-language next steps and opens the matching editor sections", () => {
     renderWorkspace({ initialForm: emptyResumeForm });
 
-    expect(screen.getByText("ATS checklist")).toBeInTheDocument();
+    expect(screen.getByText("Top fixes")).toBeInTheDocument();
     expect(screen.getByText("Getting close")).toBeInTheDocument();
-    expect(screen.getByText("Add the right skills")).toBeInTheDocument();
+    expect(screen.getByText("Add job words to Skills")).toBeInTheDocument();
 
-    fireEvent.click(within(checklistStep("Add the right skills")).getByRole("button", { name: /fix this section/i }));
+    fireEvent.click(within(checklistStep("Add job words to Skills")).getByRole("button", { name: /edit section/i }));
     expect(screen.getByRole("heading", { name: /personal info/i })).toBeInTheDocument();
   });
 
   it("checklist experience and job-post actions open the right flows", async () => {
     const { unmount } = renderWorkspace({ initialForm: emptyResumeForm });
 
-    fireEvent.click(within(checklistStep("Fix your work bullets")).getByRole("button", { name: /fix this section/i }));
+    fireEvent.click(within(checklistStep("Make work bullets clearer")).getByRole("button", { name: /edit section/i }));
     expect(screen.getByRole("heading", { name: /work experience/i })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Senior Product Designer")).toBeInTheDocument();
 
     unmount();
     renderWorkspace({ initialForm: emptyResumeForm });
 
-    fireEvent.click(within(checklistStep("Check against the job post")).getByRole("button", { name: /check job post/i }));
-    expect(screen.getByRole("dialog", { name: /check another job post/i })).toBeInTheDocument();
+    fireEvent.click(within(checklistStep("Check again with the job post")).getByRole("button", { name: /check job post/i }));
+    expect(screen.getByRole("dialog", { name: /check a different job post/i })).toBeInTheDocument();
 
-    fireEvent.keyDown(screen.getByRole("dialog", { name: /check another job post/i }), {
+    fireEvent.keyDown(screen.getByRole("dialog", { name: /check a different job post/i }), {
       key: "Escape",
       code: "Escape",
     });
     await waitFor(() => {
-      expect(screen.queryByRole("dialog", { name: /check another job post/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("dialog", { name: /check a different job post/i })).not.toBeInTheDocument();
     });
   });
 
@@ -222,7 +222,7 @@ describe("AnalysisWorkspace — unit tests (task 7.7)", () => {
     renderWorkspace();
 
     // Open the tailor modal
-    const tailorButton = screen.getByRole("button", { name: /check job match/i });
+    const tailorButton = screen.getByRole("button", { name: /check resume again/i });
     fireEvent.click(tailorButton);
 
     // The modal should be open — fill in a valid job post (≥30 chars)
@@ -252,7 +252,7 @@ describe("AnalysisWorkspace — unit tests (task 7.7)", () => {
     renderWorkspace();
 
     // Open the tailor modal
-    const tailorButton = screen.getByRole("button", { name: /check job match/i });
+    const tailorButton = screen.getByRole("button", { name: /check resume again/i });
     fireEvent.click(tailorButton);
 
     // Fill in a valid job post

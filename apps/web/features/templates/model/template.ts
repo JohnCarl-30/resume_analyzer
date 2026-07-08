@@ -29,7 +29,7 @@ export const sampleTemplates: ResumeTemplate[] = [
     description:
       "Clean section structure with standard headings, readable spacing, and no graphics that can confuse resume scanners.",
     thumbnailClass: "bg-gradient-to-br from-zinc-50 to-zinc-200",
-    atsLabel: "ATS Default",
+    atsLabel: "Scanner default",
     atsRecommended: true,
     previewVariant: "minimalist-grid",
   },
@@ -39,7 +39,7 @@ export const sampleTemplates: ResumeTemplate[] = [
     description:
       "A formal serif layout with disciplined spacing and traditional hierarchy. Best for conservative, academic, and leadership-facing roles.",
     thumbnailClass: "bg-gradient-to-br from-slate-50 to-slate-200",
-    atsLabel: "Full ATS-Optimized",
+    atsLabel: "Scanner ready",
     previewVariant: "harvard-classic",
     isPremium: true,
   },
@@ -49,7 +49,7 @@ export const sampleTemplates: ResumeTemplate[] = [
     description:
       "A sharper, high-contrast layout for product, tech, and modern professional roles. Best when you want a cleaner, more contemporary tone.",
     thumbnailClass: "bg-gradient-to-br from-blue-50 to-blue-200",
-    atsLabel: "ATS-Friendly",
+    atsLabel: "Scanner friendly",
     previewVariant: "modern-sans",
     isPremium: true,
   },
@@ -59,7 +59,7 @@ export const sampleTemplates: ResumeTemplate[] = [
     description:
       "An editorial serif resume with restrained accent treatment. Best when you want something expressive but still readable and professional.",
     thumbnailClass: "bg-gradient-to-br from-rose-50 to-rose-200",
-    atsLabel: "ATS-Friendly",
+    atsLabel: "Scanner friendly",
     previewVariant: "ruby-accent",
     isPremium: true,
   },

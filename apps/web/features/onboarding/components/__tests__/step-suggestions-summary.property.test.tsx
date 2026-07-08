@@ -74,26 +74,19 @@ describe(
                 { container },
               );
 
-              // The summary bar is a grid of 4 stat tiles. We locate it by its
-              // grid class and then scope queries within it to avoid collisions
+              // The summary bar is a grid of 4 stat items. We locate it by a
+              // stable test id and then scope queries within it to avoid collisions
               // with "Important" badge text that may appear in suggestion cards.
-              const summaryBar = container.querySelector(
-                ".grid.grid-cols-2",
-              ) as HTMLElement;
-              expect(summaryBar).not.toBeNull();
+              const summaryBar = within(container).getByTestId("suggestion-summary");
 
-              const totalLabel = within(summaryBar).getByText("Suggestions", { exact: false });
-              const importantLabel = within(summaryBar).getByText("Important", { exact: false });
+              const totalItem = within(summaryBar).getByTestId("summary-suggestions");
+              const importantItem = within(summaryBar).getByTestId("summary-important");
 
-              // The number is the previous sibling <p> element of the label <p>.
-              const totalNumber = totalLabel.previousElementSibling;
-              const importantNumber = importantLabel.previousElementSibling;
+              const totalNumber = within(totalItem).getByText(String(expectedTotal), { exact: true });
+              const importantNumber = within(importantItem).getByText(String(expectedImportant), { exact: true });
 
-              expect(totalNumber).not.toBeNull();
-              expect(importantNumber).not.toBeNull();
-
-              expect(Number(totalNumber!.textContent)).toBe(expectedTotal);
-              expect(Number(importantNumber!.textContent)).toBe(expectedImportant);
+              expect(Number(totalNumber.textContent)).toBe(expectedTotal);
+              expect(Number(importantNumber.textContent)).toBe(expectedImportant);
 
               unmount();
               document.body.removeChild(container);

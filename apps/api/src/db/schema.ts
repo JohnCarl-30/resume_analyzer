@@ -27,6 +27,12 @@ export const resumeAnalysesTable = pgTable(databaseTables.resumeAnalyses, {
   missingKeywords: jsonb("missing_keywords").$type<string[]>().notNull(),
   suggestions: jsonb("suggestions").$type<AnalysisSuggestion[]>().notNull(),
   extractedProfile: jsonb("extracted_profile").$type<ExtractedResumeProfile | null>(),
+  jobEmbedding: jsonb("job_embedding").$type<number[] | null>(),
+  resumeEmbedding: jsonb("resume_embedding").$type<number[] | null>(),
+  pipelineStages: jsonb("pipeline_stages").$type<Array<{ name: string; status: string; duration?: number; error?: string }> | null>(),
+  evaluationMetrics: jsonb("evaluation_metrics").$type<Record<string, unknown> | null>(),
+  fewShotExamplesUsed: integer("few_shot_examples_used"),
+  processingTimeMs: integer("processing_time_ms"),
   generatedAt: timestamp("generated_at", {
     withTimezone: true,
     mode: "string",

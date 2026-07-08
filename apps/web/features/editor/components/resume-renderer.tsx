@@ -5,6 +5,7 @@ import type { ResumeTemplateVariant } from "../../templates/model/template";
 interface ResumeRendererProps {
   form: ResumeForm;
   variantId: ResumeTemplateVariant;
+  showPlaceholders?: boolean;
 }
 
 function contactItems(form: ResumeForm) {
@@ -36,9 +37,9 @@ function ContactLine({
   );
 }
 
-export function ResumeRenderer({ form, variantId }: ResumeRendererProps) {
+export function ResumeRenderer({ form, variantId, showPlaceholders = false }: ResumeRendererProps) {
   if (variantId === "minimalist-grid") {
-    return <MinimalistGridLayout form={form} />;
+    return <MinimalistGridLayout form={form} showPlaceholders={showPlaceholders} />;
   }
 
   if (variantId === "harvard-classic") {
@@ -481,7 +482,26 @@ function RubyAccentLayout({ form }: { form: ResumeForm }) {
   );
 }
 
-function MinimalistGridLayout({ form }: { form: ResumeForm }) {
+function PlaceholderText({ children }: { children: React.ReactNode }) {
+  return <p className="text-sm italic leading-6 text-slate-500">{children}</p>;
+}
+
+function MinimalistGridLayout({
+  form,
+  showPlaceholders = false,
+}: {
+  form: ResumeForm;
+  showPlaceholders?: boolean;
+}) {
+  const placeholderContactItems = showPlaceholders
+    ? [form.personalInfo.phone || "(123) 456-7890", form.personalInfo.email || "you@example.com"]
+    : contactItems(form);
+  const shouldShowSummaryPlaceholder = showPlaceholders && !form.personalInfo.summary;
+  const shouldShowSkillsPlaceholder = showPlaceholders && !form.personalInfo.skills;
+  const shouldShowEducationPlaceholder = showPlaceholders && form.education.length === 0;
+  const shouldShowExperiencePlaceholder = showPlaceholders && form.experience.length === 0;
+  const shouldShowProjectsPlaceholder = showPlaceholders && form.projects.length === 0;
+
   return (
     <div className="h-full space-y-10">
       <header className="space-y-4 border-b border-[color:var(--page-line)] pb-8">
@@ -489,7 +509,7 @@ function MinimalistGridLayout({ form }: { form: ResumeForm }) {
           {form.personalInfo.fullName || "Your Name"}
         </h1>
         <ContactLine
-          items={contactItems(form)}
+          items={placeholderContactItems}
           separator="•"
           className="flex flex-wrap justify-center gap-3 text-sm text-[color:var(--page-muted)]"
         />
@@ -504,6 +524,17 @@ function MinimalistGridLayout({ form }: { form: ResumeForm }) {
       </header>
 
       <div className="grid gap-10">
+        {shouldShowSummaryPlaceholder ? (
+          <section className="space-y-4">
+            <h2 className="border-b border-[color:var(--page-line)] pb-2 text-xl font-bold uppercase tracking-widest text-[color:var(--brand)]">
+              Summary
+            </h2>
+            <PlaceholderText>
+              Add 2-3 lines about your target role, strongest skills, and the type of impact you make.
+            </PlaceholderText>
+          </section>
+        ) : null}
+
         {form.education.length > 0 && (
           <section className="space-y-5">
             <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
@@ -525,6 +556,16 @@ function MinimalistGridLayout({ form }: { form: ResumeForm }) {
             </div>
           </section>
         )}
+        {shouldShowEducationPlaceholder ? (
+          <section className="space-y-4">
+            <h2 className="border-b border-[color:var(--page-line)] pb-2 text-xl font-bold uppercase tracking-widest text-[color:var(--brand)]">
+              Education
+            </h2>
+            <PlaceholderText>
+              Add your school, degree, location, and graduation date.
+            </PlaceholderText>
+          </section>
+        ) : null}
 
         {form.experience.length > 0 && (
           <section className="space-y-5">
@@ -553,6 +594,27 @@ function MinimalistGridLayout({ form }: { form: ResumeForm }) {
             </div>
           </section>
         )}
+        {shouldShowExperiencePlaceholder ? (
+          <section className="space-y-4">
+            <h2 className="border-b border-[color:var(--page-line)] pb-2 text-xl font-bold uppercase tracking-widest text-[color:var(--brand)]">
+              Work Experience
+            </h2>
+            <PlaceholderText>
+              Add your job title, company, dates, and 2-4 bullet points that show measurable results.
+            </PlaceholderText>
+          </section>
+        ) : null}
+
+        {shouldShowSkillsPlaceholder ? (
+          <section className="space-y-4">
+            <h2 className="border-b border-[color:var(--page-line)] pb-2 text-xl font-bold uppercase tracking-widest text-[color:var(--brand)]">
+              Skills
+            </h2>
+            <PlaceholderText>
+              Add tools, technologies, and strengths that match the jobs you want.
+            </PlaceholderText>
+          </section>
+        ) : null}
 
         {form.leadership.length > 0 && (
           <section className="space-y-5">
@@ -624,6 +686,15 @@ function MinimalistGridLayout({ form }: { form: ResumeForm }) {
                 </div>
               ))}
             </div>
+          </section>
+        ) : shouldShowProjectsPlaceholder ? (
+          <section className="space-y-4">
+            <h2 className="border-b border-[color:var(--page-line)] pb-2 text-xl font-bold uppercase tracking-widest text-[color:var(--brand)]">
+              Projects
+            </h2>
+            <PlaceholderText>
+              Optional: add projects that show your work, tools, and outcomes.
+            </PlaceholderText>
           </section>
         ) : null}
       </div>

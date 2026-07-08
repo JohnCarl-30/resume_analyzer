@@ -28,4 +28,11 @@ export interface ResumeAnalysis {
   extractedCharacterCount?: number;
   extractedProfile?: ExtractedResumeProfile | null;
   extractionProvider?: "parser" | "vertex" | "openai";
+  // AI Pipeline fields
+  jobEmbedding?: number[] | null;
+  resumeEmbedding?: number[] | null;
+  pipelineStages?: Array<{ name: string; status: string; duration?: number; error?: string }> | null;
+  evaluationMetrics?: Record<string, unknown> | null;
+  fewShotExamplesUsed?: number | null;
+  processingTimeMs?: number | null;
 }

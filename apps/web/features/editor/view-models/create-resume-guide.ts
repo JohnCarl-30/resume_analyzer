@@ -90,7 +90,7 @@ export function getCreateResumeGuideState(
       },
       {
         id: "template",
-        label: "Template",
+        label: "Resume style",
         complete: options.hasSelectedTemplate,
         button: "Choose",
       },

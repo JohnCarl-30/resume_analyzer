@@ -7,16 +7,16 @@
 :root {
   color-scheme: light;
   --page-bg: #ffffff;
-  --page-bg-strong: #f4f6f9;
+  --page-bg-strong: #f7f9fc;
   --page-surface: #ffffff;
-  --page-line: #e2e8f0;
-  --page-line-strong: #cbd5e1;
+  --page-line: #dfe6f0;
+  --page-line-strong: #c7d2e3;
   --page-text: #0f172a;
-  --page-muted: #64748b;
-  --brand: #2563eb;
-  --brand-strong: #1d4ed8;
-  --brand-soft: #eff6ff;
-  --success: #10b981;
+  --page-muted: #5f6f87;
+  --brand: #155dfc;
+  --brand-strong: #0f4ed8;
+  --brand-soft: #eef4ff;
+  --success: #0f9f6e;
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
   --font-display: var(--font-geist-sans), "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
@@ -46,7 +46,7 @@
   --chart-3: var(--brand-strong);
   --chart-4: var(--page-muted);
   --chart-5: var(--page-line-strong);
-  --radius: 0.625rem;
+  --radius: 0.5rem;
   --sidebar: var(--page-bg-strong);
   --sidebar-foreground: var(--page-text);
   --sidebar-primary: var(--brand);

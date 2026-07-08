@@ -167,15 +167,17 @@ export function useResumeEditor(
     }));
   };
 
-  const addEducation = () => {
+  const addEducation = (draft: Partial<ResumeForm["education"][number]> = {}) => {
     const newEntry = {
       id: `edu_${Date.now()}`,
       institution: "",
       degree: "",
       location: "",
       dateRange: "",
+      ...draft,
     };
     setFormWithHistory((prev) => ({ ...prev, education: [...prev.education, newEntry] }));
+    return newEntry.id;
   };
 
   const removeEducation = (id: string) => {
@@ -189,15 +191,17 @@ export function useResumeEditor(
     }));
   };
 
-  const addExperience = () => {
+  const addExperience = (draft: Partial<ResumeForm["experience"][number]> = {}) => {
     const newEntry = {
       id: `exp_${Date.now()}`,
       role: "",
       location: "",
       dateRange: "",
       bullets: [] as string[],
+      ...draft,
     };
     setFormWithHistory((prev) => ({ ...prev, experience: [...prev.experience, newEntry] }));
+    return newEntry.id;
   };
 
   const addExperienceBullet = (id: string, bullet: string) => {

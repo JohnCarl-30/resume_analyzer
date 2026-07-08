@@ -10,6 +10,8 @@ export interface AnalysisNextStep {
   complete: boolean;
   action: AnalysisNextStepAction;
   buttonLabel: string;
+  applyLabel?: string;
+  applyDescription?: string;
 }
 
 export interface AnalysisNextStepsState {
@@ -102,6 +104,9 @@ export function getAnalysisNextStepsState(
 ): AnalysisNextStepsState {
   const score = analysisResult?.score ?? 0;
   const missingKeywordCount = analysisResult?.missingKeywords.length ?? 0;
+  const missingKeywordPreview = analysisResult?.missingKeywords.slice(0, 6) ?? [];
+  const firstMissingKeywords = missingKeywordPreview.slice(0, 5);
+  const missingKeywordText = firstMissingKeywords.join(", ");
   const searchText = formSearchText(form, analysisResult);
   const roleComplete = hasTargetRole(targetRole, searchText);
   const skillsComplete = hasSkills(form) && missingKeywordCount <= 6;
@@ -113,47 +118,60 @@ export function getAnalysisNextStepsState(
   const steps: AnalysisNextStep[] = [
     {
       id: "target-role",
-      title: `Add ${targetRole || "your target job"} near the top`,
-      description: "Put the job title in your summary or most recent role so scanners know what you are applying for.",
+      title: `Show ${targetRole || "the job title"} near the top`,
+      description: "Put the job title in your summary or most recent role so the resume matches the job quickly.",
       complete: roleComplete,
       action: "personal",
-      buttonLabel: roleComplete ? "Review" : "Fix this section",
+      buttonLabel: roleComplete ? "Review" : "Edit section",
+      applyLabel: roleComplete ? undefined : "Add suggestion",
+      applyDescription: targetRole
+        ? `Add "${targetRole}" to the summary near the top.`
+        : "Add the job title to the summary near the top.",
     },
     {
       id: "skills",
-      title: "Add the right skills",
+      title: "Add job words to Skills",
       description: missingKeywordCount > 0
         ? `Use missing job words naturally, starting with ${analysisResult?.missingKeywords.slice(0, 3).join(", ")}.`
         : "Keep your skills and summary aligned with the job post.",
       complete: skillsComplete,
       action: "skills",
-      buttonLabel: skillsComplete ? "Review" : "Fix this section",
+      buttonLabel: skillsComplete ? "Review" : "Edit section",
+      applyLabel: !skillsComplete && firstMissingKeywords.length > 0 ? "Add suggestion" : undefined,
+      applyDescription:
+        !skillsComplete && firstMissingKeywords.length > 0
+          ? `Add ${missingKeywordText} to Skills so you can edit them in context.`
+          : undefined,
     },
     {
       id: "experience",
-      title: "Fix your work bullets",
+      title: "Make work bullets clearer",
       description: impactComplete
         ? "Your bullets include concrete details. Review them for relevance to this job."
         : "Add real tools, actions, and numbers like users, speed, revenue, time saved, or percent improved.",
       complete: experienceComplete && impactComplete,
       action: "experience",
-      buttonLabel: experienceComplete && impactComplete ? "Review" : "Fix this section",
+      buttonLabel: experienceComplete && impactComplete ? "Review" : "Edit section",
+      applyLabel: experienceComplete && impactComplete ? undefined : "Add suggestion",
+      applyDescription: "Add a bullet starter with placeholders for a real result, tool, and audience.",
     },
     {
       id: "education",
       title: "Add education",
-      description: "Most ATS systems expect a clear Education section, even when experience is more important.",
+      description: "Most resume checks expect a clear Education section, even when experience is more important.",
       complete: educationComplete,
       action: "education",
-      buttonLabel: educationComplete ? "Review" : "Fix this section",
+      buttonLabel: educationComplete ? "Review" : "Edit section",
+      applyLabel: educationComplete ? undefined : "Add suggestion",
+      applyDescription: "Add an Education row you can fill in.",
     },
     {
       id: "job-match",
-      title: "Check against the job post",
-      description: "After editing, run the match again so the score and suggestions update for this role.",
+      title: "Check again with the job post",
+      description: "After editing, run the resume check again so the guidance updates for this role.",
       complete: jobComplete,
       action: "job",
-      buttonLabel: jobComplete ? "Recheck" : "Check job post",
+      buttonLabel: jobComplete ? "Check again" : "Check job post",
     },
   ];
 
@@ -165,13 +183,13 @@ export function getAnalysisNextStepsState(
     score >= 60 ? "close" :
     "needs-work";
   const statusLabel =
-    statusTone === "strong" ? "ATS ready" :
+    statusTone === "strong" ? "Ready to review" :
     statusTone === "close" ? "Getting close" :
-    "Needs work";
+    "Needs a few fixes";
   const summary =
     statusTone === "strong"
-      ? "This resume has the core ATS signals for the job. A final human edit is still worth doing."
-      : "Follow the checklist before printing. Each fix improves what resume scanners and recruiters can read.";
+      ? "This resume has the core signals for the job. Give it one final human read before printing."
+      : "Start with these fixes before printing. Each one makes the resume easier for scanners and recruiters to read.";
 
   return {
     statusLabel,
@@ -180,7 +198,7 @@ export function getAnalysisNextStepsState(
     completedCount,
     totalCount,
     progress,
-    missingKeywordPreview: analysisResult?.missingKeywords.slice(0, 6) ?? [],
+    missingKeywordPreview,
     steps,
   };
 }

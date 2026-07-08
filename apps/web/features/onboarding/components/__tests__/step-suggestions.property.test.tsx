@@ -83,15 +83,15 @@ describe(
               // to avoid collisions with the summary bar (which also shows "Important").
               const card = within(iterContainer).getByRole("article");
 
-              // Assert title is rendered inside the card via the <h3> element
-              const heading = card.querySelector("h3");
+              // Assert title is rendered inside the card.
+              const heading = within(card).getByTestId("suggestion-title");
               expect(heading).not.toBeNull();
-              expect(heading!.textContent).toBe(suggestion.title);
+              expect(heading.textContent).toBe(suggestion.title);
 
-              // Assert detail text is rendered inside the card via the <p> element
-              const detail = card.querySelector("p");
+              // Assert detail text is rendered inside the card.
+              const detail = within(card).getByTestId("suggestion-detail");
               expect(detail).not.toBeNull();
-              expect(detail!.textContent).toBe(suggestion.detail);
+              expect(detail.textContent).toBe(suggestion.detail);
 
               // Assert correct badge label is rendered inside the card
               const badgeLabel = expectedBadgeLabel(suggestion.severity);

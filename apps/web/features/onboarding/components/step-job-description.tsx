@@ -1,15 +1,7 @@
 import React from "react";
-import { ArrowRight, ClipboardList } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Field,
   FieldDescription,
@@ -43,39 +35,34 @@ export function StepJobDescription({
   const isNearLimit = trimmedLength > MAX_LENGTH * 0.9;
 
   return (
-    <section className="section-reveal flex flex-1 flex-col items-center justify-center bg-background px-4 py-6 sm:px-8">
+    <section className="section-reveal flex flex-1 flex-col items-center justify-center overflow-y-auto bg-background px-4 py-8 sm:px-8">
       <div className="w-full max-w-3xl">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <Badge variant="secondary">STEP 2 OF 5</Badge>
-          <div className="flex flex-col gap-3">
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
-              Paste the job post
-            </h1>
-            <p className="mx-auto max-w-xl text-base leading-7 text-muted-foreground">
-              Copy the job post here. We&apos;ll look for the skills and wording the company cares about.
-            </p>
-          </div>
+        <div className="flex flex-col gap-3 text-left sm:items-center sm:text-center">
+          <span className="sr-only">STEP 2 OF 5</span>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
+            Paste the job post
+          </h1>
+          <p className="max-w-xl text-base leading-7 text-muted-foreground">
+            Copy the responsibilities, requirements, and tools from the job post.
+          </p>
         </div>
 
-        <Card className="mx-auto mt-8 max-w-2xl">
-          <CardHeader>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex min-w-0 items-start gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-                  <ClipboardList aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <CardTitle>Job post</CardTitle>
-                  <CardDescription>Paste the responsibilities, requirements, and qualifications from the posting.</CardDescription>
-                </div>
-              </div>
+        <div className="mx-auto mt-8 max-w-2xl rounded-lg border bg-background p-4 sm:p-5">
+          <div className="flex items-start justify-between gap-4 border-b pb-4">
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold text-foreground">Job post</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Paste responsibilities, requirements, and qualifications from the posting.
+              </p>
+            </div>
+            {jobDescription.length > 0 ? (
               <Button type="button" variant="ghost" size="sm" onClick={() => setJobDescription("")}>
                 Clear
               </Button>
-            </div>
-          </CardHeader>
+            ) : null}
+          </div>
 
-          <CardContent>
+          <div className="pt-4">
             <FieldGroup>
               <Field data-invalid={jobDescriptionError ? "true" : undefined}>
                 <FieldLabel htmlFor="job-description">Job post text</FieldLabel>
@@ -95,9 +82,9 @@ export function StepJobDescription({
                 )}
               </Field>
             </FieldGroup>
-          </CardContent>
+          </div>
 
-          <CardFooter className="flex-col items-stretch gap-4">
+          <div className="mt-5 flex flex-col items-stretch gap-4 border-t pt-4">
             <div className="flex items-center justify-between gap-3 text-sm">
               <span className={isNearLimit ? "font-semibold text-destructive" : "text-muted-foreground"}>
                 {trimmedLength} / {MAX_LENGTH} characters
@@ -110,8 +97,8 @@ export function StepJobDescription({
               Next: Add Resume
               <ArrowRight data-icon="inline-end" aria-hidden="true" />
             </Button>
-          </CardFooter>
-        </Card>
+          </div>
+        </div>
       </div>
     </section>
   );

@@ -130,10 +130,10 @@ function renderWorkspace(
 }
 
 // ---------------------------------------------------------------------------
-// Helper: open the "Switch Template" modal
+// Helper: open the resume style modal
 // ---------------------------------------------------------------------------
 function openTemplateModal() {
-  fireEvent.click(screen.getByRole("button", { name: /switch template/i }));
+  fireEvent.click(screen.getByRole("button", { name: /choose resume style/i }));
 }
 
 // Helper: close the template modal via the "Close modal" icon button (aria-label)
@@ -237,7 +237,7 @@ describe("Preservation — Non-Switching Inputs and Fallback Behavior Unaffected
       );
 
       expect(
-        screen.getByText(/no suggestions.*your resume already looks well-matched to this job/i),
+        screen.getByText(/no suggestions.*your resume already looks well matched to this job/i),
       ).toBeInTheDocument();
     });
 

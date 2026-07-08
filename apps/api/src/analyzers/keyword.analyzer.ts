@@ -31,9 +31,9 @@ const stopWords = new Set([
 export function extractJdKeywords(jobDescription: string): string[] {
   const normalized = jobDescription.toLowerCase();
 
-  // Extract multi-word technical terms first (e.g. "machine learning", "ci/cd", "next.js")
+  // Extract multi-word technical terms first (software engineering focused)
   const multiWordPatterns = normalized.match(
-    /\b(?:machine learning|deep learning|natural language processing|large language models?|ci\/cd|next\.js|node\.js|type\s?script|react native|rest(?:ful)? api|graphql|aws lambda|google cloud|azure devops|data science|full[- ]?stack)\b/gi,
+    /\b(?:machine learning|deep learning|natural language processing|large language models?|ci\/cd|next\.js|node\.js|type\s?script|react native|rest(?:ful)? api|graphql|aws lambda|google cloud|azure devops|data science|full[- ]?stack|object-oriented|functional programming|test-driven development|domain-driven design|microservices architecture|distributed systems|event-driven|real-time|low-latency|high-availability|kubernetes|docker containers|infrastructure as code|continuous integration|continuous deployment|version control|git workflow|agile methodology|scrum master|product owner|technical lead|staff engineer|principal engineer|site reliability|devops|platform engineering|developer experience|developer tools|api gateway|load balancer|reverse proxy|message queue|event bus|service mesh|observability|monitoring|logging|tracing|data pipeline|etl|elt|data warehouse|data lake|business intelligence|machine learning ops|feature engineering|model training|inference|prediction|classification|regression|clustering|neural networks|deep neural|convolutional|recurrent|transformer|attention mechanism|generative ai|llm|prompt engineering|fine-tuning|transfer learning|reinforcement learning|computer vision|nlp|speech recognition|recommendation systems|search engine|information retrieval)\b/gi,
   ) ?? [];
 
   // Extract single tokens (min 3 chars, allow dots/slashes for tech terms)

@@ -11,8 +11,8 @@
  * test focuses on the StepTemplateSelection component's selection behavior:
  *
  * 1. Render StepTemplateSelection with a given selectedTemplateId
- * 2. Assert the selected template card has the visual highlight (ring/border)
- * 3. Assert the "Current Selection" aside shows the selected template's name
+ * 2. Assert the selected template card is exposed as pressed
+ * 3. Assert the selected card shows the selected template's name and ATS label
  *
  * Validates: Requirements 3.3, 3.5, 3.6, 5.1, 6.3
  */
@@ -33,7 +33,7 @@ describe(
      * Validates: Requirements 3.3, 3.5, 3.6, 5.1, 6.3
      */
     it(
-      "reflects the selected template ID in the card highlight and Current Selection aside",
+      "reflects the selected template ID in the selected template card",
       () => {
         fc.assert(
           fc.property(
@@ -67,13 +67,12 @@ describe(
               // The selected card should contain the template's name
               expect(selectedCard!.textContent).toContain(expectedTemplate!.name);
 
-              // Assert the "Current Selection" aside shows the selected template's name.
-              const aside = iterContainer.querySelector("aside");
-              expect(aside).not.toBeNull();
-              const selectionHeading = within(aside!).getByText(expectedTemplate!.name, {
-                exact: false,
-              });
-              expect(selectionHeading).toBeTruthy();
+              // Assert the selected card shows the scanner-friendly label.
+              const selectionLabel = within(selectedCard as HTMLElement).getByText(
+                expectedTemplate!.atsLabel ?? "Scanner friendly",
+                { exact: false },
+              );
+              expect(selectionLabel).toBeTruthy();
 
               unmount();
               document.body.removeChild(iterContainer);

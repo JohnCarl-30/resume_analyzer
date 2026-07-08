@@ -133,8 +133,8 @@ describe("AnalysisWorkspace create mode", () => {
     expect(screen.getByText("Resume checklist")).toBeInTheDocument();
     expect(screen.getByText("0% complete")).toBeInTheDocument();
     expect(screen.getByText(/add your name plus an email or phone number/i)).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: /print \/ pdf/i }).length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: /backup draft/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /print \/ save pdf/i }).length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: /save a copy/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /export json/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /download source/i })).not.toBeInTheDocument();
     expect(screen.getByText("Minimalist Grid")).toBeInTheDocument();
@@ -156,8 +156,8 @@ describe("AnalysisWorkspace create mode", () => {
     unmount();
     renderCreateWorkspace();
 
-    fireEvent.click(within(guideRow("Template")).getByRole("button", { name: /choose/i }));
-    expect(screen.getByRole("heading", { name: /switch template/i })).toBeInTheDocument();
+    fireEvent.click(within(guideRow("Resume style")).getByRole("button", { name: /choose/i }));
+    expect(screen.getByRole("heading", { name: /choose resume style/i })).toBeInTheDocument();
   });
 
   it("section plus buttons create editable education and experience entries", () => {
@@ -255,7 +255,7 @@ describe("AnalysisWorkspace create mode", () => {
       resumeFileName: "Pat Resume",
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /backup draft/i }));
+    fireEvent.click(screen.getByRole("button", { name: /save a copy/i }));
 
     expect(exportedBlob).not.toBeNull();
     const payload = JSON.parse(await exportedBlob!.text());

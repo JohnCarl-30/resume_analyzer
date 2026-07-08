@@ -1,15 +1,6 @@
 import React from "react";
-import { ArrowRight, Briefcase, CheckCircle2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Field,
   FieldDescription,
@@ -26,7 +17,14 @@ interface StepTargetRoleProps {
   canContinue: boolean;
 }
 
-const roleExamples = ["Senior Frontend Engineer", "Product Manager", "Data Analyst"];
+const roleExamples = [
+  "Senior Software Engineer",
+  "Full Stack Developer",
+  "Backend Engineer",
+  "Staff Engineer",
+  "DevOps Engineer",
+  "Machine Learning Engineer",
+];
 
 export function StepTargetRole({
   targetRole,
@@ -41,30 +39,24 @@ export function StepTargetRole({
       : "";
 
   return (
-    <section className="section-reveal flex flex-1 flex-col items-center justify-center bg-background px-4 py-6 sm:px-8">
+    <section className="section-reveal flex flex-1 flex-col items-center justify-center overflow-y-auto bg-background px-4 py-8 sm:px-8">
       <div className="w-full max-w-3xl">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <Badge variant="secondary">STEP 1 OF 5</Badge>
-          <div className="flex flex-col gap-3">
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
-              What job are you applying for?
-            </h1>
-            <p className="mx-auto max-w-xl text-base leading-7 text-muted-foreground">
-              Type the job title from the posting. We&apos;ll use it to make the resume advice specific.
-            </p>
-          </div>
+        <div className="flex flex-col gap-3 text-left sm:items-center sm:text-center">
+          <span className="sr-only">STEP 1 OF 5</span>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
+            What job are you applying for?
+          </h1>
+          <p className="max-w-xl text-base leading-7 text-muted-foreground">
+            Use the job title from the posting so the advice matches the role.
+          </p>
         </div>
 
-        <Card className="mx-auto mt-8 max-w-xl">
-          <CardHeader className="items-center text-center">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-              <Briefcase aria-hidden="true" />
-            </div>
-            <CardTitle>Job title</CardTitle>
-            <CardDescription>Use the same title the company uses in the job post.</CardDescription>
-          </CardHeader>
-
-          <CardContent>
+        <div className="mx-auto mt-8 max-w-xl rounded-lg border bg-background p-4 sm:p-5">
+          <div className="mb-4 border-b pb-4">
+            <h2 className="text-base font-semibold text-foreground">Job title</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Use the same title the company uses in the job post.</p>
+          </div>
+          <div>
             <FieldGroup>
               <Field data-invalid={roleError ? "true" : undefined}>
                 <FieldLabel htmlFor="target-role">Job title</FieldLabel>
@@ -91,26 +83,31 @@ export function StepTargetRole({
                 )}
               </Field>
             </FieldGroup>
-          </CardContent>
+          </div>
 
-          <CardFooter className="flex-col items-stretch gap-3">
+          <div className="mt-5 flex flex-col items-stretch gap-3 border-t pt-4">
             <Button type="button" onClick={onNext} disabled={!canContinue} className="w-full">
               Next: Paste Job Post
               <ArrowRight data-icon="inline-end" aria-hidden="true" />
             </Button>
             <div className="flex flex-wrap justify-center gap-2">
               {roleExamples.map((example) => (
-                <Badge key={example} variant="outline">
-                  <CheckCircle2 aria-hidden="true" />
+                <Button
+                  key={example}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setTargetRole(example)}
+                >
                   {example}
-                </Badge>
+                </Button>
               ))}
             </div>
-          </CardFooter>
-        </Card>
+          </div>
+        </div>
 
-        <p className="mt-5 text-center text-xs text-muted-foreground">
-          Next: paste the job post, add your resume, choose a layout, then get plain-language tips.
+        <p className="mt-5 text-center text-sm text-muted-foreground">
+          Next, paste the job post so we can find the right job words.
         </p>
       </div>
     </section>

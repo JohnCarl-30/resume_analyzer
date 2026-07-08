@@ -22,9 +22,46 @@ const lora = Lora({
   variable: "--font-lora",
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_APP_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3001");
+
 export const metadata: Metadata = {
-  title: "Deep Focus | Resume Analyzer",
-  description: "Guide users through role targeting, document upload, and resume template selection.",
+  metadataBase: new URL(siteUrl),
+  applicationName: "Deep Focus",
+  title: {
+    default: "Deep Focus | Resume Builder",
+    template: "%s | Deep Focus",
+  },
+  description:
+    "Create a scanner-friendly resume, compare it to job posts, and get plain-language improvement tips.",
+  keywords: [
+    "resume checker",
+    "scanner friendly resume",
+    "resume builder",
+    "job match",
+    "career tools",
+  ],
+  authors: [{ name: "Deep Focus" }],
+  creator: "Deep Focus",
+  publisher: "Deep Focus",
+  openGraph: {
+    type: "website",
+    siteName: "Deep Focus",
+    title: "Deep Focus | Resume Builder",
+    description:
+      "Create a scanner-friendly resume, compare it to job posts, and get plain-language improvement tips.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Deep Focus | Resume Builder",
+    description:
+      "Create a scanner-friendly resume, compare it to job posts, and get plain-language improvement tips.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

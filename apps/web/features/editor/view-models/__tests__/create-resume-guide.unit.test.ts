@@ -53,7 +53,7 @@ describe("getCreateResumeGuideState", () => {
       "Personal Info",
       "Education",
       "Experience",
-      "Template",
+      "Resume style",
       "Finish",
     ]);
   });

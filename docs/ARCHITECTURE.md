@@ -37,6 +37,12 @@ apps/web/features/
 
 When a view grows because it contains a complete sub-surface, extract that sub-surface into `components/<surface>/` and move pure calculations into `view-models/`.
 
+### UI Copy And Layout Rules
+
+The product should feel usable by someone who has never heard the engineering terms behind resume screening. Prefer plain labels in visible UI: "resume check" over "analysis", "resume scanner" over "ATS", "resume style" over "template", "job words" over "keywords", and "Add suggestion" over "Apply draft".
+
+Keep each screen focused on one primary action. Results screens should show the top fixes first, explain that suggestions are editable, and avoid repeating the same advice in multiple panels. Mobile editor screens should use `Editor` / `Preview` tabs and avoid side panels or horizontal overflow.
+
 ## API App
 
 The API follows a request pipeline:
@@ -55,6 +61,12 @@ routes -> controllers -> services -> analyzers/repositories/storage
 - `types/`: Shared API-domain types.
 
 Optional dependencies stay conditional: the API should run locally without database, Vertex AI, R2, or OpenAI credentials.
+
+### Cache Policy
+
+Resume API responses are private by default. Routes under `/api` can include resume text, job descriptions, source files, generated suggestions, and editor data, so they use `privateApiCacheHeaders` to send `private, no-store` cache headers plus `Vercel-CDN-Cache-Control: no-store`.
+
+Do not add Vercel Runtime Cache to resume, analysis, upload, enhancement, or source-file responses unless authentication and per-user cache boundaries exist. Runtime Cache is appropriate only for future public or static data such as public template metadata, ATS rule copy, or app configuration, and it should use explicit tags and TTLs.
 
 ## Current Editor Split
 

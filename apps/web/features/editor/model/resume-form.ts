@@ -121,41 +121,72 @@ export function resumeFormFromExtractedProfile(
 
 export const defaultResumeForm: ResumeForm = {
   personalInfo: {
-    fullName: "Your Full Name",
-    phone: "+1 (555) 000-0000",
-    email: "you@example.com",
-    summary: "",
-    skills: "",
+    fullName: "Alex Chen",
+    phone: "+1 (415) 555-0192",
+    email: "alex.chen@email.com",
+    summary:
+      "Software engineer with 3+ years building scalable web applications. Experienced in React, Node.js, and cloud infrastructure. Passionate about clean code, system design, and mentoring junior developers.",
+    skills:
+      "JavaScript, TypeScript, React, Node.js, Python, PostgreSQL, MongoDB, AWS, Docker, Kubernetes, GraphQL, REST APIs, Git, CI/CD, Jest, Cypress",
   },
   education: [
     {
       id: "edu_1",
-      institution: "University Name",
-      degree: "Degree Title",
-      location: "City, State",
-      dateRange: "2020 — 2024",
+      institution: "University of California, Berkeley",
+      degree: "B.S. Computer Science",
+      location: "Berkeley, CA",
+      dateRange: "2018 — 2022",
     },
   ],
   experience: [
     {
       id: "exp_1",
-      role: "Job Title",
-      location: "Company Name, Location",
-      dateRange: "Jan 2022 — Present",
-      bullets: [],
+      role: "Software Engineer",
+      location: "Stripe, San Francisco, CA",
+      dateRange: "Jun 2022 — Present",
+      bullets: [
+        "Built payment processing APIs handling $2M+ daily transactions using Node.js and PostgreSQL",
+        "Reduced API latency by 40% through query optimization and Redis caching layer",
+        "Led migration from monolith to microservices, improving deployment frequency by 3x",
+        "Mentored 2 junior engineers through code reviews and pair programming sessions",
+      ],
+    },
+    {
+      id: "exp_2",
+      role: "Software Engineering Intern",
+      location: "Airbnb, San Francisco, CA",
+      dateRange: "May 2021 — Aug 2021",
+      bullets: [
+        "Developed React components for the booking flow, increasing conversion by 12%",
+        "Implemented A/B testing framework for frontend experiments",
+      ],
     },
   ],
   leadership: [
     {
       id: "lead_1",
-      role: "Role",
-      organization: "Organization Name",
-      location: "Location",
+      role: "Tech Lead",
+      organization: "Engineering Mentorship Program",
+      location: "Stripe",
       dateRange: "2023 — Present",
     },
   ],
-  awards: ["Academic Achievement Award"],
-  projects: [],
+  awards: ["Employee of the Quarter — Q2 2023", "Hackathon Winner — Best Developer Tool"],
+  projects: [
+    {
+      id: "proj_1",
+      name: "Open Source CLI Tool",
+      technologies: "Rust, CLI, GitHub Actions",
+      link: "github.com/alexchen/devtool",
+      startDate: "Jan 2023",
+      endDate: "Present",
+      current: true,
+      bullets: [
+        "Built a developer productivity CLI tool with 500+ GitHub stars",
+        "Automated code review checks, saving 10+ hours per week across the team",
+      ],
+    },
+  ],
 };
 
 export function resumeFormToText(form: ResumeForm): string {
@@ -164,6 +195,14 @@ export function resumeFormToText(form: ResumeForm): string {
   parts.push(form.personalInfo.fullName);
   parts.push(form.personalInfo.phone);
   parts.push(form.personalInfo.email);
+
+  if (form.personalInfo.summary) {
+    parts.push(`\nSummary\n${form.personalInfo.summary}`);
+  }
+
+  if (form.personalInfo.skills) {
+    parts.push(`\nSkills\n${form.personalInfo.skills}`);
+  }
 
   if (form.education.length > 0) {
     parts.push("\nEducation");
@@ -176,6 +215,9 @@ export function resumeFormToText(form: ResumeForm): string {
     parts.push("\nExperience");
     for (const exp of form.experience) {
       parts.push(`${exp.role} at ${exp.location}, ${exp.dateRange}`);
+      for (const bullet of exp.bullets) {
+        parts.push(`- ${bullet}`);
+      }
     }
   }
 

@@ -8,70 +8,76 @@ import type { AnalysisNextStepAction, AnalysisNextStepsState } from "../../view-
 interface AnalysisNextStepsProps {
   guide: AnalysisNextStepsState;
   onAction: (action: AnalysisNextStepAction) => void;
+  onApply?: (action: AnalysisNextStepAction) => void;
 }
 
-const statusClassName: Record<AnalysisNextStepsState["statusTone"], string> = {
-  strong: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  close: "border-amber-200 bg-amber-50 text-amber-800",
-  "needs-work": "border-rose-200 bg-rose-50 text-rose-700",
+const statusVariant: Record<AnalysisNextStepsState["statusTone"], React.ComponentProps<typeof Badge>["variant"]> = {
+  strong: "default",
+  close: "secondary",
+  "needs-work": "destructive",
 };
 
-export function AnalysisNextSteps({ guide, onAction }: AnalysisNextStepsProps) {
+export function AnalysisNextSteps({ guide, onAction, onApply }: AnalysisNextStepsProps) {
   const visibleKeywords = guide.missingKeywordPreview.slice(0, 4);
   const hiddenKeywordCount = Math.max(guide.missingKeywordPreview.length - visibleKeywords.length, 0);
+  const incompleteCount = guide.steps.filter((step) => !step.complete).length;
 
   return (
-    <div className="rounded-[14px] border border-[color:var(--page-line)] bg-white p-3 shadow-none">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-[color:var(--page-text)]">ATS checklist</h3>
-          <p className="mt-1 text-xs leading-5 text-[color:var(--page-muted)]">{guide.summary}</p>
-        </div>
-        <Badge variant="outline" className={`shrink-0 ${statusClassName[guide.statusTone]}`}>
-          {guide.statusLabel}
-        </Badge>
-      </div>
-
-      <div className="mt-2.5 space-y-1">
-        <Progress value={guide.progress} aria-label="ATS checklist progress" />
-        <p className="text-xs text-[color:var(--page-muted)]">
-          {guide.completedCount} of {guide.totalCount} ready
-        </p>
-      </div>
-
-      {guide.missingKeywordPreview.length > 0 ? (
-        <div className="mt-2.5 rounded-[10px] bg-[color:var(--page-bg)] px-3 py-2">
-          <p className="text-xs font-medium text-[color:var(--page-text)]">Job words to add</p>
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {visibleKeywords.map((keyword) => (
-              <span
-                key={keyword}
-                className="rounded-full border border-[color:var(--page-line)] bg-white px-2 py-1 text-[0.68rem] font-medium text-[color:var(--page-muted)]"
-              >
-                {keyword}
-              </span>
-            ))}
-            {hiddenKeywordCount > 0 ? (
-              <span className="rounded-full border border-[color:var(--page-line)] bg-white px-2 py-1 text-[0.68rem] font-medium text-[color:var(--page-muted)]">
-                +{hiddenKeywordCount} more
-              </span>
-            ) : null}
+    <div className="rounded-lg border border-[color:var(--page-line)] bg-white shadow-none">
+      <div className="border-b border-[color:var(--page-line)] px-3 py-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-[color:var(--page-text)]">Top fixes</h3>
+            <p className="mt-1 text-xs leading-5 text-[color:var(--page-muted)]">
+              {incompleteCount > 0
+                ? `Fix these ${incompleteCount} items first. Added suggestions stay editable.`
+                : "Your main fixes are done. Give the resume one final read."}
+            </p>
           </div>
+          <Badge variant={statusVariant[guide.statusTone]} className="shrink-0">
+            {guide.statusLabel}
+          </Badge>
         </div>
-      ) : null}
+      </div>
+      <div className="px-3 py-3">
+        <p className="text-xs leading-5 text-[color:var(--page-muted)]">{guide.summary}</p>
 
-      <div className="mt-2.5 space-y-1.5">
-        {guide.steps.map((step, index) => (
-          <div
-            key={step.id}
-            className="rounded-[12px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] px-2.5 py-2"
-          >
-            <div className="flex items-start gap-3">
+        <div className="mt-2.5 flex flex-col gap-1">
+          <Progress value={guide.progress} aria-label="Resume check progress" />
+          <p className="text-xs text-[color:var(--page-muted)]">
+            {guide.completedCount} of {guide.totalCount} ready
+          </p>
+        </div>
+
+        {guide.missingKeywordPreview.length > 0 ? (
+          <div className="mt-2.5 border-t border-[color:var(--page-line)] pt-2.5">
+            <p className="text-xs font-medium text-[color:var(--page-text)]">Job words to add</p>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {visibleKeywords.map((keyword) => (
+                <Badge key={keyword} variant="outline" className="text-[0.68rem]">
+                  {keyword}
+                </Badge>
+              ))}
+              {hiddenKeywordCount > 0 ? (
+                <Badge variant="outline" className="text-[0.68rem]">
+                  +{hiddenKeywordCount} more
+                </Badge>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="mt-2.5 flex flex-col border-t border-[color:var(--page-line)]">
+          {guide.steps.map((step, index) => (
+            <div
+              key={step.id}
+              className="flex items-start gap-3 border-b border-[color:var(--page-line)] py-2.5 last:border-b-0"
+            >
               <span
-                className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.65rem] font-semibold ${
+                className={`mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full border text-[0.65rem] font-semibold ${
                   step.complete
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-600"
-                    : "border-[color:var(--page-line)] bg-white text-[color:var(--page-muted)]"
+                    ? "border-[color:var(--brand)] text-[color:var(--brand)]"
+                    : "border-[color:var(--page-line)] text-[color:var(--page-muted)]"
                 }`}
                 aria-hidden="true"
               >
@@ -79,22 +85,41 @@ export function AnalysisNextSteps({ guide, onAction }: AnalysisNextStepsProps) {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-[color:var(--page-text)]">{step.title}</p>
-                <p className="mt-0.5 overflow-hidden text-xs leading-4 text-[color:var(--page-muted)] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
+                <p className="mt-0.5 text-xs leading-4 text-[color:var(--page-muted)]">
                   {step.description}
                 </p>
-                <Button
-                  type="button"
-                  variant={step.complete ? "ghost" : "outline"}
-                  size="sm"
-                  onClick={() => onAction(step.action)}
-                  className="mt-1.5 h-7 px-2.5 text-xs"
-                >
-                  {step.buttonLabel}
-                </Button>
+                {!step.complete && step.applyDescription ? (
+                  <p className="mt-1 text-xs leading-4 text-[color:var(--page-muted)]">
+                    Suggested edit: {step.applyDescription}
+                  </p>
+                ) : null}
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  <Button
+                    type="button"
+                    variant={step.complete ? "ghost" : "outline"}
+                    size="sm"
+                    onClick={() => onAction(step.action)}
+                    className="h-7 px-2.5 text-xs"
+                  >
+                    {step.buttonLabel}
+                  </Button>
+                  {!step.complete && step.applyLabel && onApply ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => onApply(step.action)}
+                      aria-label={`Add suggestion for ${step.title}`}
+                      className="h-7 px-2.5 text-xs"
+                    >
+                      {step.applyLabel}
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

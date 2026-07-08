@@ -60,7 +60,7 @@ describe("StepSuggestions unit tests", () => {
     renderStep(makeAnalysisResult({ suggestions: [] }));
     expect(
       screen.getByText(
-        "No suggestions — your resume already looks well-matched to this job.",
+        "No suggestions — your resume already looks well matched to this job.",
       ),
     ).toBeTruthy();
   });
@@ -136,12 +136,12 @@ describe("StepSuggestions unit tests", () => {
   });
 
   /**
-   * Open Resume Editor button calls onEnterEditor
+   * Open editor button calls onEnterEditor
    */
-  it("Open Resume Editor button calls onEnterEditor", async () => {
+  it("Open editor button calls onEnterEditor", async () => {
     const user = userEvent.setup();
     const { onEnterEditor } = renderStep();
-    await user.click(screen.getByRole("button", { name: /open resume editor/i }));
+    await user.click(screen.getByRole("button", { name: /open editor/i }));
     expect(onEnterEditor).toHaveBeenCalledTimes(1);
   });
 });

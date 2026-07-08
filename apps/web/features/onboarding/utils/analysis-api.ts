@@ -24,7 +24,7 @@ function buildErrorMessage(error: unknown, fallback: string): string {
       const orderedFieldLabels: Record<string, string> = {
         targetRole: "Target role",
         jobDescription: "Job description",
-        selectedTemplateId: "Template selection",
+        selectedTemplateId: "Resume style",
         resumeText: "Resume text",
       };
 
@@ -58,7 +58,7 @@ export async function createResumeAnalysis(
 
     return await apiClient.post<ResumeAnalysisResult>("/api/analysis/upload", formData, true);
   } catch (error) {
-    throw new Error(buildErrorMessage(error, "Unable to generate analysis right now."));
+    throw new Error(buildErrorMessage(error, "Unable to check this resume right now."));
   }
 }
 
@@ -68,7 +68,7 @@ export async function createAnalysisFromTemplate(
   try {
     return await apiClient.post<ResumeAnalysisResult>("/api/analysis/template", input);
   } catch (error) {
-    throw new Error(buildErrorMessage(error, "Unable to generate analysis right now."));
+    throw new Error(buildErrorMessage(error, "Unable to check this resume right now."));
   }
 }
 
@@ -76,7 +76,7 @@ export async function getResumeAnalysis(analysisId: string): Promise<ResumeAnaly
   try {
     return await apiClient.get<ResumeAnalysisResult>(`/api/analysis/${analysisId}`);
   } catch (error) {
-    throw new Error(buildErrorMessage(error, "Unable to load the saved analysis right now."));
+    throw new Error(buildErrorMessage(error, "Unable to load the saved resume check right now."));
   }
 }
 
@@ -84,7 +84,7 @@ export async function listResumeAnalyses(): Promise<ResumeAnalysisResult[]> {
   try {
     return await apiClient.get<ResumeAnalysisResult[]>("/api/analysis");
   } catch (error) {
-    throw new Error(buildErrorMessage(error, "Unable to load analyses right now."));
+    throw new Error(buildErrorMessage(error, "Unable to load saved resume checks right now."));
   }
 }
 
@@ -99,6 +99,6 @@ export async function updateResumeAnalysis(
   try {
     return await apiClient.patch<ResumeAnalysisResult>(`/api/analysis/${analysisId}`, input);
   } catch (error) {
-    throw new Error(buildErrorMessage(error, "Failed to update resume analysis."));
+    throw new Error(buildErrorMessage(error, "Failed to update this resume check."));
   }
 }

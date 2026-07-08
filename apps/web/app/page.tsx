@@ -1,84 +1,142 @@
 import Link from "next/link";
-import { PlusIcon, SparklesIcon, BriefcaseOutlineIcon } from "@/features/onboarding/components/wizard-icons";
+import type { Metadata } from "next";
+import { ArrowRight, FileText, SearchCheck, ShieldCheck, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ResumeRenderer } from "@/features/editor/components/resume-renderer";
+import { defaultResumeForm } from "@/features/editor/model/resume-form";
+import { BrandMark } from "@/features/onboarding/components/wizard-icons";
+
+export const metadata: Metadata = {
+  title: "Resume Builder and Job Match Checker",
+  description:
+    "Create a clean resume or check an existing resume against a job description with plain-language guidance.",
+  alternates: {
+    canonical: "/",
+  },
+};
 
 export default function LandingPage() {
   return (
-    <main className="relative min-h-screen overflow-y-auto bg-[color:var(--page-bg)]">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-[20%] left-1/2 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-[color:var(--brand-soft)] opacity-60 blur-[120px]" />
-      </div>
-
-      <div className="relative mx-auto max-w-6xl px-6 py-16 sm:px-8 sm:py-24 lg:py-32">
-        <div className="text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-[color:var(--brand-soft)] px-4 py-1.5 text-sm font-semibold text-[color:var(--brand)]">
-            <SparklesIcon />
-            AI-Powered Resume Tools
-          </div>
-          <h1 className="mx-auto max-w-4xl font-display text-5xl font-bold tracking-tight text-[color:var(--page-text)] sm:text-6xl lg:text-7xl">
-            Land your <span className="text-[color:var(--brand)]">next role</span>
-          </h1>
-          <p className="mx-auto mt-8 max-w-2xl text-lg leading-8 text-[color:var(--page-muted)] sm:text-xl">
-            Choose how you want to get started. Create a resume from scratch or analyze an existing one against a job description.
-          </p>
-        </div>
-
-        <div className="mx-auto mt-16 max-w-3xl grid gap-6 sm:grid-cols-2 lg:mt-20">
-          <Link
-            href="/create-resume"
-            className="group relative flex flex-col items-center gap-5 rounded-[28px] border border-[color:var(--page-line)] bg-white p-10 text-center shadow-[0_12px_28px_rgba(59,75,138,0.07)] transition hover:-translate-y-2 hover:border-[color:var(--brand)] hover:shadow-[0_24px_48px_rgba(37,99,235,0.14)]"
-          >
-            <div className="flex h-20 w-20 items-center justify-center rounded-[20px] bg-[color:var(--brand-soft)] text-[color:var(--brand)] transition group-hover:scale-110">
-              <PlusIcon />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-[color:var(--page-text)]">Create Resume</h2>
-              <p className="mt-3 text-[0.95rem] leading-6 text-[color:var(--page-muted)]">
-                Build a new resume from scratch with AI guidance, multiple templates, and real-time preview.
-              </p>
-            </div>
+    <main className="min-h-screen bg-background text-foreground">
+      <header className="border-b bg-background">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="inline-flex items-center gap-2 text-base font-semibold tracking-tight">
+            <BrandMark />
+            Deep Focus
           </Link>
-
-          <Link
-            href="/analyses"
-            className="group relative flex flex-col items-center gap-5 rounded-[28px] border border-[color:var(--page-line)] bg-white p-10 text-center shadow-[0_12px_28px_rgba(59,75,138,0.07)] transition hover:-translate-y-2 hover:border-[color:var(--brand)] hover:shadow-[0_24px_48px_rgba(37,99,235,0.14)]"
-          >
-            <div className="flex h-20 w-20 items-center justify-center rounded-[20px] bg-[color:var(--brand-soft)] text-[color:var(--brand)] transition group-hover:scale-110">
-              <BriefcaseOutlineIcon />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-[color:var(--page-text)]">Analyze Resume</h2>
-              <p className="mt-3 text-[0.95rem] leading-6 text-[color:var(--page-muted)]">
-                Upload your resume and compare it against any job description with AI-powered suggestions.
-              </p>
-            </div>
-          </Link>
+          <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
+            <Link href="/create-resume" className="transition hover:text-foreground">
+              Create Resume
+            </Link>
+            <Link href="/analysis/new" className="transition hover:text-foreground">
+              Check Resume
+            </Link>
+            <Link href="/analyses" className="transition hover:text-foreground">
+              Saved Checks
+            </Link>
+          </nav>
+          <Button asChild size="sm">
+            <Link href="/create-resume">Start</Link>
+          </Button>
         </div>
+      </header>
 
-        <div className="mx-auto mt-24 max-w-5xl">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-[color:var(--page-text)]">Everything you need</h2>
-            <p className="mt-2 text-[color:var(--page-muted)]">Built for modern job seekers</p>
+      <section className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl items-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(28rem,1fr)] lg:px-8">
+        <div className="flex max-w-2xl flex-col gap-7">
+          <div className="flex flex-col gap-4">
+            <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+              Build a resume that scanners and people can read
+            </h1>
+            <p className="max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
+              Create a clean resume, compare it to a job post, and get plain-language fixes before you print.
+            </p>
           </div>
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Button asChild size="lg" className="h-12 justify-between px-4 text-base">
+              <Link href="/create-resume">
+                <span className="inline-flex items-center gap-2">
+                  <FileText data-icon="inline-start" aria-hidden="true" />
+                  Create Resume
+                </span>
+                <ArrowRight data-icon="inline-end" aria-hidden="true" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="h-12 justify-between px-4 text-base">
+              <Link href="/analysis/new">
+                <span className="inline-flex items-center gap-2">
+                  <SearchCheck data-icon="inline-start" aria-hidden="true" />
+                  Check Resume
+                </span>
+                <ArrowRight data-icon="inline-end" aria-hidden="true" />
+              </Link>
+            </Button>
+          </div>
+
+          <div className="grid gap-4 pt-2 sm:grid-cols-3">
             {[
-              { title: "4 Templates", desc: "Harvard, Modern, Ruby & Minimalist layouts designed for ATS." },
-              { title: "AI Extraction", desc: "Upload PDF/DOCX and get structured resume data instantly." },
-              { title: "Match Score", desc: "See how well your resume fits the job description." },
-              { title: "Bullet Enhancer", desc: "Improve experience bullets with one click using AI." },
-              { title: "Auto-Save", desc: "Never lose progress — everything saved to your browser." },
-              { title: "PDF Export", desc: "Print-ready output in any template you choose." },
-            ].map((feature) => (
-              <div
-                key={feature.title}
-                className="rounded-[20px] border border-[color:var(--page-line)] bg-white p-6 transition hover:border-[color:var(--brand)] hover:shadow-md"
-              >
-                <h3 className="font-semibold text-[color:var(--page-text)]">{feature.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-[color:var(--page-muted)]">{feature.desc}</p>
-              </div>
-            ))}
+              {
+                title: "Scanner-friendly",
+                description: "Readable sections and plain text.",
+                icon: ShieldCheck,
+              },
+              {
+                title: "Clear advice",
+                description: "Simple fixes you can apply.",
+                icon: Sparkles,
+              },
+              {
+                title: "Private draft",
+                description: "Saved in your browser.",
+                icon: FileText,
+              },
+            ].map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <div key={item.title} className="flex min-w-0 items-start gap-3">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                    <Icon aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">{item.title}</p>
+                    <p className="mt-1 text-sm leading-5 text-muted-foreground">{item.description}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      </div>
+
+        <div className="hidden min-w-0 lg:block">
+          <div className="rounded-xl border bg-background p-4 shadow-sm">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_19rem]">
+              <div className="aspect-[1/1.414] overflow-hidden rounded-lg border bg-white px-8 py-10">
+                <ResumeRenderer form={defaultResumeForm} variantId="minimalist-grid" />
+              </div>
+              <aside className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-4">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Job match</p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    Review missing job words, weak bullets, and section gaps.
+                  </p>
+                </div>
+                {[
+                  ["Job title match", "Good"],
+                  ["Key skills", "Good"],
+                  ["Job words", "Needs work"],
+                  ["Impact bullets", "Needs work"],
+                ].map(([label, status]) => (
+                  <div key={label} className="flex items-center justify-between gap-3 border-t pt-3 text-sm">
+                    <span className="font-medium text-foreground">{label}</span>
+                    <span className={status === "Good" ? "text-emerald-700" : "text-amber-700"}>{status}</span>
+                  </div>
+                ))}
+              </aside>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }

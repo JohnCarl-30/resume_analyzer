@@ -56,10 +56,10 @@ const readyForm: ResumeForm = {
 };
 
 describe("getAnalysisNextStepsState", () => {
-  it("turns a weak analysis into plain-language ATS fixes", () => {
+  it("turns a weak analysis into plain-language resume fixes", () => {
     const guide = getAnalysisNextStepsState(emptyResumeForm, baseAnalysis, "Frontend Engineer");
 
-    expect(guide.statusLabel).toBe("Needs work");
+    expect(guide.statusLabel).toBe("Needs a few fixes");
     expect(guide.progress).toBeLessThan(100);
     expect(guide.missingKeywordPreview).toEqual([
       "TypeScript",
@@ -69,13 +69,16 @@ describe("getAnalysisNextStepsState", () => {
       "performance",
     ]);
     expect(guide.steps.map((step) => step.title)).toEqual([
-      "Add Frontend Engineer near the top",
-      "Add the right skills",
-      "Fix your work bullets",
+      "Show Frontend Engineer near the top",
+      "Add job words to Skills",
+      "Make work bullets clearer",
       "Add education",
-      "Check against the job post",
+      "Check again with the job post",
     ]);
     expect(guide.steps.filter((step) => !step.complete).every((step) => step.buttonLabel.length > 0)).toBe(true);
+    expect(guide.steps.slice(0, 4).every((step) => step.applyLabel === "Add suggestion")).toBe(true);
+    expect(guide.steps[1]?.applyDescription).toContain("TypeScript");
+    expect(guide.steps[2]?.applyDescription).toContain("placeholders");
   });
 
   it("marks the checklist ready when role, skills, impact, education, and score are strong", () => {
@@ -91,9 +94,10 @@ describe("getAnalysisNextStepsState", () => {
       "Frontend Engineer",
     );
 
-    expect(guide.statusLabel).toBe("ATS ready");
+    expect(guide.statusLabel).toBe("Ready to review");
     expect(guide.completedCount).toBe(5);
     expect(guide.progress).toBe(100);
     expect(guide.steps.every((step) => step.complete)).toBe(true);
+    expect(guide.steps.every((step) => step.applyLabel === undefined)).toBe(true);
   });
 });

@@ -71,14 +71,14 @@ describe(
               // Card shows the template name
               expect(card).toHaveTextContent(template.name);
 
-              // Card shows the ATS label (falls back to "ATS-Friendly" if not set)
-              const atsLabel = template.atsLabel ?? "ATS-Friendly";
+              // Card shows the scanner-friendly label.
+              const atsLabel = template.atsLabel ?? "Scanner friendly";
               expect(card).toHaveTextContent(atsLabel);
             }
 
             // Total number of template card buttons equals sampleTemplates.length
             const allButtons = screen.getAllByRole("button");
-            // Filter to template card buttons (exclude the "Check My Resume" button)
+            // Filter to template card buttons (exclude the primary action button)
             const templateCardButtons = allButtons.filter((btn) =>
               sampleTemplates.some((t) => btn.textContent?.includes(t.name)),
             );

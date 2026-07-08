@@ -125,10 +125,10 @@ function renderWorkspace(overrides?: { onTemplateChange?: (id: ResumeTemplateVar
 }
 
 // ---------------------------------------------------------------------------
-// Helper: open the "Switch Template" modal
+// Helper: open the resume style modal
 // ---------------------------------------------------------------------------
 function openTemplateModal() {
-  fireEvent.click(screen.getByRole("button", { name: /switch template/i }));
+  fireEvent.click(screen.getByRole("button", { name: /choose resume style/i }));
 }
 
 // ---------------------------------------------------------------------------

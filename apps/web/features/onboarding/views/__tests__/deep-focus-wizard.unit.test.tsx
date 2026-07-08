@@ -165,7 +165,7 @@ describe("DeepFocusWizard unit tests", () => {
       // Navigate to step 3
       await advanceToStep3();
 
-      // Template step is shown — click "Check My Resume"
+      // Style step is shown — click "Check my resume"
       expect(hasStepPill("STEP 4 OF 5")).toBe(true);
       const generateBtn = screen.getByRole("button", { name: /check my resume/i });
       fireEvent.click(generateBtn);
@@ -176,7 +176,7 @@ describe("DeepFocusWizard unit tests", () => {
       });
 
       // Click "Open Resume Editor" to go to workspace
-      const enterEditorBtn = screen.getByRole("button", { name: /open resume editor/i });
+      const enterEditorBtn = screen.getByRole("button", { name: /open editor/i });
       fireEvent.click(enterEditorBtn);
 
       // Workspace should be shown
@@ -230,7 +230,7 @@ describe("DeepFocusWizard unit tests", () => {
   // Validates: Requirement 6.3
   // -------------------------------------------------------------------------
   describe("handleGenerateAnalysis transitions step 4 -> step 5 on success", () => {
-    it("shows step 5 (STEP 5 OF 5) after Check My Resume succeeds", async () => {
+    it("shows step 5 (STEP 5 OF 5) after Check my resume succeeds", async () => {
       mockCreateResumeAnalysis.mockResolvedValue(minimalAnalysisResult);
 
       render(<DeepFocusWizard />);
@@ -241,7 +241,7 @@ describe("DeepFocusWizard unit tests", () => {
       // Confirm we are on template step
       expect(hasStepPill("STEP 4 OF 5")).toBe(true);
 
-      // Click "Check My Resume"
+      // Click "Check my resume"
       const generateBtn = screen.getByRole("button", { name: /check my resume/i });
       fireEvent.click(generateBtn);
 
@@ -254,7 +254,7 @@ describe("DeepFocusWizard unit tests", () => {
       expect(mockCreateResumeAnalysis).toHaveBeenCalledTimes(1);
     });
 
-    it("stays on template step and shows error when Check My Resume fails", async () => {
+    it("stays on template step and shows error when Check my resume fails", async () => {
       mockCreateResumeAnalysis.mockRejectedValue(new Error("Server error"));
 
       render(<DeepFocusWizard />);
@@ -288,7 +288,7 @@ describe("DeepFocusWizard unit tests", () => {
         expect(hasStepPill("STEP 5 OF 5")).toBe(true);
       });
 
-      const enterEditorBtn = screen.getByRole("button", { name: /open resume editor/i });
+      const enterEditorBtn = screen.getByRole("button", { name: /open editor/i });
       fireEvent.click(enterEditorBtn);
 
       await waitFor(() => {

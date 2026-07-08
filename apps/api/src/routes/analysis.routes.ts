@@ -42,3 +42,32 @@ analysisRouter.post(
   "/template",
   asyncHandler(analysisController.createFromTemplate),
 );
+
+// AI Pipeline route (multi-step LLM processing with optional embeddings)
+analysisRouter.post(
+  "/pipeline",
+  analysisUpload.single("resume"),
+  asyncHandler(analysisController.runPipeline),
+);
+
+// Semantic search route (vector similarity search)
+analysisRouter.post(
+  "/search",
+  asyncHandler(analysisController.semanticSearch),
+);
+
+// Evaluation route (metrics for extraction quality)
+analysisRouter.post(
+  "/evaluate",
+  asyncHandler(analysisController.evaluate),
+);
+
+// Few-shot examples routes
+analysisRouter.get(
+  "/examples",
+  asyncHandler(analysisController.getFewShotExamples),
+);
+analysisRouter.post(
+  "/examples",
+  asyncHandler(analysisController.createFewShotExample),
+);

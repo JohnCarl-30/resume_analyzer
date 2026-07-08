@@ -253,6 +253,27 @@ function slugifyFileName(value: string) {
   return slug || "resume";
 }
 
+function normalizeApplyTerm(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9+.#]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function mergeCommaList(existing: string, additions: string[]) {
+  const seen = new Set<string>();
+  const merged: string[] = [];
+
+  for (const item of [...existing.split(/[,\n;]+/), ...additions]) {
+    const trimmed = item.trim();
+    const normalized = normalizeApplyTerm(trimmed);
+    if (!trimmed || seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+    merged.push(trimmed);
+  }
+
+  return merged.join(", ");
+}
+
 function relativeTimeLabel(timestamp?: string) {
   if (!timestamp) {
     return "Not saved yet";
@@ -827,6 +848,102 @@ export function AnalysisWorkspace({
     setModalView("tailor");
   }
 
+  function getApplyKeywords(limit = 6) {
+    const keywords = [
+      ...(analysisResult?.missingKeywords ?? []),
+      ...(analysisResult?.matchedKeywords ?? []),
+    ];
+    const seen = new Set<string>();
+    const uniqueKeywords: string[] = [];
+
+    for (const keyword of keywords) {
+      const normalized = normalizeApplyTerm(keyword);
+      if (!normalized || seen.has(normalized)) {
+        continue;
+      }
+      seen.add(normalized);
+      uniqueKeywords.push(keyword.trim());
+      if (uniqueKeywords.length >= limit) {
+        break;
+      }
+    }
+
+    return uniqueKeywords;
+  }
+
+  function buildSummaryDraft() {
+    const role = (targetRole || analysisResult?.targetRole || "Target role").trim();
+    const keywords = getApplyKeywords(4);
+    const keywordPhrase = keywords.length > 0 ? ` with experience related to ${keywords.join(", ")}` : "";
+    return `${role} candidate${keywordPhrase}. Add one real result here so recruiters can see your impact.`;
+  }
+
+  function buildImpactBulletDraft() {
+    const role = (targetRole || analysisResult?.targetRole || "the role").trim();
+    const keywords = getApplyKeywords(3);
+    const toolPhrase = keywords.length > 0 ? keywords.join(", ") : "relevant tools";
+    return `Used ${toolPhrase} to improve [specific result] for [team/users] in a ${role} context. Replace brackets with a real outcome.`;
+  }
+
+  function handleApplyAnalysisStepAction(action: AnalysisNextStepAction) {
+    if (action === "personal") {
+      const currentSummary = form.personalInfo.summary.trim();
+      const role = (targetRole || analysisResult?.targetRole || "").trim();
+      const normalizedSummary = normalizeApplyTerm(currentSummary);
+      const normalizedRole = normalizeApplyTerm(role);
+      const nextSummary =
+        currentSummary && normalizedRole && !normalizedSummary.includes(normalizedRole)
+          ? `${role}. ${currentSummary}`
+          : currentSummary || buildSummaryDraft();
+
+      updatePersonalInfo({ summary: nextSummary });
+      setActiveSectionId("personal");
+      setToast({ message: "Added an editable summary suggestion", type: "success" });
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+
+    if (action === "skills") {
+      const keywords = getApplyKeywords();
+      if (keywords.length > 0) {
+        updatePersonalInfo({ skills: mergeCommaList(form.personalInfo.skills, keywords) });
+      }
+      setActiveSectionId("personal");
+      setToast({ message: "Added editable job words to Skills", type: "success" });
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+
+    if (action === "experience") {
+      const bullet = buildImpactBulletDraft();
+      if (form.experience.length === 0) {
+        addExperience({
+          role: targetRole || analysisResult?.targetRole || "",
+          bullets: [bullet],
+        });
+      } else {
+        addExperienceBullet(form.experience[0].id, bullet);
+      }
+      setActiveSectionId("experience");
+      setToast({ message: "Added an editable bullet suggestion", type: "success" });
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+
+    if (action === "education") {
+      if (form.education.length === 0) {
+        addEducation();
+        setToast({ message: "Added an editable Education row", type: "success" });
+        setTimeout(() => setToast(null), 3000);
+      }
+      setActiveSectionId("education");
+      return;
+    }
+
+    setMobileSidebarOpen(false);
+    setModalView("tailor");
+  }
+
   function handleResetCreateDraft() {
     resetForm(emptyResumeForm);
     setEditedTitle("New Resume");
@@ -940,7 +1057,7 @@ export function AnalysisWorkspace({
           </div>
         </div>
 
-        <div className={`min-h-0 flex-1 overflow-y-auto px-3 py-2 ${createMode ? "pb-6 xl:pb-3" : ""}`}>
+        <div className={`min-h-0 flex-1 overflow-y-auto px-3 py-2 ${createMode ? "pb-6 xl:pb-3" : "pb-5"}`}>
           {createMode && (
             <div className="mb-4">
               <CreateResumeGuide
@@ -954,7 +1071,11 @@ export function AnalysisWorkspace({
           )}
           {analysisNextSteps && (
             <div className="mb-3">
-              <AnalysisNextSteps guide={analysisNextSteps} onAction={handleAnalysisStepAction} />
+              <AnalysisNextSteps
+                guide={analysisNextSteps}
+                onAction={handleAnalysisStepAction}
+                onApply={handleApplyAnalysisStepAction}
+              />
             </div>
           )}
           {editorSections.map((section, index) => {
@@ -1132,7 +1253,7 @@ export function AnalysisWorkspace({
   function renderDocumentPreview() {
     if (previewMode === "uploaded" && resumePreviewUrl) {
       return (
-        <div className="mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white shadow-[0_24px_60px_rgba(26,32,61,0.12)]">
+        <div className="mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-lg border border-[color:var(--page-line)] bg-white shadow-sm">
           <iframe
             key={`${resumePreviewUrl}-${previewZoom}`}
             title="Uploaded resume preview"
@@ -1146,7 +1267,7 @@ export function AnalysisWorkspace({
     if (previewMode === "parsed" && analysisResult?.parsedResumeText) {
       return (
         <div
-          className="print-resume mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white px-10 py-12 shadow-[0_24px_60px_rgba(26,32,61,0.12)] sm:px-14 sm:py-16"
+          className="print-resume mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-lg border border-[color:var(--page-line)] bg-white px-10 py-12 shadow-sm sm:px-14 sm:py-16"
           style={{
             transform: `scale(${previewZoom / 100})`,
             transformOrigin: "top center",
@@ -1160,19 +1281,19 @@ export function AnalysisWorkspace({
     if (hasStructuredPreview) {
       return (
         <div
-          className="print-resume mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white px-8 py-10 shadow-[0_24px_60px_rgba(26,32,61,0.12)] sm:px-12 sm:py-14 lg:px-16 lg:py-16"
+          className="print-resume mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-lg border border-[color:var(--page-line)] bg-white px-8 py-10 shadow-sm sm:px-12 sm:py-14 lg:px-16 lg:py-16"
           style={{
             transform: `scale(${previewZoom / 100})`,
             transformOrigin: "top center",
           }}
         >
-          <ResumeRenderer form={form} variantId={activeTemplateId} />
+          <ResumeRenderer form={form} variantId={activeTemplateId} showPlaceholders={createMode} />
         </div>
       );
     }
 
     return (
-      <div className="mx-auto flex aspect-[1/1.414] w-full max-w-[860px] items-center justify-center rounded-[28px] border border-dashed border-[color:var(--page-line)] bg-white px-8 py-10 text-center shadow-[0_24px_60px_rgba(26,32,61,0.08)]">
+      <div className="mx-auto flex aspect-[1/1.414] w-full max-w-[860px] items-center justify-center rounded-lg border border-dashed border-[color:var(--page-line)] bg-white px-8 py-10 text-center shadow-sm">
         <div className="max-w-md space-y-3">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]">
             Preview unavailable
@@ -1223,14 +1344,14 @@ export function AnalysisWorkspace({
           </div>
         </div>
       )}
-      <header className="shrink-0 border-b border-[color:var(--page-line)] bg-white px-3 py-2 sm:px-4 sm:py-2.5">
+      <header className="shrink-0 border-b border-[color:var(--page-line)] bg-white px-3 py-2 sm:px-4">
         <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex min-w-0 items-center gap-2 text-sm sm:gap-3">
             {!createMode && (
               <button
                 type="button"
                 onClick={() => setMobileSidebarOpen(true)}
-                className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[12px] border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-sm font-medium text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-soft)] xl:hidden"
+                className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[12px] border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-sm font-medium text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] xl:hidden"
                 aria-label="Open resume editor"
               >
                 <MenuIcon />
@@ -1311,7 +1432,7 @@ export function AnalysisWorkspace({
           <div
             className={`items-center gap-2 ${
               createMode
-                ? "-mx-3 flex overflow-x-auto px-3 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0 [&::-webkit-scrollbar]:hidden"
+                ? "hidden overflow-x-auto [scrollbar-width:none] sm:flex sm:flex-wrap [&::-webkit-scrollbar]:hidden"
                 : "flex flex-nowrap"
             }`}
           >
@@ -1322,7 +1443,7 @@ export function AnalysisWorkspace({
                   <div className="font-bold text-[color:var(--page-text)]">{Math.round(analysisResult.score)}% match</div>
                   <div className="text-[color:var(--page-muted)]">
                     {analysisResult.matchedKeywords.length}{" "}
-                    {analysisResult.matchedKeywords.length === 1 ? "keyword" : "keywords"} found
+                    {analysisResult.matchedKeywords.length === 1 ? "job word" : "job words"} found
                   </div>
                 </div>
               </div>
@@ -1333,7 +1454,7 @@ export function AnalysisWorkspace({
                 type="button"
                 onClick={undo}
                 disabled={!canUndo}
-                className="inline-flex items-center justify-center rounded-l-[14px] border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-soft)] disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:py-2.5"
+                className="inline-flex items-center justify-center rounded-l-[14px] border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:py-2.5"
                 aria-label="Undo"
                 title="Undo"
               >
@@ -1343,7 +1464,7 @@ export function AnalysisWorkspace({
                 type="button"
                 onClick={redo}
                 disabled={!canRedo}
-                className="inline-flex items-center justify-center rounded-r-[14px] border border-l-0 border-[color:var(--page-line)] bg-white px-2.5 py-2 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-soft)] disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:py-2.5"
+                className="inline-flex items-center justify-center rounded-r-[14px] border border-l-0 border-[color:var(--page-line)] bg-white px-2.5 py-2 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:py-2.5"
                 aria-label="Redo"
                 title="Redo"
               >
@@ -1364,7 +1485,7 @@ export function AnalysisWorkspace({
             <button
               type="button"
               onClick={() => setShowShortcuts(true)}
-              className={`shrink-0 items-center justify-center rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-soft)] ${
+              className={`shrink-0 items-center justify-center rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] ${
                 createMode ? "hidden" : "hidden 2xl:inline-flex"
               }`}
               aria-label="Keyboard shortcuts"
@@ -1377,39 +1498,39 @@ export function AnalysisWorkspace({
               <button
                 type="button"
                 onClick={openTailorModal}
-                aria-label="Check Job Match"
+                aria-label="Check resume again"
                 className="inline-flex shrink-0 items-center gap-2 rounded-[12px] bg-[color:var(--brand)] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(79,107,255,0.22)] transition hover:bg-[color:var(--brand-strong)]"
               >
                 <EyeIcon />
-                <span aria-hidden="true" className="hidden sm:inline">Check Job Match</span>
-                <span aria-hidden="true" className="sm:hidden">Check Match</span>
+                <span aria-hidden="true" className="hidden sm:inline">Check again</span>
+                <span aria-hidden="true" className="sm:hidden">Check</span>
               </button>
             )}
 
             <button
               type="button"
               onClick={() => setModalView("templates")}
-              aria-label="Switch template"
-              className="group hidden max-w-[9rem] shrink-0 items-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-xs font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg-soft)] active:scale-[0.98] sm:inline-flex sm:max-w-none sm:text-sm"
+              aria-label="Choose resume style"
+              className="group hidden max-w-[9rem] shrink-0 items-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-xs font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg-strong)] active:scale-[0.98] sm:inline-flex sm:max-w-none sm:text-sm"
             >
               <span className={createMode ? "hidden sm:inline-flex" : "inline-flex"}>
                 <GridIcon />
               </span>
               <span className="truncate">
-                {createMode ? (selectedTemplate?.name ?? "Switch template") : `Layout: ${selectedTemplate?.name ?? "Choose"}`}
+                {createMode ? (selectedTemplate?.name ?? "Choose style") : `Style: ${selectedTemplate?.name ?? "Choose"}`}
               </span>
             </button>
 
             <button
               type="button"
               onClick={() => window.print()}
-              aria-label="Print Resume"
+              aria-label="Print or save PDF"
               className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-xs font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] sm:px-4 sm:text-sm"
             >
               <span className={createMode ? "hidden sm:inline-flex" : "inline-flex"}>
                 <DownloadIcon />
               </span>
-              <span aria-hidden="true" className="hidden sm:inline">Print Resume</span>
+              <span aria-hidden="true" className="hidden sm:inline">Print / Save PDF</span>
               <span aria-hidden="true" className="sm:hidden">Print</span>
             </button>
 
@@ -1421,7 +1542,7 @@ export function AnalysisWorkspace({
                 className="hidden shrink-0 items-center gap-2 whitespace-nowrap rounded-[12px] border border-[color:var(--page-line)] bg-white px-4 py-2 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[color:var(--page-line)] disabled:hover:text-[color:var(--page-text)] 2xl:inline-flex"
               >
                 <DownloadIcon />
-                {resumeSourceUrl ? "Download Original" : "Backup Copy"}
+                {resumeSourceUrl ? "Download original" : "Backup copy"}
               </button>
             )}
           </div>
@@ -1486,10 +1607,10 @@ export function AnalysisWorkspace({
         </aside>
 
         <section
-          className={`${createMode && mobileCreateView === "editor" ? "hidden xl:flex" : "flex"} min-h-0 flex-1 overflow-hidden bg-[#f7f9fc]`}
+          className={`${createMode && mobileCreateView === "editor" ? "hidden xl:flex" : "flex"} min-h-0 flex-1 overflow-hidden bg-[color:var(--page-bg-strong)]`}
         >
           <div className="flex h-full flex-1 gap-0">
-            <div className="relative min-h-0 flex-1 overflow-hidden bg-[#f7f9fc]">
+            <div className="relative min-h-0 flex-1 overflow-hidden bg-[color:var(--page-bg-strong)]">
               <div className="pointer-events-none absolute inset-x-2 top-3 z-20 flex justify-center">
                 <div className="pointer-events-auto flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-[color:var(--page-line)] bg-white/95 px-2 py-1.5 shadow-sm [scrollbar-width:none] sm:gap-2 sm:px-2.5 [&::-webkit-scrollbar]:hidden">
                   {hasSourcePreviewChoice ? (
@@ -1582,12 +1703,12 @@ export function AnalysisWorkspace({
         {modalView ? (
           <DialogContent
             showCloseButton={false}
-            className="max-h-[92vh] max-w-[calc(100%-2rem)] gap-0 overflow-hidden rounded-[28px] border border-[color:var(--page-line)] bg-white p-0 text-[color:var(--page-text)] shadow-[0_28px_80px_rgba(15,23,42,0.22)] sm:max-w-6xl"
+            className="max-h-[92vh] max-w-[calc(100%-2rem)] gap-0 overflow-hidden rounded-xl border border-[color:var(--page-line)] bg-white p-0 text-[color:var(--page-text)] shadow-lg sm:max-w-5xl"
           >
             {modalView === "content" ? (
               <>
-                <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-6 py-5 sm:px-8">
-                  <DialogTitle className="text-[2rem] font-semibold tracking-tight text-[color:var(--page-text)]">
+                <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-5 py-4 sm:px-6">
+                  <DialogTitle className="text-xl font-semibold tracking-tight text-[color:var(--page-text)]">
                     Add Content
                   </DialogTitle>
                   <DialogDescription className="sr-only">
@@ -1596,14 +1717,14 @@ export function AnalysisWorkspace({
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="inline-flex h-12 w-12 items-center justify-center rounded-[16px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+                    className="inline-flex size-9 items-center justify-center rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-surface)] text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
                     aria-label="Close add content"
                   >
                     <CloseIcon />
                   </button>
                 </div>
 
-                <div className="px-6 py-6 sm:px-8 sm:py-8">
+                <div className="px-5 py-5 sm:px-6 sm:py-6">
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {addContentOptions.map((option) =>
                       option.interactive ? (
@@ -1611,10 +1732,10 @@ export function AnalysisWorkspace({
                           key={option.id}
                           type="button"
                           onClick={openProjectModal}
-                          className="rounded-[18px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] p-5 text-left transition hover:border-[color:var(--brand)] hover:-translate-y-0.5"
+                          className="rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-surface)] p-4 text-left transition hover:border-[color:var(--brand)]"
                         >
                           <div className="flex items-start gap-4">
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[color:var(--page-line)] bg-white text-[color:var(--page-muted)]">
+                            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[color:var(--page-line)] bg-white text-[color:var(--page-muted)]">
                               {contentOptionIcon(option.icon)}
                             </div>
                             <div className="space-y-1">
@@ -1632,10 +1753,10 @@ export function AnalysisWorkspace({
                           key={option.id}
                           type="button"
                           onClick={() => handleAddContentOption(option.id)}
-                          className="rounded-[18px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] p-5 text-left transition hover:border-[color:var(--brand)] hover:-translate-y-0.5"
+                          className="rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-surface)] p-4 text-left transition hover:border-[color:var(--brand)]"
                         >
                           <div className="flex items-start gap-4">
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[color:var(--page-line)] bg-white text-[color:var(--page-muted)]">
+                            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[color:var(--page-line)] bg-white text-[color:var(--page-muted)]">
                               {contentOptionIcon(option.icon)}
                             </div>
                             <div className="space-y-1">
@@ -1655,9 +1776,9 @@ export function AnalysisWorkspace({
               </>
             ) : modalView === "project" ? (
               <>
-                <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-6 py-5 sm:px-8">
-                  <DialogTitle className="text-[2rem] font-semibold tracking-tight text-[color:var(--page-text)]">
-                    Add Projects
+                <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-5 py-4 sm:px-6">
+                  <DialogTitle className="text-xl font-semibold tracking-tight text-[color:var(--page-text)]">
+                    Add Project
                   </DialogTitle>
                   <DialogDescription className="sr-only">
                     Add a project with technologies, dates, links, and bullet details.
@@ -1665,16 +1786,16 @@ export function AnalysisWorkspace({
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="inline-flex h-12 w-12 items-center justify-center rounded-[16px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+                    className="inline-flex size-9 items-center justify-center rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-surface)] text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
                     aria-label="Close add projects"
                   >
                     <CloseIcon />
                   </button>
                 </div>
 
-                <div className="max-h-[calc(92vh-5.5rem)] overflow-y-auto px-6 py-8 sm:px-8">
-                  <div className="space-y-8">
-                    <div className="space-y-3">
+                <div className="max-h-[calc(92vh-5rem)] overflow-y-auto px-5 py-5 sm:px-6">
+                  <div className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-2">
                       <label className="text-sm font-semibold tracking-wide text-[color:var(--page-text)]">
                         Project Name *
                       </label>
@@ -1683,11 +1804,11 @@ export function AnalysisWorkspace({
                         value={projectDraft.name}
                         onChange={(event) => updateProjectDraft("name", event.target.value)}
                         placeholder="E-Commerce Platform"
-                        className="w-full rounded-[18px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-6 py-4 text-2xl text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)]"
+                        className="w-full rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-3 text-base text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)]"
                       />
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="flex flex-col gap-2">
                       <label className="text-sm font-semibold tracking-wide text-[color:var(--page-text)]">
                         Technologies
                       </label>
@@ -1696,11 +1817,11 @@ export function AnalysisWorkspace({
                         value={projectDraft.technologies}
                         onChange={(event) => updateProjectDraft("technologies", event.target.value)}
                         placeholder="React, Node.js, PostgreSQL"
-                        className="w-full rounded-[18px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-6 py-4 text-xl text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)]"
+                        className="w-full rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-3 text-base text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)]"
                       />
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="flex flex-col gap-2">
                       <label className="text-sm font-semibold tracking-wide text-[color:var(--page-text)]">
                         Project Link <span className="text-[color:var(--page-muted)]">(Optional)</span>
                       </label>
@@ -1709,22 +1830,22 @@ export function AnalysisWorkspace({
                         value={projectDraft.link}
                         onChange={(event) => updateProjectDraft("link", event.target.value)}
                         placeholder="https://github.com/username/project"
-                        className="w-full rounded-[18px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-6 py-4 text-xl text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)]"
+                        className="w-full rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-3 text-base text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)]"
                       />
                     </div>
 
-                    <div className="grid gap-6 md:grid-cols-2">
-                      <div className="space-y-3">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="flex flex-col gap-2">
                         <label className="text-sm font-semibold tracking-wide text-[color:var(--page-text)]">
                           Start Date
                         </label>
-                        <div className="flex items-center justify-between rounded-[18px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-6 py-4">
+                        <div className="flex items-center justify-between rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-3">
                           <input
                             type="text"
                             value={projectDraft.startDate}
                             onChange={(event) => updateProjectDraft("startDate", event.target.value)}
                             placeholder="January 2024"
-                            className="w-full bg-transparent text-xl text-[color:var(--page-text)] outline-none placeholder:text-[color:var(--page-muted)]"
+                            className="w-full bg-transparent text-base text-[color:var(--page-text)] outline-none placeholder:text-[color:var(--page-muted)]"
                           />
                           <span className="ml-4 text-[color:var(--page-muted)]">
                             <CalendarIcon />
@@ -1732,18 +1853,18 @@ export function AnalysisWorkspace({
                         </div>
                       </div>
 
-                      <div className="space-y-3">
+                      <div className="flex flex-col gap-2">
                         <label className="text-sm font-semibold tracking-wide text-[color:var(--page-text)]">
                           End Date
                         </label>
-                        <div className="flex items-center justify-between rounded-[18px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-6 py-4">
+                        <div className="flex items-center justify-between rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-3">
                           <input
                             type="text"
                             value={projectDraft.endDate}
                             onChange={(event) => updateProjectDraft("endDate", event.target.value)}
                             placeholder="March 2024"
                             disabled={projectDraft.current}
-                            className="w-full bg-transparent text-xl text-[color:var(--page-text)] outline-none placeholder:text-[color:var(--page-muted)] disabled:opacity-50"
+                            className="w-full bg-transparent text-base text-[color:var(--page-text)] outline-none placeholder:text-[color:var(--page-muted)] disabled:opacity-50"
                           />
                           <span className="ml-4 text-[color:var(--page-muted)]">
                             <CalendarIcon />
@@ -1752,17 +1873,17 @@ export function AnalysisWorkspace({
                       </div>
                     </div>
 
-                    <label className="flex items-center gap-4 text-xl text-[color:var(--page-text)]">
+                    <label className="flex items-center gap-3 text-sm text-[color:var(--page-text)]">
                       <input
                         type="checkbox"
                         checked={projectDraft.current}
                         onChange={(event) => updateProjectDraft("current", event.target.checked)}
-                        className="h-7 w-7 rounded border border-[color:var(--page-line)]"
+                        className="size-4 rounded border border-[color:var(--page-line)]"
                       />
                       Currently working on this project
                     </label>
 
-                    <div className="space-y-4">
+                    <div className="flex flex-col gap-3">
                       <div className="flex items-center justify-between gap-4">
                         <label className="text-sm font-semibold tracking-wide text-[color:var(--page-text)]">
                           Project Description
@@ -1770,24 +1891,19 @@ export function AnalysisWorkspace({
                         <button
                           type="button"
                           onClick={handleAddBullet}
-                          className="inline-flex items-center gap-3 rounded-[16px] border border-[color:var(--page-line)] bg-white px-5 py-3 text-lg font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
+                          className="inline-flex h-8 items-center gap-2 rounded-lg border border-[color:var(--page-line)] bg-white px-3 text-sm font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
                         >
                           <PlusIcon />
                           Add Bullet
                         </button>
                       </div>
 
-                      <div className="flex items-center gap-6 text-3xl text-[color:var(--page-muted)]">
-                        <span className="font-semibold text-[color:var(--brand)]">B</span>
-                        <span className="italic text-sky-500">I</span>
-                      </div>
-
                       {projectDraft.bullets.length > 0 ? (
-                        <div className="space-y-2">
+                        <div className="flex flex-col gap-2">
                           {projectDraft.bullets.map((bullet, index) => (
                             <div
                               key={`${bullet}-${index}`}
-                              className="flex items-start justify-between gap-3 rounded-[16px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] px-4 py-3"
+                              className="flex items-start justify-between gap-3 rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-surface)] px-4 py-3"
                             >
                               <p className="text-base leading-7 text-[color:var(--page-text)]">{bullet}</p>
                               <button
@@ -1803,7 +1919,7 @@ export function AnalysisWorkspace({
                         </div>
                       ) : null}
 
-                      <div className="rounded-[20px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] p-5">
+                      <div className="rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-bg)] p-4">
                         <div className="flex justify-end">
                           <button
                             type="button"
@@ -1819,7 +1935,7 @@ export function AnalysisWorkspace({
                           value={projectDraft.bulletInput}
                           onChange={(event) => updateProjectDraft("bulletInput", event.target.value)}
                           placeholder="Built a feature that..."
-                          className="mt-3 min-h-[9rem] w-full resize-none bg-transparent text-2xl leading-9 text-[color:var(--page-text)] outline-none placeholder:text-[color:var(--page-muted)]"
+                          className="mt-3 min-h-[8rem] w-full resize-none bg-transparent text-base leading-7 text-[color:var(--page-text)] outline-none placeholder:text-[color:var(--page-muted)]"
                         />
 
                         <div className="mt-5 flex flex-col gap-4 border-t border-[color:var(--page-line)] pt-5 sm:flex-row sm:items-center sm:justify-between">
@@ -1829,7 +1945,7 @@ export function AnalysisWorkspace({
                           <button
                             type="button"
                             onClick={handleCompleteBullet}
-                            className="inline-flex items-center gap-3 rounded-[18px] border border-[color:var(--page-line)] bg-white px-5 py-3 text-lg font-semibold text-[color:var(--brand)] transition hover:border-[color:var(--brand)]"
+                            className="inline-flex h-9 items-center gap-2 rounded-lg border border-[color:var(--page-line)] bg-white px-3 text-sm font-semibold text-[color:var(--brand)] transition hover:border-[color:var(--brand)]"
                           >
                             <SparklesIcon />
                             Complete Bullet
@@ -1840,20 +1956,20 @@ export function AnalysisWorkspace({
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-4 border-t border-[color:var(--page-line)] px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+                <div className="flex flex-col gap-4 border-t border-[color:var(--page-line)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                   <div className="min-h-6 text-sm text-rose-500">{projectFormError}</div>
                   <div className="flex items-center justify-end gap-4">
                     <button
                       type="button"
                       onClick={closeModal}
-                      className="inline-flex items-center justify-center rounded-[16px] border border-[color:var(--page-line)] bg-white px-8 py-4 text-2xl font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)]"
+                      className="inline-flex h-9 items-center justify-center rounded-lg border border-[color:var(--page-line)] bg-white px-4 text-sm font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)]"
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
                       onClick={handleSaveProject}
-                      className="inline-flex items-center justify-center rounded-[16px] bg-[color:var(--brand)] px-8 py-4 text-2xl font-semibold text-white transition hover:bg-[color:var(--brand-strong)]"
+                      className="inline-flex h-9 items-center justify-center rounded-lg bg-[color:var(--brand)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-strong)]"
                     >
                       Save Changes
                     </button>
@@ -1862,28 +1978,28 @@ export function AnalysisWorkspace({
               </>
             ) : modalView === "tailor" ? (
               <>
-                <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-6 py-5 sm:px-8">
-                  <div className="space-y-1">
-                    <DialogTitle className="text-[2rem] font-semibold tracking-tight text-[color:var(--page-text)]">
-                      Check Another Job Post
+                <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-5 py-4 sm:px-6">
+                  <div className="flex flex-col gap-1">
+                    <DialogTitle className="text-xl font-semibold tracking-tight text-[color:var(--page-text)]">
+                      Check a different job post
                     </DialogTitle>
-                    <DialogDescription className="text-lg text-[color:var(--page-muted)]">
+                    <DialogDescription className="text-sm text-[color:var(--page-muted)]">
                       Paste a new job post and we&apos;ll refresh the tips for that role.
                     </DialogDescription>
                   </div>
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="inline-flex h-12 w-12 items-center justify-center rounded-[16px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+                    className="inline-flex size-9 items-center justify-center rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-surface)] text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
                     aria-label="Close tailor modal"
                   >
                     <CloseIcon />
                   </button>
                 </div>
 
-                <div className="px-6 py-8 sm:px-8">
-                  <div className="space-y-6">
-                    <div className="space-y-3">
+                <div className="px-5 py-5 sm:px-6">
+                  <div className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-2">
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-semibold tracking-wide text-[color:var(--page-text)]">
                           Job Post
@@ -1896,7 +2012,7 @@ export function AnalysisWorkspace({
                         value={newJobDescription}
                         onChange={(e) => setNewJobDescription(e.target.value)}
                         placeholder="Paste the full job post here..."
-                        className="min-h-[400px] w-full resize-none rounded-[24px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-6 py-5 text-lg leading-8 text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)]"
+                        className="min-h-[320px] w-full resize-none rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-3 text-base leading-7 text-[color:var(--page-text)] outline-none transition focus:border-[color:var(--brand)]"
                       />
                       {newJobDescription.length < 30 && newJobDescription.length > 0 && (
                         <p className="text-xs text-[#e16f62]">
@@ -1917,7 +2033,7 @@ export function AnalysisWorkspace({
                           onClick={handleTailorToJob}
                           disabled={isUpdatingAnalysis}
                           className="ml-2 whitespace-nowrap rounded-md bg-rose-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50"
-                          aria-label="Retry analysis"
+                          aria-label="Retry resume check"
                         >
                           Retry
                         </button>
@@ -1929,7 +2045,7 @@ export function AnalysisWorkspace({
                         type="button"
                         onClick={closeModal}
                         disabled={isUpdatingAnalysis}
-                        className="inline-flex h-16 items-center justify-center rounded-[18px] border border-[color:var(--page-line)] bg-white px-10 text-lg font-semibold text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] disabled:opacity-50"
+                        className="inline-flex h-9 items-center justify-center rounded-lg border border-[color:var(--page-line)] bg-white px-4 text-sm font-semibold text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] disabled:opacity-50"
                       >
                         Cancel
                       </button>
@@ -1937,9 +2053,9 @@ export function AnalysisWorkspace({
                         type="button"
                         disabled={isUpdatingAnalysis || newJobDescription.length < 30}
                         onClick={handleTailorToJob}
-                        className="inline-flex h-16 items-center justify-center gap-3 rounded-[18px] bg-[color:var(--brand)] px-10 text-lg font-semibold text-white shadow-[0_12px_32px_rgba(37,99,235,0.25)] transition hover:bg-[color:var(--brand-strong)] hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-50"
+                        className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-[color:var(--brand)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-strong)] disabled:opacity-50"
                       >
-                        {isUpdatingAnalysis ? "Checking..." : "Check Resume"}
+                        {isUpdatingAnalysis ? "Checking..." : "Check resume"}
                         {!isUpdatingAnalysis && <SparklesIcon />}
                       </button>
                     </div>
@@ -1948,28 +2064,28 @@ export function AnalysisWorkspace({
               </>
             ) : modalView === "templates" ? (
               <div className="flex h-full flex-col">
-                <header className="flex h-[112px] shrink-0 items-center justify-between border-b border-[color:var(--page-line)] px-8 sm:px-12">
-                  <div className="space-y-1">
-                    <DialogTitle className="text-4xl font-semibold tracking-tight text-[color:var(--page-text)]">
-                      Switch Template
+                <header className="flex shrink-0 items-center justify-between border-b border-[color:var(--page-line)] px-5 py-4 sm:px-6">
+                  <div className="flex flex-col gap-1">
+                    <DialogTitle className="text-xl font-semibold tracking-tight text-[color:var(--page-text)]">
+                      Choose resume style
                     </DialogTitle>
                     <DialogDescription className="sr-only">
-                      Choose a resume template and preview your content in that layout.
+                      Choose a resume style and preview your content in that layout.
                     </DialogDescription>
-                    <p className="text-xl text-[color:var(--page-muted)]">Instant layout preview with your content</p>
+                    <p className="text-sm text-[color:var(--page-muted)]">Preview your content in another layout.</p>
                   </div>
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="group flex h-14 w-14 items-center justify-center rounded-full border border-[color:var(--page-line)] bg-white transition hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg-strong)] active:scale-95"
+                    className="group flex size-9 items-center justify-center rounded-lg border border-[color:var(--page-line)] bg-white transition hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg-strong)] active:scale-95"
                     aria-label="Close modal"
                   >
                     <CloseIcon />
                   </button>
                 </header>
 
-                <div className="flex-1 overflow-y-auto px-8 py-10 sm:px-12">
-                  <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {sampleTemplates.map((template) => (
                       <TemplateCard
                         key={template.id}
@@ -1981,12 +2097,12 @@ export function AnalysisWorkspace({
                   </div>
                 </div>
 
-                <div className="border-t border-[color:var(--page-line)] px-8 py-6 sm:px-12">
+                <div className="border-t border-[color:var(--page-line)] px-5 py-4 sm:px-6">
                   <div className="flex items-center justify-end">
                     <button
                       type="button"
                       onClick={closeModal}
-                      className="inline-flex h-16 items-center justify-center rounded-[20px] border border-[color:var(--page-line)] bg-white px-10 text-2xl font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)]"
+                      className="inline-flex h-9 items-center justify-center rounded-lg border border-[color:var(--page-line)] bg-white px-4 text-sm font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)]"
                     >
                       Close selection
                     </button>
@@ -2000,26 +2116,26 @@ export function AnalysisWorkspace({
 
       {showShortcuts && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-[rgba(15,23,42,0.35)] p-4 sm:p-6">
-          <div className="w-full max-w-md overflow-hidden rounded-[24px] border border-[color:var(--page-line)] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]">
+          <div className="w-full max-w-md overflow-hidden rounded-xl border border-[color:var(--page-line)] bg-white shadow-lg">
             <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-6 py-4">
               <h2 className="text-lg font-semibold text-[color:var(--page-text)]">Keyboard Shortcuts</h2>
               <button
                 type="button"
                 onClick={() => setShowShortcuts(false)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] border border-[color:var(--page-line)] text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+                className="inline-flex size-9 items-center justify-center rounded-lg border border-[color:var(--page-line)] text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
               >
                 <CloseIcon />
               </button>
             </div>
             <div className="px-6 py-4">
-              <div className="space-y-3">
+              <div className="flex flex-col gap-3">
                 {[
                   { keys: "Ctrl + Z", action: "Undo" },
                   { keys: "Ctrl + Y", action: "Redo" },
                   { keys: "Ctrl + Shift + Z", action: "Redo" },
                   { keys: "Ctrl + P", action: "Print resume" },
                 ].map((shortcut) => (
-                  <div key={shortcut.keys} className="flex items-center justify-between rounded-[12px] bg-[color:var(--page-bg)] px-4 py-3">
+                  <div key={shortcut.keys} className="flex items-center justify-between rounded-lg bg-[color:var(--page-bg)] px-4 py-3">
                     <span className="text-sm text-[color:var(--page-text)]">{shortcut.action}</span>
                     <kbd className="rounded-md border border-[color:var(--page-line)] bg-white px-2 py-1 text-xs font-mono font-semibold text-[color:var(--page-muted)]">
                       {shortcut.keys}

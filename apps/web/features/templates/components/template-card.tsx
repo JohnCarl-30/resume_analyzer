@@ -1,5 +1,6 @@
 import { TemplateRealPreview } from "./template-preview";
 import type { ResumeTemplate } from "../model/template";
+import { Badge } from "@/components/ui/badge";
 
 interface TemplateCardProps {
   template: ResumeTemplate;
@@ -13,42 +14,38 @@ export function TemplateCard({ template, isSelected, onSelect }: TemplateCardPro
       type="button"
       onClick={() => onSelect(template.id)}
       aria-pressed={isSelected}
-      className={`group relative flex w-full flex-col overflow-hidden rounded-[28px] border text-left transition duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--app-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
+      className={`group relative flex w-full flex-col overflow-hidden rounded-lg border bg-white text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
         isSelected
-          ? "translate-y-[-4px] border-[rgba(152,229,195,0.42)] bg-white/[0.06] shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
-          : "border-white/10 bg-white/[0.025] hover:translate-y-[-2px] hover:border-white/20 hover:bg-white/[0.05]"
+          ? "border-primary ring-2 ring-primary/15"
+          : "border-border hover:border-primary/60 hover:bg-accent/30"
       }`}
     >
       <div
-        className={`relative flex h-40 w-full items-center justify-center overflow-hidden p-4 ${template.thumbnailClass}`}
+        className={`relative flex h-44 w-full items-center justify-center overflow-hidden border-b p-4 ${template.thumbnailClass}`}
       >
         <TemplateRealPreview variantId={template.id} />
       </div>
 
-      <div className="space-y-3 px-5 py-5">
+      <div className="flex flex-col gap-3 px-4 py-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium text-[color:var(--app-text)]">{template.name}</h3>
+          <h3 className="text-base font-semibold text-foreground">{template.name}</h3>
           <div className="flex flex-wrap justify-end gap-1.5">
             {template.atsRecommended ? (
-              <span className="rounded-full border border-[rgba(152,229,195,0.28)] bg-[rgba(152,229,195,0.12)] px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--app-accent)]">
-                ATS
-              </span>
+              <Badge variant="secondary">Recommended</Badge>
             ) : null}
             {template.isPremium && (
-              <span className="rounded-full border border-[rgba(217,255,181,0.18)] bg-[rgba(217,255,181,0.08)] px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--app-accent-strong)]">
-                PRO
-              </span>
+              <Badge>PRO</Badge>
             )}
           </div>
         </div>
-        <span className="inline-flex w-fit rounded-full border border-white/10 px-2 py-0.5 text-xs font-medium text-[color:var(--app-muted)]">
-          {template.atsLabel ?? "ATS-Friendly"}
+        <span className="inline-flex w-fit rounded-full border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground">
+          {template.atsLabel ?? "Scanner friendly"}
         </span>
-        <p className="text-sm leading-6 text-[color:var(--app-muted)]">{template.description}</p>
+        <p className="text-sm leading-6 text-muted-foreground">{template.description}</p>
       </div>
 
       {isSelected && (
-        <div className="absolute right-4 top-4 rounded-full bg-[color:var(--app-accent)] p-1 text-slate-950 shadow-md">
+        <div className="absolute right-3 top-3 rounded-full bg-primary p-1 text-primary-foreground shadow-sm">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"

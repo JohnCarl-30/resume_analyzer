@@ -1,13 +1,7 @@
 import React from "react";
-import { ArrowRight, CheckCircle2, FileText, Lightbulb, SearchCheck, Target, TriangleAlert } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
 import {
   Empty,
   EmptyDescription,
@@ -34,28 +28,21 @@ function SeverityBadge({ severity }: { severity: AnalysisSuggestion["severity"] 
 }
 
 function SuggestionCard({ suggestion }: { suggestion: AnalysisSuggestion }) {
-  const Icon = suggestion.severity === "high" ? TriangleAlert : suggestion.severity === "medium" ? Target : Lightbulb;
-
   return (
-    <Card role="article">
-      <CardHeader>
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-start gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-              <Icon aria-hidden="true" />
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-base font-semibold tracking-tight text-foreground">{suggestion.title}</h3>
-              <span className="text-sm text-muted-foreground">{suggestion.category}</span>
-            </div>
-          </div>
-          <SeverityBadge severity={suggestion.severity} />
+    <article role="article" className="rounded-lg border bg-background p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 data-testid="suggestion-title" className="text-base font-semibold tracking-tight text-foreground">
+            {suggestion.title}
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">{suggestion.category}</p>
         </div>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm leading-7 text-muted-foreground">{suggestion.detail}</p>
-      </CardContent>
-    </Card>
+        <SeverityBadge severity={suggestion.severity} />
+      </div>
+      <p data-testid="suggestion-detail" className="mt-4 text-sm leading-7 text-muted-foreground">
+        {suggestion.detail}
+      </p>
+    </article>
   );
 }
 
@@ -63,57 +50,56 @@ export function StepSuggestions({ analysisResult, onEnterEditor, onBack }: StepS
   const { suggestions, matchedKeywords, missingKeywords } = analysisResult;
   const totalCount = suggestions.length;
   const criticalCount = suggestions.filter((s) => s.severity === "high").length;
-  const atsReadiness = [
+  const topSuggestions = [...suggestions].sort((a, b) => {
+    const severityRank: Record<AnalysisSuggestion["severity"], number> = {
+      high: 0,
+      medium: 1,
+      low: 2,
+    };
+    return severityRank[a.severity] - severityRank[b.severity];
+  });
+  const visibleSuggestions = topSuggestions.slice(0, 3);
+  const hiddenSuggestionCount = Math.max(topSuggestions.length - visibleSuggestions.length, 0);
+  const readiness = [
     {
-      label: matchedKeywords.length > 0 ? `${matchedKeywords.length} job keywords found` : "Add job keywords from the description",
+      label: matchedKeywords.length > 0 ? `${matchedKeywords.length} job words found` : "Add job words from the description",
       complete: matchedKeywords.length > 0,
     },
     {
-      label: missingKeywords.length === 0 ? "No missing keywords flagged" : `${missingKeywords.length} keywords still missing`,
+      label: missingKeywords.length === 0 ? "No missing job words flagged" : `${missingKeywords.length} job words still missing`,
       complete: missingKeywords.length === 0,
     },
     {
-      label: criticalCount === 0 ? "No urgent scanner issues" : `${criticalCount} important improvement${criticalCount === 1 ? "" : "s"} to fix`,
+      label: criticalCount === 0 ? "No urgent fixes" : `${criticalCount} important improvement${criticalCount === 1 ? "" : "s"} to fix`,
       complete: criticalCount === 0,
     },
   ];
 
-  const summaryItems = [
-    { label: "Suggestions", value: totalCount, icon: FileText },
-    { label: "Important", value: criticalCount, icon: TriangleAlert },
-    { label: "Found", value: matchedKeywords.length, icon: CheckCircle2 },
-    { label: "Missing", value: missingKeywords.length, icon: Target },
-  ];
-
   return (
-    <section className="section-reveal flex flex-1 flex-col bg-background px-4 py-6 sm:px-8 lg:px-10">
+    <section className="section-reveal flex flex-1 flex-col overflow-y-auto bg-background px-4 py-8 sm:px-8 lg:px-10">
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6">
         <div className="flex flex-col gap-3 text-left sm:items-center sm:text-center">
-          <Badge variant="secondary">STEP 5 OF 5</Badge>
+          <span className="sr-only">STEP 5 OF 5</span>
           <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
-            Your resume improvement plan
+            Fix these first
           </h1>
           <p className="max-w-2xl text-base leading-7 text-muted-foreground">
-            These are the changes that can help your resume match this job and pass company resume scanners.
+            These are the clearest changes to help your resume match this job. You can add a draft suggestion, edit it,
+            and print only when it feels right.
           </p>
         </div>
 
-        <Card>
-          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex min-w-0 items-start gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-                <SearchCheck aria-hidden="true" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold tracking-tight text-foreground">Job match and scanner check</h2>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  Suggestions are based on the {analysisResult.targetRole} job and the job post you pasted.
-                  The editor keeps familiar sections and readable text so the final PDF stays easy to scan.
-                </p>
-              </div>
+        <div className="rounded-lg border bg-background p-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">Resume check</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                Suggestions are based on the {analysisResult.targetRole} job and the job post you pasted.
+                The editor keeps familiar sections and readable text so the final PDF stays easy to read.
+              </p>
             </div>
             <div className="grid gap-2 sm:min-w-72">
-              {atsReadiness.map((item) => (
+              {readiness.map((item) => (
                 <div key={item.label} className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle2
                     aria-hidden="true"
@@ -123,24 +109,42 @@ export function StepSuggestions({ analysisResult, onEnterEditor, onBack }: StepS
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {summaryItems.map((item) => (
-            <Card key={item.label}>
-              <CardContent className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-3xl font-semibold tracking-tight text-foreground">{item.value}</p>
-                  <p className="mt-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{item.label}</p>
-                </div>
-                <div className="flex size-9 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-                  <item.icon aria-hidden="true" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          </div>
         </div>
+
+        <dl
+          data-testid="suggestion-summary"
+          className="grid grid-cols-2 overflow-hidden rounded-lg border bg-background md:grid-cols-4"
+        >
+          <div
+            data-testid="summary-suggestions"
+            className="border-b p-4 even:border-l md:border-b-0 md:border-l md:first:border-l-0"
+          >
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Top fixes</dt>
+            <dd className="mt-2 text-3xl font-semibold tracking-tight text-foreground">{totalCount}</dd>
+          </div>
+          <div
+            data-testid="summary-important"
+            className="border-b p-4 even:border-l md:border-b-0 md:border-l md:first:border-l-0"
+          >
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Important</dt>
+            <dd className="mt-2 text-3xl font-semibold tracking-tight text-foreground">{criticalCount}</dd>
+          </div>
+          <div
+            data-testid="summary-found"
+            className="border-b p-4 even:border-l md:border-b-0 md:border-l md:first:border-l-0"
+          >
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Found words</dt>
+            <dd className="mt-2 text-3xl font-semibold tracking-tight text-foreground">{matchedKeywords.length}</dd>
+          </div>
+          <div
+            data-testid="summary-missing"
+            className="border-b p-4 even:border-l md:border-b-0 md:border-l md:first:border-l-0"
+          >
+            <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Words to add</dt>
+            <dd className="mt-2 text-3xl font-semibold tracking-tight text-foreground">{missingKeywords.length}</dd>
+          </div>
+        </dl>
 
         <div className="flex-1 overflow-y-auto">
           {suggestions.length === 0 ? (
@@ -151,31 +155,34 @@ export function StepSuggestions({ analysisResult, onEnterEditor, onBack }: StepS
                 </EmptyMedia>
                 <EmptyTitle>No suggestions</EmptyTitle>
                 <EmptyDescription>
-                  No suggestions — your resume already looks well-matched to this job.
+                  No suggestions — your resume already looks well matched to this job.
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
           ) : (
             <div className="grid gap-3">
-              {suggestions.map((suggestion) => (
+              {visibleSuggestions.map((suggestion) => (
                 <SuggestionCard key={suggestion.id} suggestion={suggestion} />
               ))}
+              {hiddenSuggestionCount > 0 ? (
+                <p className="text-center text-sm text-muted-foreground">
+                  {hiddenSuggestionCount} more suggestion{hiddenSuggestionCount === 1 ? "" : "s"} will be waiting in the editor.
+                </p>
+              ) : null}
             </div>
           )}
         </div>
       </div>
 
-      <Card className="mx-auto mt-6 w-full max-w-5xl">
-        <CardFooter className="flex-col gap-3 sm:flex-row sm:justify-between">
+      <div className="mx-auto mt-6 flex w-full max-w-5xl flex-col gap-3 border-t pt-4 sm:flex-row sm:justify-between">
           <Button type="button" variant="outline" onClick={onBack}>
             Back
           </Button>
           <Button type="button" onClick={onEnterEditor}>
-            Open Resume Editor
+            Open editor
             <ArrowRight data-icon="inline-end" aria-hidden="true" />
           </Button>
-        </CardFooter>
-      </Card>
+      </div>
     </section>
   );
 }

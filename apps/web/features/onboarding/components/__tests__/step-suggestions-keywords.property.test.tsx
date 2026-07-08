@@ -66,25 +66,18 @@ describe(
                 { container },
               );
 
-              // Locate the summary bar grid to scope queries and avoid
-              // collisions with other text in the component.
-              const summaryBar = container.querySelector(
-                ".grid.grid-cols-2",
-              ) as HTMLElement;
-              expect(summaryBar).not.toBeNull();
+              // Locate the summary bar to scope queries and avoid collisions
+              // with other text in the component.
+              const summaryBar = within(container).getByTestId("suggestion-summary");
 
-              const matchedLabel = within(summaryBar).getByText("Found", { exact: false });
-              const missingLabel = within(summaryBar).getByText("Missing", { exact: false });
+              const matchedItem = within(summaryBar).getByTestId("summary-found");
+              const missingItem = within(summaryBar).getByTestId("summary-missing");
 
-              // The count is the previous sibling <p> element of the label <p>.
-              const matchedNumber = matchedLabel.previousElementSibling;
-              const missingNumber = missingLabel.previousElementSibling;
+              const matchedNumber = within(matchedItem).getByText(String(matchedKeywords.length), { exact: true });
+              const missingNumber = within(missingItem).getByText(String(missingKeywords.length), { exact: true });
 
-              expect(matchedNumber).not.toBeNull();
-              expect(missingNumber).not.toBeNull();
-
-              expect(Number(matchedNumber!.textContent)).toBe(matchedKeywords.length);
-              expect(Number(missingNumber!.textContent)).toBe(missingKeywords.length);
+              expect(Number(matchedNumber.textContent)).toBe(matchedKeywords.length);
+              expect(Number(missingNumber.textContent)).toBe(missingKeywords.length);
 
               unmount();
               document.body.removeChild(container);
