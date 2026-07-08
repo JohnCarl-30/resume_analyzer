@@ -1,6 +1,7 @@
 import { TemplateRealPreview } from "./template-preview";
 import type { ResumeTemplate } from "../model/template";
 import { Badge } from "@/components/ui/badge";
+import { GAP, PADDING } from "@/lib/design-tokens";
 
 interface TemplateCardProps {
   template: ResumeTemplate;
@@ -21,15 +22,15 @@ export function TemplateCard({ template, isSelected, onSelect }: TemplateCardPro
       }`}
     >
       <div
-        className={`relative flex h-44 w-full items-center justify-center overflow-hidden border-b p-4 ${template.thumbnailClass}`}
+        className={`relative flex h-44 w-full items-center justify-center overflow-hidden border-b ${PADDING.default} ${template.thumbnailClass}`}
       >
         <TemplateRealPreview variantId={template.id} />
       </div>
 
-      <div className="flex flex-col gap-3 px-4 py-4">
+      <div className={`flex flex-col ${GAP.default} ${PADDING.default}`}>
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold text-foreground">{template.name}</h3>
-          <div className="flex flex-wrap justify-end gap-1.5">
+          <h3 className="text-lg font-semibold text-foreground">{template.name}</h3>
+          <div className={`flex flex-wrap justify-end ${GAP.inline}`}>
             {template.atsRecommended ? (
               <Badge variant="secondary">Recommended</Badge>
             ) : null}
@@ -38,14 +39,14 @@ export function TemplateCard({ template, isSelected, onSelect }: TemplateCardPro
             )}
           </div>
         </div>
-        <span className="inline-flex w-fit rounded-full border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground">
+        <p className="text-sm leading-6 text-muted-foreground">{template.description}</p>
+        <span className="inline-flex w-fit text-xs font-medium text-muted-foreground">
           {template.atsLabel ?? "Scanner friendly"}
         </span>
-        <p className="text-sm leading-6 text-muted-foreground">{template.description}</p>
       </div>
 
       {isSelected && (
-        <div className="absolute right-3 top-3 rounded-full bg-primary p-1 text-primary-foreground shadow-sm">
+        <div className={`absolute right-3 top-3 rounded-full bg-primary ${PADDING.tight} text-primary-foreground shadow-sm`}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"

@@ -432,40 +432,49 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
 
               <div className="flex flex-1 flex-col overflow-hidden">
                 <div className="shrink-0 border-b border-[color:var(--page-line)] bg-white px-4 py-3 sm:px-6">
-                  <div className="mx-auto grid max-w-5xl grid-cols-5 gap-2">
-                    {stepOverview.map((stepItem, index) => {
-                      const stepNum = index + 1;
-                      const isActive = step === stepNum;
-                      const isCompleted = step > stepNum;
+                  <nav aria-label="Onboarding progress">
+                    <div className="sr-only" aria-live="polite" aria-atomic="true">
+                      Step {step} of {stepOverview.length}: {stepOverview[step - 1]?.title}
+                    </div>
+                    <div className="mx-auto grid max-w-5xl grid-cols-5 gap-2">
+                      {stepOverview.map((stepItem, index) => {
+                        const stepNum = index + 1;
+                        const isActive = step === stepNum;
+                        const isCompleted = step > stepNum;
 
-                      return (
-                        <div key={stepItem.id} className="min-w-0">
-                          <div
-                            className={`h-1.5 rounded-full transition ${
-                              isCompleted || isActive
-                                ? "bg-[color:var(--brand)]"
-                                : "bg-[color:var(--page-line)]"
-                            }`}
-                            aria-hidden="true"
-                          />
-                          <div className="mt-2 hidden min-w-0 items-center justify-between gap-2 text-xs sm:flex">
-                            <span
-                              className={`truncate font-medium ${
-                                isActive
-                                  ? "text-[color:var(--brand)]"
-                                  : isCompleted
-                                    ? "text-[color:var(--page-text)]"
-                                    : "text-[color:var(--page-muted)]"
+                        return (
+                          <div key={stepItem.id} className="min-w-0">
+                            <div
+                              className={`h-1.5 rounded-full transition ${
+                                isCompleted || isActive
+                                  ? "bg-[color:var(--brand)]"
+                                  : "bg-[color:var(--page-line)]"
                               }`}
-                            >
-                              {stepItem.title}
-                            </span>
-                            <span className="shrink-0 text-[color:var(--page-muted)]">{stepNum}</span>
+                              role="progressbar"
+                              aria-valuenow={isCompleted ? 100 : isActive ? 50 : 0}
+                              aria-valuemin={0}
+                              aria-valuemax={100}
+                              aria-label={`${stepItem.title}: ${isCompleted ? "completed" : isActive ? "in progress" : "not started"}`}
+                            />
+                            <div className="mt-2 hidden min-w-0 items-center justify-between gap-2 text-xs sm:flex">
+                              <span
+                                className={`truncate font-medium ${
+                                  isActive
+                                    ? "text-[color:var(--brand)]"
+                                    : isCompleted
+                                      ? "text-[color:var(--page-text)]"
+                                      : "text-[color:var(--page-muted)]"
+                                }`}
+                              >
+                                {stepItem.title}
+                              </span>
+                              <span className="shrink-0 text-[color:var(--page-muted)]">{stepNum}</span>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  </nav>
                 </div>
 
                 {analysisIdFromUrl && isRestoringAnalysis ? (

@@ -9,6 +9,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { GAP, PADDING, PADDING_Y, MARGIN_TOP } from "@/lib/design-tokens";
 
 interface StepTargetRoleProps {
   targetRole: string;
@@ -41,7 +42,7 @@ export function StepTargetRole({
   return (
     <section className="section-reveal flex flex-1 flex-col items-center justify-center overflow-y-auto bg-background px-4 py-8 sm:px-8">
       <div className="w-full max-w-3xl">
-        <div className="flex flex-col gap-3 text-left sm:items-center sm:text-center">
+        <div className={`flex flex-col ${GAP.compact} text-left sm:items-center sm:text-center`}>
           <span className="sr-only">STEP 1 OF 5</span>
           <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
             What job are you applying for?
@@ -51,8 +52,8 @@ export function StepTargetRole({
           </p>
         </div>
 
-        <div className="mx-auto mt-8 max-w-xl rounded-lg border bg-background p-4 sm:p-5">
-          <div className="mb-4 border-b pb-4">
+        <div className={`mx-auto ${MARGIN_TOP.major} max-w-xl rounded-lg border bg-background ${PADDING.default} sm:p-5`}>
+          <div className={`mb-4 border-b pb-4`}>
             <h2 className="text-base font-semibold text-foreground">Job title</h2>
             <p className="mt-1 text-sm text-muted-foreground">Use the same title the company uses in the job post.</p>
           </div>
@@ -85,12 +86,12 @@ export function StepTargetRole({
             </FieldGroup>
           </div>
 
-          <div className="mt-5 flex flex-col items-stretch gap-3 border-t pt-4">
+          <div className={`mt-5 flex flex-col items-stretch ${GAP.compact} border-t ${PADDING_Y.default}`}>
             <Button type="button" onClick={onNext} disabled={!canContinue} className="w-full">
               Next: Paste Job Post
               <ArrowRight data-icon="inline-end" aria-hidden="true" />
             </Button>
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className={`flex flex-wrap justify-center ${GAP.inline}`}>
               {roleExamples.map((example) => (
                 <Button
                   key={example}
@@ -106,7 +107,7 @@ export function StepTargetRole({
           </div>
         </div>
 
-        <p className="mt-5 text-center text-sm text-muted-foreground">
+        <p className={`${MARGIN_TOP.default} text-center text-sm text-muted-foreground`}>
           Next, paste the job post so we can find the right job words.
         </p>
       </div>

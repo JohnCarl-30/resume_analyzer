@@ -3,6 +3,7 @@ import { ArrowRight, FileCheck2, FileUp, Pencil, Upload } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { GAP, PADDING, PADDING_Y, MARGIN_TOP } from "@/lib/design-tokens";
 
 interface StepDocumentUploadProps {
   resumeInputId: string;
@@ -39,8 +40,8 @@ export function StepDocumentUpload({
 }: StepDocumentUploadProps) {
   return (
     <section className="section-reveal flex flex-1 flex-col overflow-y-auto bg-background px-4 py-8 sm:px-8 lg:px-10">
-      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6">
-        <div className="flex flex-col gap-3 text-left sm:items-center sm:text-center">
+      <div className={`mx-auto flex w-full max-w-6xl flex-1 flex-col ${GAP.section}`}>
+        <div className={`flex flex-col ${GAP.compact} text-left sm:items-center sm:text-center`}>
           <span className="sr-only">STEP 3 OF 5</span>
           <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
             Add your resume
@@ -50,12 +51,12 @@ export function StepDocumentUpload({
           </p>
         </div>
 
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-          <div className="flex flex-col gap-2 border-b pb-4">
+        <div className={`mx-auto flex w-full max-w-3xl flex-col ${GAP.default}`}>
+          <div className={`flex flex-col ${GAP.inline} border-b ${PADDING_Y.default}`}>
             <h2 className="text-base font-semibold text-foreground">Your resume</h2>
             <p className="text-sm text-muted-foreground">Use a PDF or Word file up to 10 MB.</p>
           </div>
-          <div className="flex flex-col gap-4">
+          <div className={`flex flex-col ${GAP.default}`}>
             <label
               htmlFor={resumeInputId}
               onDragOver={(event) => {
@@ -83,7 +84,7 @@ export function StepDocumentUpload({
               </div>
 
               {resumeFile ? (
-                <div className="mt-5 flex max-w-md flex-col items-center gap-2">
+                <div className={`mt-5 flex max-w-md flex-col items-center ${GAP.inline}`}>
                   <p className="text-lg font-semibold text-foreground">{resumeFile.name}</p>
                   <p className="text-sm text-muted-foreground">{formatFileSize(resumeFile.size)} ready to check</p>
                   <span
@@ -97,7 +98,7 @@ export function StepDocumentUpload({
                   </span>
                 </div>
               ) : (
-                <div className="mt-5 flex max-w-md flex-col items-center gap-2">
+                <div className={`mt-5 flex max-w-md flex-col items-center ${GAP.inline}`}>
                   <p className="text-lg font-semibold text-foreground">Drag your resume here</p>
                   <p className="text-sm text-muted-foreground">PDF or Word file, up to 10 MB</p>
                   <span
@@ -117,13 +118,13 @@ export function StepDocumentUpload({
             <Button
               type="button"
               variant={createFromScratch ? "secondary" : "outline"}
-              className="h-auto justify-start gap-3 whitespace-normal px-4 py-3 text-left"
+              className={`h-auto justify-start ${GAP.compact} whitespace-normal ${PADDING.default} py-3 text-left`}
               onClick={() => {
                 setCreateFromScratch(true);
               }}
             >
               <Pencil data-icon="inline-start" aria-hidden="true" />
-              <span className="flex flex-col gap-1">
+              <span className={`flex flex-col ${GAP.tight}`}>
                 <span>Start with a blank resume</span>
                 <span className="text-xs font-normal text-muted-foreground">
                   Open the builder and fill it in yourself.
@@ -143,7 +144,7 @@ export function StepDocumentUpload({
         </div>
       </div>
 
-      <div className="mx-auto mt-6 flex w-full max-w-3xl flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className={`mx-auto ${MARGIN_TOP.section} flex w-full max-w-3xl flex-col ${GAP.compact} border-t ${PADDING_Y.default} sm:flex-row sm:items-center sm:justify-between`}>
         <p className="text-sm leading-6 text-muted-foreground">
           {createFromScratch
             ? "You'll start with a blank resume and build it in the editor."

@@ -33,6 +33,13 @@ import {
 import { ResumeStatusBadge } from "../components/resume-status-badge";
 import type { ResumeSummary } from "../model/resume";
 import { useResumeDashboard } from "../view-models/use-resume-dashboard";
+import {
+  GAP,
+  PADDING,
+  PADDING_Y,
+  MARGIN_TOP,
+  COMPONENT_SPACING,
+} from "@/lib/design-tokens";
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -128,9 +135,9 @@ function AnalysisMobileCard({
   onOpenAnalysis: (analysisId: string) => void;
 }) {
   return (
-    <article className="rounded-lg border bg-background p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-3">
+    <article className={`rounded-lg border bg-background ${COMPONENT_SPACING.mobileCard.padding}`}>
+      <div className={`flex items-start justify-between ${GAP.default}`}>
+        <div className={`flex min-w-0 items-start ${GAP.compact}`}>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
             <FileText aria-hidden="true" />
           </div>
@@ -141,25 +148,25 @@ function AnalysisMobileCard({
         </div>
         <ResumeStatusBadge status={resume.status} />
       </div>
-      <div className="mt-4 flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-3">
+      <div className={`${MARGIN_TOP.section} flex flex-col ${GAP.default}`}>
+        <div className={`flex items-center justify-between ${GAP.compact}`}>
           <p className="truncate text-sm text-muted-foreground">{resume.targetRole || "Target role not set"}</p>
           <Badge variant={getScoreVariant(resume.score)}>{resume.score}%</Badge>
         </div>
         <Progress value={resume.score} aria-label={`${resume.score}% match rate`} />
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="flex flex-col gap-1">
+        <div className={`grid grid-cols-2 ${GAP.compact} text-sm`}>
+          <div className={`flex flex-col ${GAP.tight}`}>
             <span className="text-muted-foreground">Words to add</span>
             <span className="font-medium">{resume.missingKeywordCount}</span>
           </div>
-          <div className="flex flex-col gap-1">
+          <div className={`flex flex-col ${GAP.tight}`}>
             <span className="text-muted-foreground">Fixes</span>
             <span className="font-medium">{resume.suggestionCount}</span>
           </div>
         </div>
       </div>
-      <div className="mt-4 flex items-center justify-between gap-3 border-t pt-4">
-        <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+      <div className={`${MARGIN_TOP.section} flex items-center justify-between ${GAP.compact} border-t ${PADDING_Y.default}`}>
+        <div className={`flex min-w-0 items-center ${GAP.inline} text-sm text-muted-foreground`}>
           <Clock aria-hidden="true" />
           <span className="truncate">{formatDate(resume.uploadedAt)}</span>
         </div>
@@ -195,9 +202,9 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
-        <header className="flex flex-col gap-4 border-b pb-6 md:flex-row md:items-end md:justify-between">
-          <div className="flex max-w-2xl flex-col gap-2">
+      <section className={`mx-auto flex w-full max-w-7xl flex-col ${GAP.section} px-4 py-6 sm:px-6 lg:px-8`}>
+        <header className={`flex flex-col ${GAP.default} border-b pb-6 md:flex-row md:items-end md:justify-between`}>
+          <div className={`flex max-w-2xl flex-col ${GAP.inline}`}>
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Saved resume checks</h1>
             <p className="text-sm text-muted-foreground sm:text-base">
               Review match scores, missing job words, and next steps from one focused workspace.
@@ -211,9 +218,9 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
 
         <dl className="grid overflow-hidden rounded-lg border bg-background md:grid-cols-3">
           {displayStats.map((stat) => (
-            <div key={stat.label} className="border-b p-4 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0">
+            <div key={stat.label} className={`border-b ${PADDING.default} last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0`}>
               <dt className="text-sm text-muted-foreground">{stat.label}</dt>
-              <dd className="mt-2 flex items-baseline gap-2">
+              <dd className={`${MARGIN_TOP.inline} flex items-baseline ${GAP.inline}`}>
                 <span className="text-3xl font-semibold tracking-tight">{stat.value}</span>
                 <span className="text-sm text-muted-foreground">{stat.description}</span>
               </dd>
@@ -229,8 +236,8 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
           </Alert>
         ) : null}
 
-        <section className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <section className={`flex flex-col ${GAP.compact}`}>
+          <div className={`flex flex-col ${GAP.tight} sm:flex-row sm:items-end sm:justify-between`}>
             <div>
               <h2 className="text-xl font-semibold tracking-tight">Recent checks</h2>
               <p className="text-sm text-muted-foreground">
@@ -323,7 +330,7 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
                 </Table>
               </div>
 
-              <div className="grid gap-3 md:hidden">
+              <div className={`grid ${GAP.compact} md:hidden`}>
                 {resumes.map((resume) => (
                   <AnalysisMobileCard key={resume.id} resume={resume} onOpenAnalysis={onOpenAnalysis} />
                 ))}
