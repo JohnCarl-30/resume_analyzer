@@ -483,7 +483,7 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
                       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[color:var(--brand)]">
                         Restoring
                       </p>
-                      <h2 className="text-3xl font-semibold tracking-tight text-[color:var(--page-text)]">
+                      <h2 className="display-serif text-3xl text-[color:var(--page-text)]">
                         Loading your saved check
                       </h2>
                       <p className="text-base text-[color:var(--page-muted)]">

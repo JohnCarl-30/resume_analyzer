@@ -80,7 +80,7 @@ export function StepSuggestions({ analysisResult, onEnterEditor, onBack }: StepS
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6">
         <div className="flex flex-col gap-3 text-left sm:items-center sm:text-center">
           <span className="sr-only">STEP 5 OF 5</span>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
+          <h1 className="display-serif text-3xl text-foreground sm:text-5xl">
             Fix these first
           </h1>
           <p className="max-w-2xl text-base leading-7 text-muted-foreground">

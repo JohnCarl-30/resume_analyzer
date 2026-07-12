@@ -44,7 +44,7 @@ export function StepTargetRole({
       <div className="w-full max-w-3xl">
         <div className={`flex flex-col ${GAP.compact} text-left sm:items-center sm:text-center`}>
           <span className="sr-only">STEP 1 OF 5</span>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
+          <h1 className="display-serif text-3xl text-foreground sm:text-5xl">
             What job are you applying for?
           </h1>
           <p className="max-w-xl text-base leading-7 text-muted-foreground">

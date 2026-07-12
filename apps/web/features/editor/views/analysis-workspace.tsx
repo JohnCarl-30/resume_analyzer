@@ -1298,7 +1298,7 @@ export function AnalysisWorkspace({
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]">
             Preview unavailable
           </p>
-          <h3 className="text-2xl font-semibold tracking-tight text-[color:var(--page-text)]">
+          <h3 className="display-serif text-2xl text-[color:var(--page-text)]">
             We parsed the file, but there isn&apos;t enough structured content to draw the page yet.
           </h3>
           <p className="text-base leading-7 text-[color:var(--page-muted)]">

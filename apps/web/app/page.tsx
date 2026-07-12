@@ -47,10 +47,10 @@ export default function LandingPage() {
         <div className={`flex max-w-2xl flex-col ${GAP.major}`}>
           <div className={`flex flex-col ${GAP.default}`}>
             <h1
-              className="animate-enter-up text-4xl font-semibold tracking-tight text-balance text-foreground sm:text-5xl lg:text-6xl"
+              className="display-serif animate-enter-up text-4xl text-foreground sm:text-5xl lg:text-6xl"
               style={{ "--enter-delay": "60ms" } as CSSProperties}
             >
-              Build a resume that scanners and people can read
+              Build a resume that scanners and people can <em>read</em>
             </h1>
             <p
               className="animate-enter-up max-w-xl text-base leading-7 text-pretty text-muted-foreground sm:text-lg"

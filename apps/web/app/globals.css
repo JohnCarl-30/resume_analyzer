@@ -93,6 +93,25 @@ textarea {
   font-family: var(--font-serif);
 }
 
+/*
+ * Editorial display voice: the app's signature.
+ * A resume is a typeset document, so page headings are set in the serif
+ * display face (Lora) with tuned tracking. Used only on top-of-page headings;
+ * body, UI, and the resume document itself stay in Geist.
+ */
+.display-serif {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: -0.011em;
+  text-wrap: balance;
+}
+
+.display-serif em,
+.display-serif .accent {
+  font-style: italic;
+  color: var(--brand);
+}
+
 .font-mono {
   font-family: var(--font-mono);
 }

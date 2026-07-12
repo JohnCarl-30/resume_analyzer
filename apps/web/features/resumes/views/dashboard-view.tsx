@@ -205,7 +205,7 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
       <section className={`mx-auto flex w-full max-w-7xl flex-col ${GAP.section} px-4 py-6 sm:px-6 lg:px-8`}>
         <header className={`flex flex-col ${GAP.default} border-b pb-6 md:flex-row md:items-end md:justify-between`}>
           <div className={`flex max-w-2xl flex-col ${GAP.inline}`}>
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Saved resume checks</h1>
+            <h1 className="display-serif text-3xl sm:text-4xl">Saved resume checks</h1>
             <p className="text-sm text-muted-foreground sm:text-base">
               Review match scores, missing job words, and next steps from one focused workspace.
             </p>

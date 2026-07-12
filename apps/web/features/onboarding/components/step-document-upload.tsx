@@ -43,7 +43,7 @@ export function StepDocumentUpload({
       <div className={`mx-auto flex w-full max-w-6xl flex-1 flex-col ${GAP.section}`}>
         <div className={`flex flex-col ${GAP.compact} text-left sm:items-center sm:text-center`}>
           <span className="sr-only">STEP 3 OF 5</span>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
+          <h1 className="display-serif text-3xl text-foreground sm:text-5xl">
             Add your resume
           </h1>
           <p className="max-w-2xl text-base leading-7 text-muted-foreground">
