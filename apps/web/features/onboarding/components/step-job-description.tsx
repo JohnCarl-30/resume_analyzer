@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRightIcon } from "@radix-ui/react-icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -95,7 +95,7 @@ export function StepJobDescription({
             </div>
             <Button type="button" onClick={onNext} disabled={!canContinue} className="w-full">
               Next: Add Resume
-              <ArrowRight data-icon="inline-end" aria-hidden="true" />
+              <ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
             </Button>
           </div>
         </div>

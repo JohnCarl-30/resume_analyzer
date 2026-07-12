@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeftIcon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 
 interface SectionEditorHeaderProps {
@@ -17,7 +17,7 @@ export function SectionEditorHeader({ title, onBack }: SectionEditorHeaderProps)
         size="sm"
         className="shrink-0"
       >
-        <ArrowLeft data-icon="inline-start" aria-hidden="true" />
+        <ArrowLeftIcon data-icon="inline-start" aria-hidden="true" />
         Sections
       </Button>
       <h3 className="min-w-0 truncate text-lg font-semibold tracking-tight text-[color:var(--page-text)] sm:text-xl">

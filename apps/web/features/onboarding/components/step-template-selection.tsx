@@ -1,5 +1,11 @@
 import React from "react";
-import { ArrowRight, CheckCircle2, FileText, Loader2, Sparkles } from "lucide-react";
+import {
+  ArrowRightIcon,
+  CheckCircledIcon,
+  FileIcon,
+  ReloadIcon,
+  StarIcon,
+} from "@radix-ui/react-icons";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -72,7 +78,7 @@ export function StepTemplateSelection({
                 value="resume"
                 className="h-auto justify-start gap-3 px-4 py-3 text-left whitespace-normal"
               >
-                <FileText className="shrink-0 text-muted-foreground" />
+                <FileIcon className="shrink-0 text-muted-foreground" />
                 <span className="flex flex-col gap-1">
                   <span className="font-medium">Use my uploaded resume</span>
                   <span className="text-xs font-normal text-muted-foreground">
@@ -84,7 +90,7 @@ export function StepTemplateSelection({
                 value="template"
                 className="h-auto justify-start gap-3 px-4 py-3 text-left whitespace-normal"
               >
-                <Sparkles className="shrink-0 text-muted-foreground" />
+                <StarIcon className="shrink-0 text-muted-foreground" />
                 <span className="flex flex-col gap-1">
                   <span className="font-medium">Start fresh</span>
                   <span className="text-xs font-normal text-muted-foreground">
@@ -104,23 +110,16 @@ export function StepTemplateSelection({
               const isSelected = template.id === selectedTemplateId;
 
               return (
-                <Card
+                <button
                   key={template.id}
-                  role="button"
-                  tabIndex={0}
+                  type="button"
                   aria-pressed={isSelected}
                   onClick={() => setSelectedTemplateId(template.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setSelectedTemplateId(template.id);
-                    }
-                  }}
                   className={cn(
-                    "group min-w-0 cursor-pointer overflow-hidden transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                    "group flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-lg border bg-card text-left transition-[border-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:ring-offset-2",
                     isSelected
-                      ? "border-primary ring-2 ring-primary/20"
-                      : "border-border hover:-translate-y-0.5 hover:bg-accent/40",
+                      ? "border-foreground/50"
+                      : "border-border hover:border-foreground/20 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
                   )}
                 >
                   <div className={cn("h-56 overflow-hidden border-b p-4", template.thumbnailClass)}>
@@ -138,14 +137,14 @@ export function StepTemplateSelection({
                     </div>
                     <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                       {isSelected ? (
-                        <CheckCircle2 aria-hidden="true" className="text-primary" />
+                        <CheckCircledIcon aria-hidden="true" className="text-primary" />
                       ) : (
                         <span className="size-2 rounded-full bg-border" />
                       )}
                       {template.atsLabel ?? "Scanner friendly"}
                     </div>
                   </div>
-                </Card>
+                </button>
               );
             })}
           </div>
@@ -174,7 +173,7 @@ export function StepTemplateSelection({
                       {selectedTemplate.description}
                     </p>
                     <Badge variant="outline" className="w-fit">
-                      <CheckCircle2 className="mr-1 size-3" />
+                      <CheckCircledIcon className="mr-1 size-3" />
                       {selectedTemplate.atsLabel}
                     </Badge>
                   </div>
@@ -204,13 +203,13 @@ export function StepTemplateSelection({
         <Button type="button" onClick={onNext} disabled={isSubmitting}>
           {isSubmitting ? (
             <>
-              <Loader2 className="mr-2 size-4 animate-spin" />
+              <ReloadIcon className="mr-2 size-4 animate-spin" />
               Checking resume...
             </>
           ) : (
             <>
               Check my resume
-              <ArrowRight className="ml-2 size-4" />
+              <ArrowRightIcon className="ml-2 size-4" />
             </>
           )}
         </Button>

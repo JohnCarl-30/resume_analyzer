@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Geist, Geist_Mono, Lora } from "next/font/google";
 
 import "./globals.css";
+import { PageTransition } from "@/components/page-transition";
 import { cn } from "@/lib/utils";
 
 const geistSans = Geist({
@@ -29,6 +30,9 @@ const siteUrl =
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   applicationName: "Deep Focus",
+  alternates: {
+    canonical: "/",
+  },
   title: {
     default: "Deep Focus | Resume Builder",
     template: "%s | Deep Focus",
@@ -45,18 +49,29 @@ export const metadata: Metadata = {
   authors: [{ name: "Deep Focus" }],
   creator: "Deep Focus",
   publisher: "Deep Focus",
+  category: "career",
   openGraph: {
     type: "website",
     siteName: "Deep Focus",
+    url: "/",
     title: "Deep Focus | Resume Builder",
     description:
       "Create a scanner-friendly resume, compare it to job posts, and get plain-language improvement tips.",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Deep Focus resume builder and job match checker",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Deep Focus | Resume Builder",
     description:
       "Create a scanner-friendly resume, compare it to job posts, and get plain-language improvement tips.",
+    images: ["/opengraph-image"],
   },
   robots: {
     index: true,
@@ -64,10 +79,17 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport = {
+  themeColor: "#155dfc",
+};
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={cn(geistSans.variable, geistMono.variable, lora.variable)}>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <PageTransition />
+        {children}
+      </body>
     </html>
   );
 }

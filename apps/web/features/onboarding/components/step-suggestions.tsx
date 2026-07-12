@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRightIcon, CheckCircledIcon } from "@radix-ui/react-icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -101,7 +101,7 @@ export function StepSuggestions({ analysisResult, onEnterEditor, onBack }: StepS
             <div className="grid gap-2 sm:min-w-72">
               {readiness.map((item) => (
                 <div key={item.label} className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2
+                  <CheckCircledIcon
                     aria-hidden="true"
                     className={item.complete ? "text-primary" : "text-muted-foreground"}
                   />
@@ -151,7 +151,7 @@ export function StepSuggestions({ analysisResult, onEnterEditor, onBack }: StepS
             <Empty className="min-h-64 border">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
-                  <CheckCircle2 aria-hidden="true" />
+                  <CheckCircledIcon aria-hidden="true" />
                 </EmptyMedia>
                 <EmptyTitle>No suggestions</EmptyTitle>
                 <EmptyDescription>
@@ -180,7 +180,7 @@ export function StepSuggestions({ analysisResult, onEnterEditor, onBack }: StepS
           </Button>
           <Button type="button" onClick={onEnterEditor}>
             Open editor
-            <ArrowRight data-icon="inline-end" aria-hidden="true" />
+            <ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
           </Button>
       </div>
     </section>

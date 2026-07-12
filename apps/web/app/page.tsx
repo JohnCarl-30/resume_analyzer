@@ -1,7 +1,13 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import type { Metadata } from "next";
-import { ArrowRight, FileText, SearchCheck, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  ArrowRightIcon,
+  FileIcon,
+  MagnifyingGlassIcon,
+  StarIcon,
+  TargetIcon,
+} from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import { ResumeRenderer } from "@/features/editor/components/resume-renderer";
 import { defaultResumeForm } from "@/features/editor/model/resume-form";
@@ -20,7 +26,7 @@ export const metadata: Metadata = {
 export default function LandingPage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <header className="border-b bg-background">
+      <header className="border-b border-border bg-background/90 backdrop-blur-sm">
         <div className={`mx-auto flex h-16 max-w-7xl items-center justify-between ${GAP.default} px-4 sm:px-6 lg:px-8`}>
           <Link href="/" className={`inline-flex items-center ${GAP.inline} text-base font-semibold tracking-tight`}>
             <BrandMark />
@@ -43,9 +49,12 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <section className={`mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl items-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(28rem,1fr)] lg:px-8`}>
+      <section className={`mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl items-center gap-16 px-4 py-20 sm:px-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(28rem,1fr)] lg:px-8 lg:py-28`}>
         <div className={`flex max-w-2xl flex-col ${GAP.major}`}>
           <div className={`flex flex-col ${GAP.default}`}>
+            <p className="animate-enter-up font-mono text-xs font-medium tracking-[0.12em] uppercase text-muted-foreground">
+              Resume workspace
+            </p>
             <h1
               className="display-serif animate-enter-up text-4xl text-foreground sm:text-5xl lg:text-6xl"
               style={{ "--enter-delay": "60ms" } as CSSProperties}
@@ -67,10 +76,10 @@ export default function LandingPage() {
             <Button asChild size="lg" className={`h-12 justify-between ${PADDING.default} text-base`}>
               <Link href="/create-resume">
                 <span className={`inline-flex items-center ${GAP.inline}`}>
-                  <FileText data-icon="inline-start" aria-hidden="true" />
+                  <FileIcon data-icon="inline-start" aria-hidden="true" />
                   Create Resume
                 </span>
-                <ArrowRight
+                <ArrowRightIcon
                   data-icon="inline-end"
                   aria-hidden="true"
                   className="transition-transform duration-200 ease-out group-hover/button:translate-x-0.5"
@@ -80,10 +89,10 @@ export default function LandingPage() {
             <Button asChild size="lg" variant="outline" className={`h-12 justify-between ${PADDING.default} text-base`}>
               <Link href="/analysis/new">
                 <span className={`inline-flex items-center ${GAP.inline}`}>
-                  <SearchCheck data-icon="inline-start" aria-hidden="true" />
+                  <MagnifyingGlassIcon data-icon="inline-start" aria-hidden="true" />
                   Check Resume
                 </span>
-                <ArrowRight
+                <ArrowRightIcon
                   data-icon="inline-end"
                   aria-hidden="true"
                   className="transition-transform duration-200 ease-out group-hover/button:translate-x-0.5"
@@ -93,31 +102,31 @@ export default function LandingPage() {
           </div>
 
           <div
-            className={`animate-enter-up grid ${GAP.default} pt-2 sm:grid-cols-3`}
+            className={`animate-enter-up grid border-t border-border pt-6 ${GAP.default} sm:grid-cols-3`}
             style={{ "--enter-delay": "300ms" } as CSSProperties}
           >
             {[
               {
                 title: "Scanner-friendly",
                 description: "Readable sections and plain text.",
-                icon: ShieldCheck,
+                icon: TargetIcon,
               },
               {
                 title: "Clear advice",
                 description: "Simple fixes you can apply.",
-                icon: Sparkles,
+                icon: StarIcon,
               },
               {
                 title: "Private draft",
                 description: "Saved in your browser.",
-                icon: FileText,
+                icon: FileIcon,
               },
             ].map((item) => {
               const Icon = item.icon;
 
               return (
                 <div key={item.title} className={`flex min-w-0 items-start ${GAP.compact}`}>
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-foreground">
                     <Icon aria-hidden="true" />
                   </div>
                   <div className="min-w-0">
@@ -134,12 +143,12 @@ export default function LandingPage() {
           className="animate-enter-right hidden min-w-0 lg:block"
           style={{ "--enter-delay": "220ms" } as CSSProperties}
         >
-          <div className={`rounded-xl border bg-background ${PADDING.default} shadow-sm`}>
+          <div className={`rounded-xl border border-border bg-card ${PADDING.generous}`}>
             <div className={`grid ${GAP.default} xl:grid-cols-[minmax(0,1fr)_19rem]`}>
-              <div className="aspect-[1/1.414] overflow-hidden rounded-lg border bg-white px-8 py-10">
+              <div className="aspect-[1/1.414] overflow-hidden rounded-lg border border-border bg-white px-8 py-10">
                 <ResumeRenderer form={defaultResumeForm} variantId="minimalist-grid" />
               </div>
-              <aside className={`flex flex-col ${GAP.compact} rounded-lg border bg-muted/30 ${PADDING.default}`}>
+              <aside className={`flex flex-col ${GAP.compact} rounded-lg border border-border bg-muted/50 ${PADDING.default}`}>
                 <div>
                   <p className="text-sm font-semibold text-foreground">Job match</p>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
@@ -154,7 +163,7 @@ export default function LandingPage() {
                 ].map(([label, status]) => (
                   <div key={label} className={`flex items-center justify-between ${GAP.compact} border-t pt-3 text-sm`}>
                     <span className="font-medium text-foreground">{label}</span>
-                    <span className={status === "Good" ? "text-emerald-700" : "text-amber-700"}>{status}</span>
+                    <span className={status === "Good" ? "text-[#346538]" : "text-[#956400]"}>{status}</span>
                   </div>
                 ))}
               </aside>

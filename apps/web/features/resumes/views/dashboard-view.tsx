@@ -2,13 +2,13 @@
 
 import React from "react";
 import {
-  AlertCircle,
-  ArrowUpRight,
-  Clock,
-  FileText,
-  Inbox,
-  Plus,
-} from "lucide-react";
+  ClockIcon,
+  ExclamationTriangleIcon,
+  FileIcon,
+  OpenInNewWindowIcon,
+  PlusIcon,
+  ArchiveIcon,
+} from "@radix-ui/react-icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -135,11 +135,11 @@ function AnalysisMobileCard({
   onOpenAnalysis: (analysisId: string) => void;
 }) {
   return (
-    <article className={`rounded-lg border bg-background ${COMPONENT_SPACING.mobileCard.padding}`}>
+    <article className={`rounded-lg border border-border bg-card ${COMPONENT_SPACING.mobileCard.padding}`}>
       <div className={`flex items-start justify-between ${GAP.default}`}>
         <div className={`flex min-w-0 items-start ${GAP.compact}`}>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-            <FileText aria-hidden="true" />
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted text-foreground">
+            <FileIcon aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="truncate text-base font-semibold">{resume.candidateName || "Untitled Analysis"}</h3>
@@ -167,12 +167,12 @@ function AnalysisMobileCard({
       </div>
       <div className={`${MARGIN_TOP.section} flex items-center justify-between ${GAP.compact} border-t ${PADDING_Y.default}`}>
         <div className={`flex min-w-0 items-center ${GAP.inline} text-sm text-muted-foreground`}>
-          <Clock aria-hidden="true" />
+          <ClockIcon aria-hidden="true" />
           <span className="truncate">{formatDate(resume.uploadedAt)}</span>
         </div>
         <Button type="button" variant="outline" size="sm" onClick={() => onOpenAnalysis(resume.id)}>
           Open
-          <ArrowUpRight data-icon="inline-end" aria-hidden="true" />
+          <OpenInNewWindowIcon data-icon="inline-end" aria-hidden="true" />
         </Button>
       </div>
     </article>
@@ -202,8 +202,8 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <section className={`mx-auto flex w-full max-w-7xl flex-col ${GAP.section} px-4 py-6 sm:px-6 lg:px-8`}>
-        <header className={`flex flex-col ${GAP.default} border-b pb-6 md:flex-row md:items-end md:justify-between`}>
+      <section className={`mx-auto flex w-full max-w-7xl flex-col ${GAP.major} px-4 py-12 sm:px-6 lg:px-8 lg:py-16`}>
+        <header className={`flex flex-col ${GAP.default} border-b border-border pb-8 md:flex-row md:items-end md:justify-between`}>
           <div className={`flex max-w-2xl flex-col ${GAP.inline}`}>
             <h1 className="display-serif text-3xl sm:text-4xl">Saved resume checks</h1>
             <p className="text-sm text-muted-foreground sm:text-base">
@@ -211,12 +211,12 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
             </p>
           </div>
           <Button type="button" onClick={onNewAnalysis}>
-            <Plus data-icon="inline-start" aria-hidden="true" />
+            <PlusIcon data-icon="inline-start" aria-hidden="true" />
             New resume check
           </Button>
         </header>
 
-        <dl className="grid overflow-hidden rounded-lg border bg-background md:grid-cols-3">
+        <dl className="grid overflow-hidden rounded-lg border border-border bg-card md:grid-cols-3">
           {displayStats.map((stat) => (
             <div key={stat.label} className={`border-b ${PADDING.default} last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0`}>
               <dt className="text-sm text-muted-foreground">{stat.label}</dt>
@@ -230,7 +230,7 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
 
         {error ? (
           <Alert variant="destructive">
-            <AlertCircle aria-hidden="true" />
+            <ExclamationTriangleIcon aria-hidden="true" />
             <AlertTitle>Dashboard unavailable</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
@@ -253,7 +253,7 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
             <Empty className="min-h-72 border">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
-                  <Inbox aria-hidden="true" />
+                  <ArchiveIcon aria-hidden="true" />
                 </EmptyMedia>
                 <EmptyTitle>No resume checks yet</EmptyTitle>
                 <EmptyDescription>
@@ -262,7 +262,7 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
               </EmptyHeader>
               <EmptyContent>
                 <Button type="button" onClick={onNewAnalysis}>
-                  <Plus data-icon="inline-start" aria-hidden="true" />
+                  <PlusIcon data-icon="inline-start" aria-hidden="true" />
                   New resume check
                 </Button>
               </EmptyContent>
@@ -271,7 +271,7 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
 
           {!isLoading && resumes.length > 0 ? (
             <>
-              <div className="hidden overflow-hidden rounded-lg border bg-background md:block">
+              <div className="hidden overflow-hidden rounded-lg border border-border bg-card md:block">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -288,8 +288,8 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
                       <TableRow key={resume.id}>
                         <TableCell>
                           <div className="flex min-w-0 items-center gap-3">
-                            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-                              <FileText aria-hidden="true" />
+                            <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-foreground">
+                              <FileIcon aria-hidden="true" />
                             </div>
                             <div className="min-w-0">
                               <p className="truncate font-medium">{resume.candidateName || "Untitled Analysis"}</p>
@@ -320,7 +320,7 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
                               onClick={() => onOpenAnalysis(resume.id)}
                             >
                               Open
-                              <ArrowUpRight data-icon="inline-end" aria-hidden="true" />
+                              <OpenInNewWindowIcon data-icon="inline-end" aria-hidden="true" />
                             </Button>
                           </div>
                         </TableCell>

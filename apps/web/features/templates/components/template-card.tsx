@@ -15,10 +15,10 @@ export function TemplateCard({ template, isSelected, onSelect }: TemplateCardPro
       type="button"
       onClick={() => onSelect(template.id)}
       aria-pressed={isSelected}
-      className={`group relative flex w-full flex-col overflow-hidden rounded-lg border bg-white text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+      className={`group relative flex w-full flex-col overflow-hidden rounded-lg border bg-white text-left transition-[border-color,box-shadow] duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:ring-offset-2 ${
         isSelected
-          ? "border-primary ring-2 ring-primary/15"
-          : "border-border hover:border-primary/60 hover:bg-accent/30"
+          ? "border-foreground/50"
+          : "border-border hover:border-foreground/20 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
       }`}
     >
       <div
@@ -46,7 +46,7 @@ export function TemplateCard({ template, isSelected, onSelect }: TemplateCardPro
       </div>
 
       {isSelected && (
-        <div className={`absolute right-3 top-3 rounded-full bg-primary ${PADDING.tight} text-primary-foreground shadow-sm`}>
+        <div className={`absolute right-3 top-3 rounded-full bg-primary ${PADDING.tight} text-primary-foreground`}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"

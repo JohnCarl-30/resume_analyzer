@@ -1327,10 +1327,10 @@ export function AnalysisWorkspace({
       {toast && (
         <div className="absolute left-1/2 top-4 z-[70] -translate-x-1/2">
           <div
-            className={`rounded-[14px] px-5 py-3 text-sm font-medium shadow-lg transition ${
+          className={`rounded-lg px-5 py-3 text-sm font-medium shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition ${
               toast.type === "error"
-                ? "bg-red-50 text-red-700 border border-red-200"
-                : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                ? "border border-[#f1c9c7] bg-[#fdebec] text-[#9f2f2d]"
+                : "border border-[#cfe0cd] bg-[#edf3ec] text-[#346538]"
             }`}
           >
             {toast.message}
@@ -1703,7 +1703,7 @@ export function AnalysisWorkspace({
         {modalView ? (
           <DialogContent
             showCloseButton={false}
-            className="max-h-[92vh] max-w-[calc(100%-2rem)] gap-0 overflow-hidden rounded-xl border border-[color:var(--page-line)] bg-white p-0 text-[color:var(--page-text)] shadow-lg sm:max-w-5xl"
+            className="max-h-[92vh] max-w-[calc(100%-2rem)] gap-0 overflow-hidden rounded-xl border border-[color:var(--page-line)] bg-white p-0 text-[color:var(--page-text)] shadow-[0_2px_8px_rgba(0,0,0,0.04)] sm:max-w-5xl"
           >
             {modalView === "content" ? (
               <>
@@ -2116,7 +2116,7 @@ export function AnalysisWorkspace({
 
       {showShortcuts && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-[rgba(15,23,42,0.35)] p-4 sm:p-6">
-          <div className="w-full max-w-md overflow-hidden rounded-xl border border-[color:var(--page-line)] bg-white shadow-lg">
+          <div className="w-full max-w-md overflow-hidden rounded-xl border border-[color:var(--page-line)] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
             <div className="flex items-center justify-between border-b border-[color:var(--page-line)] px-6 py-4">
               <h2 className="text-lg font-semibold text-[color:var(--page-text)]">Keyboard Shortcuts</h2>
               <button

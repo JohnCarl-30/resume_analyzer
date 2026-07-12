@@ -17,10 +17,19 @@
   --brand-strong: #0f4ed8;
   --brand-soft: #eef4ff;
   --success: #0f9f6e;
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --font-display: var(--font-geist-sans), "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-body: var(--font-geist-sans), "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --danger-soft: #fef2f2;
+  --danger-text: #b91c1c;
+  --info-soft: #eef4ff;
+  --info-text: #155dfc;
+  --success-soft: #ecfdf5;
+  --warning-soft: #fffbeb;
+  --warning-text: #b45309;
+  --shadow-lg: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 1px 4px rgba(0, 0, 0, 0.03);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --font-display: var(--font-geist-sans), "Geist", "Helvetica Neue", ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-geist-sans), "Geist", "Helvetica Neue", ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-lora), "Lora", "Georgia", "Times New Roman", serif;
   --font-mono: var(--font-geist-mono), "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
   --background: var(--page-bg);
@@ -37,7 +46,7 @@
   --muted-foreground: var(--page-muted);
   --accent: var(--brand-soft);
   --accent-foreground: var(--brand-strong);
-  --destructive: #dc2626;
+  --destructive: var(--danger-text);
   --border: var(--page-line);
   --input: var(--page-line);
   --ring: var(--brand);
@@ -46,7 +55,7 @@
   --chart-3: var(--brand-strong);
   --chart-4: var(--page-muted);
   --chart-5: var(--page-line-strong);
-  --radius: 0.5rem;
+  --radius: 0.375rem;
   --sidebar: var(--page-bg-strong);
   --sidebar-foreground: var(--page-text);
   --sidebar-primary: var(--brand);
@@ -67,6 +76,7 @@ body {
   background: transparent;
   color: var(--page-text);
   font-family: var(--font-body);
+  line-height: 1.6;
   text-rendering: optimizeLegibility;
 }
 
@@ -102,7 +112,8 @@ textarea {
 .display-serif {
   font-family: var(--font-serif);
   font-weight: 600;
-  letter-spacing: -0.011em;
+  letter-spacing: -0.028em;
+  line-height: 1.1;
   text-wrap: balance;
 }
 
@@ -116,10 +127,47 @@ textarea {
   font-family: var(--font-mono);
 }
 
+.page-transition {
+  position: fixed;
+  z-index: 70;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: color-mix(in srgb, var(--page-bg) 92%, transparent);
+  transition: opacity 180ms var(--ease-out-quart);
+}
+
+.page-transition.is-active {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  [data-slot="button"],
+  button:not([data-slot="button"]) {
+    transition:
+      transform 150ms var(--ease-out-quart),
+      background-color 150ms var(--ease-out-quart),
+      border-color 150ms var(--ease-out-quart),
+      color 150ms var(--ease-out-quart),
+      box-shadow 150ms var(--ease-out-quart);
+  }
+
+  [data-slot="button"]:not(:disabled):hover,
+  button:not([data-slot="button"]):not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+
+  [data-slot="button"]:not(:disabled):active,
+  button:not([data-slot="button"]):not(:disabled):active {
+    transform: scale(0.98);
+  }
+}
+
 .section-reveal {
   opacity: 0;
-  transform: translateY(20px) scale(0.985);
-  animation: section-reveal 380ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  transform: translateY(12px);
+  animation: section-reveal 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .step-pill {
@@ -139,7 +187,7 @@ textarea {
 @keyframes section-reveal {
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
@@ -167,23 +215,36 @@ textarea {
 
 .animate-enter-up {
   opacity: 0;
-  animation: enter-up 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: enter-up 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: var(--enter-delay, 0ms);
 }
 
 .animate-enter-right {
   opacity: 0;
-  animation: enter-right 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: enter-right 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: var(--enter-delay, 0ms);
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .page-transition {
+    display: none;
+  }
+
   .section-reveal,
   .animate-enter-up,
   .animate-enter-right {
     animation: none;
     opacity: 1;
     transform: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
 
@@ -213,8 +274,8 @@ textarea {
 }
 
 @theme inline {
-  --font-heading: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-geist-sans), "Geist", "Helvetica Neue", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-geist-sans), "Geist", "Helvetica Neue", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Lora", "Georgia", "Times New Roman", serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
   --color-sidebar-ring: var(--sidebar-ring);

@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRightIcon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -89,7 +89,7 @@ export function StepTargetRole({
           <div className={`mt-5 flex flex-col items-stretch ${GAP.compact} border-t ${PADDING_Y.default}`}>
             <Button type="button" onClick={onNext} disabled={!canContinue} className="w-full">
               Next: Paste Job Post
-              <ArrowRight data-icon="inline-end" aria-hidden="true" />
+              <ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
             </Button>
             <div className={`flex flex-wrap justify-center ${GAP.inline}`}>
               {roleExamples.map((example) => (

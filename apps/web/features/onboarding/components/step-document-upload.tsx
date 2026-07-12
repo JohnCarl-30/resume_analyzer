@@ -1,5 +1,11 @@
 import React from "react";
-import { ArrowRight, FileCheck2, FileUp, Pencil, Upload } from "lucide-react";
+import {
+  ArrowRightIcon,
+  CheckCircledIcon,
+  FilePlusIcon,
+  Pencil1Icon,
+  UploadIcon,
+} from "@radix-ui/react-icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -80,7 +86,7 @@ export function StepDocumentUpload({
               />
 
               <div className="flex size-12 items-center justify-center rounded-lg bg-background text-muted-foreground ring-1 ring-border">
-                {resumeFile ? <FileCheck2 aria-hidden="true" /> : <Upload aria-hidden="true" />}
+                {resumeFile ? <CheckCircledIcon aria-hidden="true" /> : <UploadIcon aria-hidden="true" />}
               </div>
 
               {resumeFile ? (
@@ -108,7 +114,7 @@ export function StepDocumentUpload({
                       openFilePicker();
                     }}
                   >
-                    <FileUp data-icon="inline-start" aria-hidden="true" />
+                    <FilePlusIcon data-icon="inline-start" aria-hidden="true" />
                     Browse files
                   </span>
                 </div>
@@ -123,7 +129,7 @@ export function StepDocumentUpload({
                 setCreateFromScratch(true);
               }}
             >
-              <Pencil data-icon="inline-start" aria-hidden="true" />
+              <Pencil1Icon data-icon="inline-start" aria-hidden="true" />
               <span className={`flex flex-col ${GAP.tight}`}>
                 <span>Start with a blank resume</span>
                 <span className="text-xs font-normal text-muted-foreground">
@@ -154,7 +160,7 @@ export function StepDocumentUpload({
         </p>
         <Button type="button" onClick={onNext} disabled={!canContinue}>
           {createFromScratch ? "Open Builder" : "Next: Pick Layout"}
-          <ArrowRight data-icon="inline-end" aria-hidden="true" />
+          <ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
         </Button>
       </div>
     </section>
