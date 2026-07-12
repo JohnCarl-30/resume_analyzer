@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import type { Metadata } from "next";
 import { ArrowRight, FileText, SearchCheck, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,22 +46,35 @@ export default function LandingPage() {
       <section className={`mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl items-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(28rem,1fr)] lg:px-8`}>
         <div className={`flex max-w-2xl flex-col ${GAP.major}`}>
           <div className={`flex flex-col ${GAP.default}`}>
-            <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+            <h1
+              className="animate-enter-up text-4xl font-semibold tracking-tight text-balance text-foreground sm:text-5xl lg:text-6xl"
+              style={{ "--enter-delay": "60ms" } as CSSProperties}
+            >
               Build a resume that scanners and people can read
             </h1>
-            <p className="max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
+            <p
+              className="animate-enter-up max-w-xl text-base leading-7 text-pretty text-muted-foreground sm:text-lg"
+              style={{ "--enter-delay": "140ms" } as CSSProperties}
+            >
               Create a clean resume, compare it to a job post, and get plain-language fixes before you print.
             </p>
           </div>
 
-          <div className={`grid ${GAP.compact} sm:grid-cols-2`}>
+          <div
+            className={`animate-enter-up grid ${GAP.compact} sm:grid-cols-2`}
+            style={{ "--enter-delay": "220ms" } as CSSProperties}
+          >
             <Button asChild size="lg" className={`h-12 justify-between ${PADDING.default} text-base`}>
               <Link href="/create-resume">
                 <span className={`inline-flex items-center ${GAP.inline}`}>
                   <FileText data-icon="inline-start" aria-hidden="true" />
                   Create Resume
                 </span>
-                <ArrowRight data-icon="inline-end" aria-hidden="true" />
+                <ArrowRight
+                  data-icon="inline-end"
+                  aria-hidden="true"
+                  className="transition-transform duration-200 ease-out group-hover/button:translate-x-0.5"
+                />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className={`h-12 justify-between ${PADDING.default} text-base`}>
@@ -69,12 +83,19 @@ export default function LandingPage() {
                   <SearchCheck data-icon="inline-start" aria-hidden="true" />
                   Check Resume
                 </span>
-                <ArrowRight data-icon="inline-end" aria-hidden="true" />
+                <ArrowRight
+                  data-icon="inline-end"
+                  aria-hidden="true"
+                  className="transition-transform duration-200 ease-out group-hover/button:translate-x-0.5"
+                />
               </Link>
             </Button>
           </div>
 
-          <div className={`grid ${GAP.default} pt-2 sm:grid-cols-3`}>
+          <div
+            className={`animate-enter-up grid ${GAP.default} pt-2 sm:grid-cols-3`}
+            style={{ "--enter-delay": "300ms" } as CSSProperties}
+          >
             {[
               {
                 title: "Scanner-friendly",
@@ -109,7 +130,10 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="hidden min-w-0 lg:block">
+        <div
+          className="animate-enter-right hidden min-w-0 lg:block"
+          style={{ "--enter-delay": "220ms" } as CSSProperties}
+        >
           <div className={`rounded-xl border bg-background ${PADDING.default} shadow-sm`}>
             <div className={`grid ${GAP.default} xl:grid-cols-[minmax(0,1fr)_19rem]`}>
               <div className="aspect-[1/1.414] overflow-hidden rounded-lg border bg-white px-8 py-10">

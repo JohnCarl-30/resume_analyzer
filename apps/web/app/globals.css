@@ -124,8 +124,44 @@ textarea {
   }
 }
 
+@keyframes enter-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes enter-right {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-enter-up {
+  opacity: 0;
+  animation: enter-up 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--enter-delay, 0ms);
+}
+
+.animate-enter-right {
+  opacity: 0;
+  animation: enter-right 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--enter-delay, 0ms);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .section-reveal {
+  .section-reveal,
+  .animate-enter-up,
+  .animate-enter-right {
     animation: none;
     opacity: 1;
     transform: none;
