@@ -3,7 +3,8 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-const transitionDuration = 180;
+const transitionDuration = 280;
+const minimumOverlayMs = 180;
 
 function isInternalNavigation(anchor: HTMLAnchorElement, event: MouseEvent) {
   if (
@@ -60,14 +61,13 @@ export function PageTransition() {
     }
 
     const elapsed = startedAt.current ? performance.now() - startedAt.current : 0;
-    const timeout = window.setTimeout(
-      () => {
-        setIsNavigating(false);
-        originPathname.current = null;
-        startedAt.current = null;
-      },
-      Math.max(0, transitionDuration - elapsed),
-    );
+    const remaining = Math.max(minimumOverlayMs - elapsed, transitionDuration - elapsed, 0);
+
+    const timeout = window.setTimeout(() => {
+      setIsNavigating(false);
+      originPathname.current = null;
+      startedAt.current = null;
+    }, remaining);
 
     return () => window.clearTimeout(timeout);
   }, [isNavigating, pathname]);

@@ -27,7 +27,12 @@
   --shadow-lg: 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 1px 4px rgba(0, 0, 0, 0.03);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
+  --motion-page: 280ms;
+  --motion-enter: 520ms;
   --font-display: var(--font-geist-sans), "Geist", "Helvetica Neue", ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-geist-sans), "Geist", "Helvetica Neue", ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-lora), "Lora", "Georgia", "Times New Roman", serif;
@@ -133,24 +138,42 @@ textarea {
   inset: 0;
   pointer-events: none;
   opacity: 0;
-  background: color-mix(in srgb, var(--page-bg) 92%, transparent);
-  transition: opacity 180ms var(--ease-out-quart);
+  background: color-mix(in srgb, var(--page-bg) 88%, transparent);
+  backdrop-filter: blur(0px);
+  transition:
+    opacity var(--motion-page) var(--ease-out-expo),
+    backdrop-filter var(--motion-page) var(--ease-out-expo);
 }
 
 .page-transition.is-active {
   pointer-events: auto;
   opacity: 1;
+  backdrop-filter: blur(8px);
+}
+
+.page-enter {
+  animation: page-enter 420ms var(--ease-out-expo) both;
+}
+
+.motion-link {
+  transition: color var(--motion-fast) var(--ease-out-quart);
+}
+
+.motion-lift {
+  transition:
+    transform var(--motion-base) var(--ease-out-expo),
+    box-shadow var(--motion-base) var(--ease-out-expo);
 }
 
 @media (hover: hover) {
   [data-slot="button"],
   button:not([data-slot="button"]) {
     transition:
-      transform 150ms var(--ease-out-quart),
-      background-color 150ms var(--ease-out-quart),
-      border-color 150ms var(--ease-out-quart),
-      color 150ms var(--ease-out-quart),
-      box-shadow 150ms var(--ease-out-quart);
+      transform var(--motion-fast) var(--ease-out-expo),
+      background-color var(--motion-fast) var(--ease-out-quart),
+      border-color var(--motion-fast) var(--ease-out-quart),
+      color var(--motion-fast) var(--ease-out-quart),
+      box-shadow var(--motion-base) var(--ease-out-expo);
   }
 
   [data-slot="button"]:not(:disabled):hover,
@@ -161,13 +184,48 @@ textarea {
   [data-slot="button"]:not(:disabled):active,
   button:not([data-slot="button"]):not(:disabled):active {
     transform: scale(0.98);
+    transition-duration: 100ms;
+  }
+
+  [data-slot="button"] [data-icon="inline-end"],
+  [data-slot="button"] [data-icon="inline-start"] {
+    transition: transform var(--motion-fast) var(--ease-out-expo);
+  }
+
+  [data-slot="button"]:hover [data-icon="inline-end"] {
+    transform: translateX(3px);
+  }
+
+  .motion-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 48px rgba(21, 93, 252, 0.14);
   }
 }
 
 .section-reveal {
-  opacity: 0;
-  transform: translateY(12px);
-  animation: section-reveal 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 1;
+  transform: translateY(10px);
+  animation: section-reveal var(--motion-enter) var(--ease-out-expo) forwards;
+  animation-delay: var(--enter-delay, 0ms);
+}
+
+.scroll-reveal {
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform var(--motion-enter) var(--ease-out-expo);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.scroll-reveal.is-armed:not(.is-in-view).reveal-from-below {
+  transform: translateY(32px);
+}
+
+.scroll-reveal.is-armed:not(.is-in-view).reveal-from-above {
+  transform: translateY(-24px);
+}
+
+.scroll-reveal.is-in-view {
+  transform: translateY(0);
 }
 
 .step-pill {
@@ -184,44 +242,55 @@ textarea {
   text-transform: uppercase;
 }
 
-@keyframes section-reveal {
+@keyframes page-enter {
+  from {
+    opacity: 0.92;
+    transform: translateY(10px);
+  }
   to {
     opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes section-reveal {
+  from {
+    transform: translateY(10px);
+  }
+  to {
     transform: translateY(0);
   }
 }
 
 @keyframes enter-up {
   from {
-    opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(14px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
 
 @keyframes enter-right {
   from {
-    opacity: 0;
-    transform: translateX(28px);
+    transform: translateX(20px);
   }
   to {
-    opacity: 1;
     transform: translateX(0);
   }
 }
 
 .animate-enter-up {
-  opacity: 0;
-  animation: enter-up 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  opacity: 1;
+  transform: translateY(14px);
+  animation: enter-up var(--motion-enter) var(--ease-out-expo) both;
   animation-delay: var(--enter-delay, 0ms);
 }
 
 .animate-enter-right {
-  opacity: 0;
-  animation: enter-right 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  opacity: 1;
+  transform: translateX(20px);
+  animation: enter-right calc(var(--motion-enter) + 80ms) var(--ease-out-expo) both;
   animation-delay: var(--enter-delay, 0ms);
 }
 
@@ -230,12 +299,15 @@ textarea {
     display: none;
   }
 
+  .page-enter,
   .section-reveal,
+  .scroll-reveal,
   .animate-enter-up,
   .animate-enter-right {
     animation: none;
     opacity: 1;
     transform: none;
+    transition: none;
   }
 
   *,
