@@ -2,6 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 
 import { analysisController } from "../controllers/analysis.controller.js";
+import { requireAuth } from "../middlewares/require-auth.js";
 import { HttpError } from "../utils/http-error.js";
 import { asyncHandler } from "../utils/async-handler.js";
 import { resumeParserService } from "../services/resume-parser.service.js";
@@ -28,41 +29,10 @@ const analysisUpload = multer({
   },
 });
 
-analysisRouter.post("/", asyncHandler(analysisController.create));
-analysisRouter.get("/", asyncHandler(analysisController.list));
-analysisRouter.get("/:analysisId/source", asyncHandler(analysisController.getSourceFile));
-analysisRouter.get("/:analysisId", asyncHandler(analysisController.getById));
-analysisRouter.patch("/:analysisId", asyncHandler(analysisController.update));
-analysisRouter.post(
-  "/upload",
-  analysisUpload.single("resume"),
-  asyncHandler(analysisController.createFromUpload),
-);
-analysisRouter.post(
-  "/template",
-  asyncHandler(analysisController.createFromTemplate),
-);
+analysisRouter.post("/", requireAuth, asyncHandler(analysisController.create));
+analysisRouter.get("/", requireAuth, asyncHandler(analysisController.list));
 
-// AI Pipeline route (multi-step LLM processing with optional embeddings)
-analysisRouter.post(
-  "/pipeline",
-  analysisUpload.single("resume"),
-  asyncHandler(analysisController.runPipeline),
-);
-
-// Semantic search route (vector similarity search)
-analysisRouter.post(
-  "/search",
-  asyncHandler(analysisController.semanticSearch),
-);
-
-// Evaluation route (metrics for extraction quality)
-analysisRouter.post(
-  "/evaluate",
-  asyncHandler(analysisController.evaluate),
-);
-
-// Few-shot examples routes
+// Static routes must be registered before /:analysisId wildcard routes.
 analysisRouter.get(
   "/examples",
   asyncHandler(analysisController.getFewShotExamples),
@@ -71,3 +41,33 @@ analysisRouter.post(
   "/examples",
   asyncHandler(analysisController.createFewShotExample),
 );
+analysisRouter.post(
+  "/upload",
+  requireAuth,
+  analysisUpload.single("resume"),
+  asyncHandler(analysisController.createFromUpload),
+);
+analysisRouter.post(
+  "/template",
+  requireAuth,
+  asyncHandler(analysisController.createFromTemplate),
+);
+analysisRouter.post(
+  "/pipeline",
+  requireAuth,
+  analysisUpload.single("resume"),
+  asyncHandler(analysisController.runPipeline),
+);
+analysisRouter.post(
+  "/search",
+  requireAuth,
+  asyncHandler(analysisController.semanticSearch),
+);
+analysisRouter.post(
+  "/evaluate",
+  asyncHandler(analysisController.evaluate),
+);
+
+analysisRouter.get("/:analysisId/source", requireAuth, asyncHandler(analysisController.getSourceFile));
+analysisRouter.get("/:analysisId", requireAuth, asyncHandler(analysisController.getById));
+analysisRouter.patch("/:analysisId", requireAuth, asyncHandler(analysisController.update));

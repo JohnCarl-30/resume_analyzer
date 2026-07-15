@@ -1,0 +1,20 @@
+[
+  {
+    "date": "2026-07-15",
+    "macrostructure": "Split Studio",
+    "theme": "custom",
+    "theme_axes": "light / roman-serif / cool",
+    "vibe": "split auth, resume-as-document proof",
+    "enrichment": "Tier-B resume document SVG",
+    "brief": "Deep Focus · sign-in page (apps/web/app/auth/sign-in)"
+  },
+  {
+    "date": "2026-07-15",
+    "macrostructure": "Workbench",
+    "theme": "custom",
+    "theme_axes": "light / roman-serif / cool",
+    "vibe": "reference-book restraint, resume as document",
+    "enrichment": "none",
+    "brief": "Deep Focus · resume builder + job-match checker landing page (apps/web/app/page.tsx)"
+  }
+]

@@ -3,10 +3,11 @@ import { sql } from "drizzle-orm";
 import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
 
 import { env } from "../config/env.js";
-import { databaseTables, resumeAnalysesTable } from "./schema.js";
+import { databaseTables, resumeAnalysesTable, accountAnalysisUsageTable } from "./schema.js";
 
 type AppDatabase = NeonHttpDatabase<{
   resumeAnalysesTable: typeof resumeAnalysesTable;
+  accountAnalysisUsageTable: typeof accountAnalysisUsageTable;
 }>;
 
 const neonClient = env.DATABASE_URL ? neon(env.DATABASE_URL) : null;
@@ -14,6 +15,7 @@ const drizzleClient = neonClient
   ? drizzle(neonClient, {
       schema: {
         resumeAnalysesTable,
+        accountAnalysisUsageTable,
       },
     })
   : null;
@@ -61,6 +63,25 @@ async function initializeSchema() {
     await drizzleClient.execute(sql`
       ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
       ADD COLUMN IF NOT EXISTS metrics_found integer
+    `);
+
+    await drizzleClient.execute(sql`
+      ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
+      ADD COLUMN IF NOT EXISTS user_id text
+    `);
+
+    await drizzleClient.execute(sql`
+      CREATE TABLE IF NOT EXISTS ${sql.raw(databaseTables.accountAnalysisUsage)} (
+        user_id text PRIMARY KEY,
+        analysis_id text NOT NULL,
+        redeemed_at timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+
+    await drizzleClient.execute(sql`
+      CREATE UNIQUE INDEX IF NOT EXISTS resume_analyses_one_per_user_idx
+      ON ${sql.raw(databaseTables.resumeAnalyses)} (user_id)
+      WHERE user_id IS NOT NULL
     `);
   } catch (error) {
     console.error("[db] Schema initialization failed:", error);

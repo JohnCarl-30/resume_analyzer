@@ -2,13 +2,21 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* Hallmark · genre: editorial · macrostructure: Workbench · theme: custom-tuned
+ * (vibe: "reference-book restraint, resume as document" · paper oklch(98.6% 0.004 258)
+ * · accent oklch(56% 0.21 259), reused from the project's existing --brand)
+ * · display: Lora (var(--font-serif)) · body: Geist (var(--font-body))
+ * · enrichment: none · nav: N9 · footer: Ft1 · designed-as: single-page (app/page.tsx)
+ * · pre-emit critique: P5 H4 E5 S4 R4 V5
+ */
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
   color-scheme: light;
-  --page-bg: #ffffff;
+  --page-bg: oklch(98.6% 0.004 258);
   --page-bg-strong: #f7f9fc;
-  --page-surface: #ffffff;
+  --page-surface: oklch(98.6% 0.004 258);
   --page-line: #dfe6f0;
   --page-line-strong: #c7d2e3;
   --page-text: #0f172a;
@@ -24,6 +32,9 @@
   --success-soft: #ecfdf5;
   --warning-soft: #fffbeb;
   --warning-text: #b45309;
+  /* Hallmark · landing-page redesign (app/page.tsx): the one net-new token this
+   * build needed. Everything else reuses the tokens already declared above. */
+  --tag-bullet: oklch(62% 0.15 68);
   --shadow-lg: 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 1px 4px rgba(0, 0, 0, 0.03);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
@@ -73,6 +84,8 @@
 
 html {
   background: white;
+  scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
@@ -83,6 +96,7 @@ body {
   font-family: var(--font-body);
   line-height: 1.6;
   text-rendering: optimizeLegibility;
+  overflow-x: clip;
 }
 
 * {
@@ -160,9 +174,10 @@ textarea {
 }
 
 .motion-lift {
+  will-change: transform, box-shadow;
   transition:
-    transform var(--motion-base) var(--ease-out-expo),
-    box-shadow var(--motion-base) var(--ease-out-expo);
+    transform 320ms var(--ease-out-expo),
+    box-shadow 320ms var(--ease-out-expo);
 }
 
 @media (hover: hover) {
@@ -179,11 +194,12 @@ textarea {
   [data-slot="button"]:not(:disabled):hover,
   button:not([data-slot="button"]):not(:disabled):hover {
     transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(21, 93, 252, 0.14);
   }
 
   [data-slot="button"]:not(:disabled):active,
   button:not([data-slot="button"]):not(:disabled):active {
-    transform: scale(0.98);
+    transform: scale(0.97);
     transition-duration: 100ms;
   }
 
@@ -196,9 +212,13 @@ textarea {
     transform: translateX(3px);
   }
 
+  [data-slot="button"]:hover [data-icon="inline-start"] {
+    transform: translateX(-2px);
+  }
+
   .motion-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 20px 48px rgba(21, 93, 252, 0.14);
+    transform: translateY(-3px) scale(1.008);
+    box-shadow: 0 24px 52px rgba(21, 93, 252, 0.16);
   }
 }
 
@@ -212,20 +232,25 @@ textarea {
 .scroll-reveal {
   transform: translateY(0);
   opacity: 1;
-  transition: transform var(--motion-enter) var(--ease-out-expo);
+  transition:
+    transform var(--motion-enter) var(--ease-out-expo),
+    opacity var(--motion-enter) var(--ease-out-expo);
   transition-delay: var(--reveal-delay, 0ms);
 }
 
 .scroll-reveal.is-armed:not(.is-in-view).reveal-from-below {
-  transform: translateY(32px);
+  transform: translateY(28px);
+  opacity: 0;
 }
 
 .scroll-reveal.is-armed:not(.is-in-view).reveal-from-above {
-  transform: translateY(-24px);
+  transform: translateY(-20px);
+  opacity: 0;
 }
 
 .scroll-reveal.is-in-view {
   transform: translateY(0);
+  opacity: 1;
 }
 
 .step-pill {
@@ -264,10 +289,35 @@ textarea {
 
 @keyframes enter-up {
   from {
-    transform: translateY(14px);
+    opacity: 0;
+    transform: translateY(16px);
   }
   to {
+    opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes atmosphere-drift {
+  0%,
+  100% {
+    opacity: 0.16;
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    opacity: 0.26;
+    transform: translate3d(6px, -8px, 0);
+  }
+}
+
+@keyframes callout-pop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.55);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 
@@ -280,11 +330,37 @@ textarea {
   }
 }
 
+@keyframes subtle-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
 .animate-enter-up {
-  opacity: 1;
-  transform: translateY(14px);
-  animation: enter-up var(--motion-enter) var(--ease-out-expo) both;
+  opacity: 0;
+  transform: translateY(16px);
+  animation: enter-up 600ms var(--ease-out-expo) both;
   animation-delay: var(--enter-delay, 0ms);
+}
+
+.atmosphere-label {
+  color: var(--page-muted);
+  animation: atmosphere-drift 22s ease-in-out infinite;
+  animation-delay: var(--drift-delay, 0s);
+}
+
+.scroll-reveal.is-armed:not(.is-in-view) .callout-pin {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.55);
+}
+
+.scroll-reveal.is-in-view .callout-pin {
+  animation: callout-pop 480ms var(--ease-out-expo) both;
+  animation-delay: var(--pin-delay, 200ms);
 }
 
 .animate-enter-right {
@@ -294,7 +370,42 @@ textarea {
   animation-delay: var(--enter-delay, 0ms);
 }
 
+.auth-document-art {
+  animation: subtle-float 9s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .auth-document-art {
+    animation: none;
+  }
+}
+
+.brand-logo {
+  transition: transform 280ms var(--ease-out-expo);
+}
+
+@media (hover: hover) {
+  .brand-logo:hover {
+    transform: scale(1.05);
+  }
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 14%, transparent);
+  transition:
+    border-color 180ms var(--ease-out-quart),
+    box-shadow 180ms var(--ease-out-quart);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   .page-transition {
     display: none;
   }
@@ -303,7 +414,9 @@ textarea {
   .section-reveal,
   .scroll-reveal,
   .animate-enter-up,
-  .animate-enter-right {
+  .animate-enter-right,
+  .atmosphere-label,
+  .callout-pin {
     animation: none;
     opacity: 1;
     transform: none;

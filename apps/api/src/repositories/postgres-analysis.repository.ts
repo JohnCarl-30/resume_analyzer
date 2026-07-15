@@ -29,6 +29,7 @@ function mapRowToAnalysis(
     extractedCharacterCount: row.extractedCharacterCount ?? undefined,
     extractedProfile: row.extractedProfile ?? null,
     extractionProvider: row.extractionProvider ?? undefined,
+    userId: row.userId ?? undefined,
     createdAt: row.createdAt,
   };
 }
@@ -59,6 +60,7 @@ class PostgresAnalysisRepository implements AnalysisRepository {
       extractedCharacterCount: input.extractedCharacterCount ?? null,
       extractedProfile: input.extractedProfile ?? null,
       extractionProvider: input.extractionProvider ?? null,
+      userId: input.userId,
     });
 
     return {
@@ -78,10 +80,11 @@ class PostgresAnalysisRepository implements AnalysisRepository {
       extractedCharacterCount: input.extractedCharacterCount,
       extractedProfile: input.extractedProfile,
       extractionProvider: input.extractionProvider,
+      userId: input.userId,
     };
   }
 
-  async findById(id: string) {
+  async findById(id: string, userId: string) {
     if (!db.client) {
       return null;
     }
@@ -92,10 +95,14 @@ class PostgresAnalysisRepository implements AnalysisRepository {
       .where(eq(resumeAnalysesTable.id, id))
       .limit(1);
 
-    return record ? mapRowToAnalysis(record) : null;
+    if (!record || record.userId !== userId) {
+      return null;
+    }
+
+    return mapRowToAnalysis(record);
   }
 
-  async list() {
+  async list(userId: string) {
     if (!db.client) {
       return [];
     }
@@ -103,6 +110,7 @@ class PostgresAnalysisRepository implements AnalysisRepository {
     const records = await db.client
       .select()
       .from(resumeAnalysesTable)
+      .where(eq(resumeAnalysesTable.userId, userId))
       .orderBy(desc(resumeAnalysesTable.createdAt));
 
     return records.map(mapRowToAnalysis);
@@ -137,13 +145,14 @@ class PostgresAnalysisRepository implements AnalysisRepository {
     return record;
   }
 
-  async findSourceFileById(id: string): Promise<PersistedAnalysisSourceFile | null> {
+  async findSourceFileById(id: string, userId: string): Promise<PersistedAnalysisSourceFile | null> {
     if (!db.client) {
       return null;
     }
 
     const [record] = await db.client
       .select({
+        userId: resumeAnalysesTable.userId,
         sourceFileName: resumeAnalysesTable.sourceFileName,
         sourceFileContentType: resumeAnalysesTable.sourceFileContentType,
         sourceFileDataBase64: resumeAnalysesTable.sourceFileDataBase64,
@@ -151,6 +160,10 @@ class PostgresAnalysisRepository implements AnalysisRepository {
       .from(resumeAnalysesTable)
       .where(eq(resumeAnalysesTable.id, id))
       .limit(1);
+
+    if (record?.userId !== userId) {
+      return null;
+    }
 
     if (
       !record?.sourceFileName ||

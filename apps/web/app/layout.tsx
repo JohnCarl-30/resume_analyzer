@@ -4,6 +4,7 @@ import { Geist, Geist_Mono, Lora } from "next/font/google";
 
 import "./globals.css";
 import { PageTransition } from "@/components/page-transition";
+import { AuthSessionProvider } from "@/components/auth-session-provider";
 import { cn } from "@/lib/utils";
 
 const geistSans = Geist({
@@ -87,8 +88,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={cn(geistSans.variable, geistMono.variable, lora.variable)}>
       <body className="antialiased">
-        <PageTransition />
-        {children}
+        <AuthSessionProvider>
+          <PageTransition />
+          {children}
+        </AuthSessionProvider>
       </body>
     </html>
   );

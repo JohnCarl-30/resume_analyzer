@@ -43,6 +43,7 @@ async function run() {
       selectedTemplateId: "minimalist-grid",
       jobDescription: "Need TypeScript and React experience in production systems.",
       parsedResumeText: "Built a dashboard that increased conversions by 15%.",
+      userId: "reliability-test-user",
       score: 88,
       metricsFound: 3,
       matchedKeywords: ["TypeScript"],
@@ -53,7 +54,7 @@ async function run() {
 
     assert.equal(created.metricsFound, 3);
 
-    const saved = await inMemoryAnalysisRepository.findById(created.id);
+    const saved = await inMemoryAnalysisRepository.findById(created.id, "reliability-test-user");
     assert.equal(saved?.metricsFound, 3);
 
     console.log("Reliability regression checks passed.");

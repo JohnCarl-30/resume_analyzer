@@ -23,13 +23,17 @@ class InMemoryAnalysisRepository implements AnalysisRepository {
     return this.toPublicAnalysis(analysis);
   }
 
-  async findById(id: string) {
+  async findById(id: string, userId: string) {
     const analysis = this.analyses.get(id);
-    return analysis ? this.toPublicAnalysis(analysis) : null;
+    if (!analysis || analysis.userId !== userId) {
+      return null;
+    }
+    return this.toPublicAnalysis(analysis);
   }
 
-  async list() {
+  async list(userId: string) {
     return Array.from(this.analyses.values())
+      .filter((analysis) => analysis.userId === userId)
       .sort((left, right) => Date.parse(right.generatedAt) - Date.parse(left.generatedAt))
       .map((analysis) => this.toPublicAnalysis(analysis));
   }
@@ -45,10 +49,14 @@ class InMemoryAnalysisRepository implements AnalysisRepository {
     return this.toPublicAnalysis(nextRecord);
   }
 
-  async findSourceFileById(id: string): Promise<PersistedAnalysisSourceFile | null> {
+  async findSourceFileById(id: string, userId: string): Promise<PersistedAnalysisSourceFile | null> {
     const analysis = this.analyses.get(id);
 
-    if (!analysis?.sourceFileDataBase64 || !analysis.sourceFileContentType || !analysis.sourceFileName) {
+    if (!analysis || analysis.userId !== userId) {
+      return null;
+    }
+
+    if (!analysis.sourceFileDataBase64 || !analysis.sourceFileContentType || !analysis.sourceFileName) {
       return null;
     }
 

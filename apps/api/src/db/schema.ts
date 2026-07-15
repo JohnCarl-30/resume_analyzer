@@ -8,6 +8,7 @@ export const databaseTables = {
   resumeChunks: "resume_chunks",
   resumeAnalyses: "resume_analyses",
   analysisJobs: "analysis_jobs",
+  accountAnalysisUsage: "account_analysis_usage",
 } as const;
 
 export const resumeAnalysesTable = pgTable(databaseTables.resumeAnalyses, {
@@ -33,6 +34,7 @@ export const resumeAnalysesTable = pgTable(databaseTables.resumeAnalyses, {
   evaluationMetrics: jsonb("evaluation_metrics").$type<Record<string, unknown> | null>(),
   fewShotExamplesUsed: integer("few_shot_examples_used"),
   processingTimeMs: integer("processing_time_ms"),
+  userId: text("user_id"),
   generatedAt: timestamp("generated_at", {
     withTimezone: true,
     mode: "string",
@@ -43,4 +45,13 @@ export const resumeAnalysesTable = pgTable(databaseTables.resumeAnalyses, {
   })
     .defaultNow()
     .notNull(),
+});
+
+export const accountAnalysisUsageTable = pgTable(databaseTables.accountAnalysisUsage, {
+  userId: text("user_id").primaryKey(),
+  analysisId: text("analysis_id").notNull(),
+  redeemedAt: timestamp("redeemed_at", {
+    withTimezone: true,
+    mode: "string",
+  }).notNull(),
 });

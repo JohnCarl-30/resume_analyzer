@@ -6,9 +6,13 @@ import { semanticSearchService } from "../services/semantic-search.service.js";
 import { evaluationService } from "../services/evaluation.service.js";
 import { fewShotService } from "../services/few-shot.service.js";
 
+function getUserId(req: Request) {
+  return req.userId!;
+}
+
 export const analysisController = {
-  async list(_req: Request, res: Response) {
-    const analyses = await analysisService.listAnalyses();
+  async list(req: Request, res: Response) {
+    const analyses = await analysisService.listAnalyses(getUserId(req));
     res.json({ data: analyses });
   },
 
@@ -22,7 +26,7 @@ export const analysisController = {
       ? req.params.analysisId[0]
       : req.params.analysisId;
 
-    const analysis = await analysisService.getAnalysisById(analysisId);
+    const analysis = await analysisService.getAnalysisById(analysisId, getUserId(req));
     res.json({ data: analysis });
   },
 
@@ -31,12 +35,13 @@ export const analysisController = {
       ? req.params.analysisId[0]
       : req.params.analysisId;
 
-    const updated = await analysisService.updateAnalysis(analysisId, req.body);
+    const updated = await analysisService.updateAnalysis(analysisId, getUserId(req), req.body);
     res.json({ data: updated });
   },
 
   async createFromUpload(req: Request, res: Response) {
     const analysis = await analysisService.createAnalysisFromUpload({
+      userId: getUserId(req),
       targetRole: req.body.targetRole,
       jobDescription: req.body.jobDescription,
       selectedTemplateId: req.body.selectedTemplateId,
@@ -48,6 +53,7 @@ export const analysisController = {
 
   async createFromTemplate(req: Request, res: Response) {
     const analysis = await analysisService.createAnalysisFromTemplate({
+      userId: getUserId(req),
       targetRole: req.body.targetRole,
       jobDescription: req.body.jobDescription,
       selectedTemplateId: req.body.selectedTemplateId,
@@ -62,7 +68,7 @@ export const analysisController = {
       ? req.params.analysisId[0]
       : req.params.analysisId;
 
-    const sourceFile = await analysisService.getAnalysisSourceFile(analysisId);
+    const sourceFile = await analysisService.getAnalysisSourceFile(analysisId, getUserId(req));
 
     res.setHeader("Content-Type", sourceFile.contentType);
     res.setHeader(
@@ -88,7 +94,7 @@ export const analysisController = {
   async semanticSearch(req: Request, res: Response) {
     const { jobDescription, resumeText, topK = 5 } = req.body;
 
-    const analyses = await analysisService.listAnalyses();
+    const analyses = await analysisService.listAnalyses(getUserId(req));
 
     const results = await semanticSearchService.hybridSearch(
       jobDescription,

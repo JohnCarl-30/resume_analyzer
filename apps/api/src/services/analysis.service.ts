@@ -11,6 +11,7 @@ import type { PersistedResumeAnalysis } from "../repositories/analysis.repositor
 import { db } from "../db/client.js";
 import { inMemoryAnalysisRepository } from "../repositories/in-memory-analysis.repository.js";
 import { postgresAnalysisRepository } from "../repositories/postgres-analysis.repository.js";
+import { accountService } from "./account.service.js";
 
 // Composable analyzers
 import { analyzeKeywords } from "../analyzers/keyword.analyzer.js";
@@ -29,8 +30,8 @@ const analysisRepository = db.isConfigured
   : inMemoryAnalysisRepository;
 
 export const analysisService = {
-  async listAnalyses(): Promise<PersistedResumeAnalysis[]> {
-    return analysisRepository.list();
+  async listAnalyses(userId: string): Promise<PersistedResumeAnalysis[]> {
+    return analysisRepository.list(userId);
   },
 
   async createAnalysis(input: unknown): Promise<ResumeAnalysis> {
@@ -103,11 +104,14 @@ export const analysisService = {
   },
 
   async createAnalysisFromUpload(input: {
+    userId: string;
     targetRole: unknown;
     jobDescription: unknown;
     selectedTemplateId: unknown;
     resumeFile?: Express.Multer.File;
   }): Promise<PersistedResumeAnalysis> {
+    await accountService.assertCanCreateAnalysis(input.userId);
+
     const payload = createUploadedAnalysisSchema.parse({
       targetRole: input.targetRole,
       jobDescription: input.jobDescription,
@@ -137,11 +141,12 @@ export const analysisService = {
       targetRole: analysis.targetRole,
     });
 
-    return analysisRepository.create({
+    const persisted = await analysisRepository.create({
       ...analysis,
       jobDescription: payload.jobDescription,
       selectedTemplateId: payload.selectedTemplateId,
       parsedResumeText: extracted.text,
+      userId: input.userId,
       sourceFileName: input.resumeFile.originalname,
       sourceFileContentType: input.resumeFile.mimetype,
       sourceFileDataBase64: input.resumeFile.buffer.toString("base64"),
@@ -149,14 +154,20 @@ export const analysisService = {
       extractedProfile,
       extractionProvider: extractedProfile ? "vertex" : "parser",
     });
+
+    await accountService.recordAnalysisRedemption(input.userId, persisted.id);
+    return persisted;
   },
 
   async createAnalysisFromTemplate(input: {
+    userId: string;
     targetRole: unknown;
     jobDescription: unknown;
     selectedTemplateId: unknown;
     resumeText: string;
   }): Promise<PersistedResumeAnalysis> {
+    await accountService.assertCanCreateAnalysis(input.userId);
+
     const payload = createTemplateAnalysisSchema.parse({
       targetRole: input.targetRole,
       jobDescription: input.jobDescription,
@@ -175,19 +186,23 @@ export const analysisService = {
       targetRole: analysis.targetRole,
     });
 
-    return analysisRepository.create({
+    const persisted = await analysisRepository.create({
       ...analysis,
       jobDescription: payload.jobDescription,
       selectedTemplateId: payload.selectedTemplateId,
       parsedResumeText: input.resumeText,
+      userId: input.userId,
       extractedCharacterCount: input.resumeText.length,
       extractedProfile,
       extractionProvider: extractedProfile ? "vertex" : "parser",
     });
+
+    await accountService.recordAnalysisRedemption(input.userId, persisted.id);
+    return persisted;
   },
 
-  async getAnalysisById(analysisId: string): Promise<PersistedResumeAnalysis> {
-    const analysis = await analysisRepository.findById(analysisId);
+  async getAnalysisById(analysisId: string, userId: string): Promise<PersistedResumeAnalysis> {
+    const analysis = await analysisRepository.findById(analysisId, userId);
 
     if (!analysis) {
       throw new HttpError(404, "Saved analysis not found.");
@@ -196,8 +211,8 @@ export const analysisService = {
     return analysis;
   },
 
-  async getAnalysisSourceFile(analysisId: string) {
-    const sourceFile = await analysisRepository.findSourceFileById(analysisId);
+  async getAnalysisSourceFile(analysisId: string, userId: string) {
+    const sourceFile = await analysisRepository.findSourceFileById(analysisId, userId);
 
     if (!sourceFile) {
       throw new HttpError(404, "Saved source file not found.");
@@ -208,9 +223,10 @@ export const analysisService = {
 
   async updateAnalysis(
     analysisId: string,
+    userId: string,
     input: { jobDescription: string; targetRole?: string },
   ): Promise<PersistedResumeAnalysis> {
-    const existing = await this.getAnalysisById(analysisId);
+    const existing = await this.getAnalysisById(analysisId, userId);
 
     const updatedAnalysis = await this.createAnalysis({
       targetRole: input.targetRole ?? existing.targetRole,

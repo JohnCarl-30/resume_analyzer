@@ -35,6 +35,7 @@ import {
   getResumeAnalysis,
   getResumeAnalysisSourceUrl,
 } from "../utils/analysis-api";
+import { getAnalysisQuota, type AnalysisQuota } from "@/lib/account-api";
 import { formatFileSize, isSupportedFile, maxFileSize } from "../utils/wizard-utils";
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
@@ -73,6 +74,7 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
   const [isDragActive, setIsDragActive] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<ResumeAnalysisResult | null>(null);
   const [analysisError, setAnalysisError] = useState("");
+  const [analysisQuota, setAnalysisQuota] = useState<AnalysisQuota | null>(null);
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   const [isRestoringAnalysis, setIsRestoringAnalysis] = useState(false);
   const [analysisIdFromUrl, setAnalysisIdFromUrl] = useState<string | null>(initialAnalysisId ?? null);
@@ -239,6 +241,18 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
       return;
     }
 
+    if (analysisQuota && !analysisQuota.canAnalyze) {
+      setAnalysisError(
+        analysisQuota.analysisId
+          ? "This account already used its one resume analysis. Open your saved check to review or update it."
+          : "This account already used its one resume analysis.",
+      );
+      if (analysisQuota.analysisId) {
+        router.replace(`/analysis/${analysisQuota.analysisId}`);
+      }
+      return;
+    }
+
     setAnalysisError("");
     setIsGeneratingAnalysis(true);
 
@@ -288,6 +302,18 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
   function handleSkipTemplate() {
     void handleGenerateAnalysis(true);
   }
+
+  useEffect(() => {
+    if (initialAnalysisId) {
+      return;
+    }
+
+    void getAnalysisQuota()
+      .then((quota) => setAnalysisQuota(quota))
+      .catch(() => {
+        setAnalysisQuota(null);
+      });
+  }, [initialAnalysisId]);
 
   useEffect(() => {
     if (!resumeFile) {

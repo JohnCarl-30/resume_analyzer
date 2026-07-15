@@ -1,6 +1,4 @@
-/**
- * Centralized API client with timeout, retry logic, and standardized error handling
- */
+import { getAccessToken } from "./auth-token";
 
 export interface ApiEnvelope<T> {
   data: T;
@@ -163,6 +161,15 @@ export function createApiClient(config: ApiClientConfig) {
           await new Promise((resolve) => setTimeout(resolve, delay));
         }
 
+        const authToken = await getAccessToken();
+        const requestHeaders: Record<string, string> = {
+          ...(options.headers ?? {}),
+        };
+
+        if (authToken) {
+          requestHeaders.Authorization = `Bearer ${authToken}`;
+        }
+
         const fetchOptions: RequestInit = {
           method: method_upper,
         };
@@ -170,15 +177,16 @@ export function createApiClient(config: ApiClientConfig) {
         if (options.body) {
           if (options.isFormData) {
             fetchOptions.body = options.body as FormData;
+            fetchOptions.headers = requestHeaders;
           } else {
             fetchOptions.body = JSON.stringify(options.body);
             fetchOptions.headers = {
               "Content-Type": "application/json",
-              ...(options.headers ?? {}),
+              ...requestHeaders,
             };
           }
-        } else if (options.headers) {
-          fetchOptions.headers = options.headers;
+        } else {
+          fetchOptions.headers = Object.keys(requestHeaders).length > 0 ? requestHeaders : undefined;
         }
 
         log(`${method_upper} ${path}`, options.body);

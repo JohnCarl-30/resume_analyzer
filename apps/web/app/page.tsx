@@ -1,15 +1,13 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import type { Metadata } from "next";
-import {
-  ArrowRightIcon,
-  CheckCircledIcon,
-  FileIcon,
-  MagnifyingGlassIcon,
-} from "@radix-ui/react-icons";
+import { ArrowRightIcon } from "@radix-ui/react-icons";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { Button } from "@/components/ui/button";
 import { ResumeRenderer } from "@/features/editor/components/resume-renderer";
 import { defaultResumeForm } from "@/features/editor/model/resume-form";
+import { HeroAtmosphere } from "@/features/landing/components/hero-atmosphere";
+import { RotatingWord } from "@/features/landing/components/rotating-word";
 import { BrandMark } from "@/features/onboarding/components/wizard-icons";
 
 export const metadata: Metadata = {
@@ -21,228 +19,210 @@ export const metadata: Metadata = {
   },
 };
 
+const CALLOUTS = [
+  {
+    number: "01",
+    label: "Job words",
+    insight: "Words the posting repeats often — but your summary never uses — get flagged here.",
+    position: { top: "10%", left: "97%" },
+    dot: "bg-primary",
+  },
+  {
+    number: "02",
+    label: "Bullet strength",
+    insight: "A bullet that names activity but not outcome gets a note: what changed because of it?",
+    position: { top: "62%", left: "3%" },
+    dot: "bg-[var(--tag-bullet)]",
+  },
+  {
+    number: "03",
+    label: "Layout & scan",
+    insight: "Dense paragraphs and long section names slow a six-second skim. We flag both.",
+    position: { top: "80%", left: "97%" },
+    dot: "bg-success",
+  },
+] as const;
+
+function enterDelay(ms: number): CSSProperties {
+  return { "--enter-delay": `${ms}ms` } as CSSProperties;
+}
+
+function pinDelay(ms: number): CSSProperties {
+  return { "--pin-delay": `${ms}ms` } as CSSProperties;
+}
+
 export default function LandingPage() {
   return (
-    <main className="min-h-screen overflow-hidden bg-background text-foreground">
-      <header className="relative z-20 border-b border-border bg-background/95 backdrop-blur-sm">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-base font-semibold tracking-tight">
+    <main className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link
+            href="/"
+            className="brand-logo inline-flex items-center gap-2 text-base font-semibold tracking-tight"
+          >
             <BrandMark />
-            Deep Focus
+            <span className="font-display">Deep Focus</span>
           </Link>
-          <nav aria-label="Main navigation" className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
-            <Link href="/create-resume" className="motion-link hover:text-foreground">
-              Create Resume
-            </Link>
-            <Link href="/analysis/new" className="motion-link hover:text-foreground">
-              Check Resume
-            </Link>
-            <Link href="/analyses" className="motion-link hover:text-foreground">
-              Saved Checks
-            </Link>
-          </nav>
-          <Button asChild size="sm" className="h-9 px-4">
-            <Link href="/create-resume">Start building</Link>
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="h-9 px-3 text-muted-foreground hover:text-foreground"
+          >
+            <Link href="/auth/sign-in?next=/analysis/new">Sign in</Link>
           </Button>
         </div>
       </header>
 
-      <section className="relative">
-        <div aria-hidden="true" className="absolute inset-y-0 right-0 hidden w-[43%] bg-secondary xl:block" />
-        <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl items-center gap-14 px-4 py-16 sm:px-6 sm:py-20 lg:px-8 xl:grid-cols-[minmax(0,0.82fr)_minmax(34rem,1.18fr)] xl:gap-16 xl:py-24">
-          <div className="flex max-w-xl flex-col">
-            <ScrollReveal delay={0}>
-              <p className="mb-6 w-fit rounded-md border border-primary/15 bg-secondary px-3 py-1.5 text-sm font-medium text-secondary-foreground">
-                Resume builder + job match checker
-              </p>
-            </ScrollReveal>
-            <ScrollReveal delay={60}>
-              <h1 className="display-serif max-w-[12ch] text-[clamp(2.75rem,6vw,5.25rem)] text-foreground">
-                Your resume, with a sharper <em>second draft.</em>
-              </h1>
-            </ScrollReveal>
-            <ScrollReveal delay={120}>
-              <p className="mt-6 max-w-[58ch] text-base leading-7 text-pretty text-muted-foreground sm:text-lg">
-                Build a clean resume or compare the one you have against a real job post. Deep Focus points to the
-                missing words, weak bullets, and sections worth fixing.
-              </p>
-            </ScrollReveal>
+      <section className="relative overflow-hidden">
+        <HeroAtmosphere />
 
-            <ScrollReveal delay={180}>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="h-12 min-w-44 justify-between px-4 text-base">
-                <Link href="/create-resume">
-                  <span className="inline-flex items-center gap-2">
-                    <FileIcon data-icon="inline-start" aria-hidden="true" />
-                    Build my resume
-                  </span>
-                  <ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="h-12 min-w-44 justify-between px-4 text-base">
-                <Link href="/analysis/new">
-                  <span className="inline-flex items-center gap-2">
-                    <MagnifyingGlassIcon data-icon="inline-start" aria-hidden="true" />
-                    Check my resume
-                  </span>
-                  <ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
-                </Link>
-              </Button>
-              </div>
-            </ScrollReveal>
-
-            <ScrollReveal delay={240}>
-              <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-              {["No account required", "Draft saved in your browser", "Print-ready layouts"].map((item) => (
-                <span key={item} className="inline-flex items-center gap-1.5">
-                  <CheckCircledIcon aria-hidden="true" className="text-primary" />
-                  {item}
-                </span>
-              ))}
-              </div>
-            </ScrollReveal>
-          </div>
-
-          <ScrollReveal className="relative min-w-0 xl:pl-2" delay={100}>
-            <div className="motion-lift overflow-hidden rounded-xl border border-primary/15 bg-card shadow-[0_18px_50px_rgba(21,93,252,0.12)]">
-              <div className="flex h-12 items-center justify-between border-b border-border bg-background px-4">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <span className="size-2 rounded-full bg-primary" />
-                  Product designer resume
-                </div>
-                <span className="rounded-md bg-[#ecfdf5] px-2.5 py-1 text-xs font-semibold text-[#0f7a55]">
-                  78% match
-                </span>
-              </div>
-
-              <div className="grid min-h-[30rem] grid-cols-[minmax(0,1fr)_10rem] bg-[#f7f9fc] sm:grid-cols-[minmax(0,1fr)_13rem]">
-                <div className="relative overflow-hidden p-4 sm:p-6">
-                  <div className="mx-auto aspect-[1/1.414] max-w-[25rem] overflow-hidden border border-border bg-white px-7 py-8 shadow-[0_4px_14px_rgba(15,23,42,0.06)]">
-                    <ResumeRenderer form={defaultResumeForm} variantId="minimalist-grid" />
-                  </div>
-                  <span className="absolute left-[18%] top-[37%] h-1.5 w-[42%] rounded-full bg-primary/18" />
-                  <span className="absolute left-[18%] top-[52%] h-1.5 w-[35%] rounded-full bg-primary/18" />
-                </div>
-
-                <aside aria-label="Sample resume feedback" className="border-l border-border bg-white">
-                  <div className="border-b border-border p-3.5 sm:p-4">
-                    <p className="text-xs font-semibold text-foreground sm:text-sm">Review margin</p>
-                    <p className="mt-1 hidden text-xs leading-5 text-muted-foreground sm:block">
-                      Fixes tied to this job post.
-                    </p>
-                  </div>
-                  {[
-                    ["Job words", "Add “user research”", "blue"],
-                    ["Bullet 02", "Lead with the outcome", "yellow"],
-                    ["Skills", "Move Figma higher", "green"],
-                  ].map(([label, note, tone], index) => (
-                    <ScrollReveal key={label} as="div" className="relative border-b border-border p-3.5 sm:p-4" delay={index * 70}>
-                      <span
-                        className={`mb-2 block size-2 rounded-full ${
-                          tone === "blue"
-                            ? "bg-primary"
-                            : tone === "yellow"
-                              ? "bg-[#d89a12]"
-                              : "bg-success"
-                        }`}
-                      />
-                      <p className="text-[0.68rem] font-semibold tracking-wide text-muted-foreground uppercase">
-                        {label}
-                      </p>
-                      <p className="mt-1 text-xs font-medium leading-5 text-foreground sm:text-sm">{note}</p>
-                      <span className="absolute right-3 top-3 font-mono text-[0.62rem] text-muted-foreground">
-                        0{index + 1}
-                      </span>
-                    </ScrollReveal>
-                  ))}
-                </aside>
-              </div>
-            </div>
-
-            <ScrollReveal
-              className="absolute -bottom-5 -left-2 hidden sm:block"
-              delay={280}
+        <div className="relative z-10 mx-auto max-w-3xl px-4 pt-16 pb-14 sm:px-6 sm:pt-20 sm:pb-16 lg:px-8">
+          <h1
+            className="animate-enter-up display-serif max-w-[28ch] text-[clamp(2rem,3vw+1.4rem,3.25rem)] text-foreground"
+            style={enterDelay(0)}
+          >
+            Paste a job post. See what your <RotatingWord /> needs.
+          </h1>
+          <p
+            className="animate-enter-up mt-5 max-w-[58ch] text-base leading-7 text-muted-foreground sm:text-lg"
+            style={enterDelay(90)}
+          >
+            Deep Focus lines your resume up against the posting and marks exactly where it falls
+            short — the words that are missing, the bullets that undersell you, the layout that
+            is hard to scan.
+          </p>
+          <p className="animate-enter-up mt-6 text-sm text-muted-foreground" style={enterDelay(170)}>
+            Starting from a blank page?{" "}
+            <Link
+              href="/create-resume"
+              className="motion-link font-medium text-primary underline-offset-4 hover:underline"
             >
-              <div className="rounded-lg border border-primary/15 bg-primary px-4 py-3 text-primary-foreground shadow-[0_8px_24px_rgba(21,93,252,0.2)]">
-                <p className="text-xs font-medium text-primary-foreground/75">Strongest improvement</p>
-                <p className="mt-0.5 text-sm font-semibold">Turn tasks into measurable outcomes.</p>
-              </div>
-            </ScrollReveal>
-          </ScrollReveal>
+              Build a clean resume first, no sign-in needed
+            </Link>
+          </p>
         </div>
       </section>
 
-      <section className="border-y border-border bg-background">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-          <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
-            <ScrollReveal>
-              <div>
-              <h2 className="display-serif max-w-[12ch] text-3xl text-foreground sm:text-4xl">
-                The useful kind of feedback.
-              </h2>
-              <p className="mt-4 max-w-[48ch] text-base leading-7 text-muted-foreground">
-                Every note points to a specific part of your resume, so you always know what to change next.
-              </p>
+      <section className="border-t border-border bg-muted/40">
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+          <ScrollReveal as="header" className="max-w-[42ch] pb-10 sm:pb-12">
+            <h2 className="display-serif text-2xl text-foreground sm:text-3xl">
+              Here&rsquo;s exactly what gets marked up.
+            </h2>
+            <p className="mt-3 max-w-[46ch] text-sm leading-6 text-muted-foreground sm:text-base">
+              One real job post, one real resume, three kinds of notes.
+            </p>
+          </ScrollReveal>
+
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(16rem,1fr)] lg:items-start lg:gap-14">
+            <ScrollReveal as="figure" className="min-w-0" delay={80}>
+              <div className="relative mx-auto aspect-[1/1.32] max-w-[26rem] overflow-hidden border border-border bg-card px-6 py-7">
+                <ResumeRenderer form={defaultResumeForm} variantId="minimalist-grid" />
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-card to-transparent"
+                />
+                {CALLOUTS.map((callout, index) => (
+                  <span
+                    key={callout.number}
+                    aria-hidden="true"
+                    className="callout-pin absolute z-10 flex size-6 items-center justify-center rounded-full border border-border bg-background font-mono text-[0.62rem] font-semibold text-foreground shadow-[var(--shadow-md)]"
+                    style={{
+                      top: callout.position.top,
+                      left: callout.position.left,
+                      ...pinDelay(220 + index * 120),
+                    }}
+                  >
+                    {callout.number}
+                  </span>
+                ))}
               </div>
+              <figcaption className="mt-3 text-xs text-muted-foreground">
+                Sample check on Deep Focus&rsquo;s own placeholder resume.
+              </figcaption>
             </ScrollReveal>
 
-            <div className="divide-y divide-border border-y border-border">
-              {[
-                ["Match the role", "Compare your language with the job post and find important words you missed."],
-                ["Strengthen the proof", "Spot bullets that describe activity but leave out the result."],
-                ["Keep it readable", "Use familiar sections and layouts that work for scanners and hiring teams."],
-              ].map(([title, description], index) => (
+            <ol className="flex flex-col gap-7">
+              {CALLOUTS.map((callout, index) => (
                 <ScrollReveal
-                  key={title}
-                  className="grid gap-3 py-5 sm:grid-cols-[2rem_10rem_1fr] sm:items-start sm:gap-5"
-                  delay={index * 60}
+                  as="li"
+                  key={callout.number}
+                  className="flex gap-3"
+                  delay={140 + index * 90}
                 >
-                  <span className="font-mono text-xs text-primary">0{index + 1}</span>
-                  <h3 className="text-base font-semibold text-foreground">{title}</h3>
-                  <p className="max-w-[54ch] text-sm leading-6 text-muted-foreground">{description}</p>
+                  <span
+                    aria-hidden="true"
+                    className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border border-border font-mono text-[0.62rem] font-semibold text-foreground"
+                  >
+                    {callout.number}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+                      <span
+                        className={`size-1.5 shrink-0 rounded-full ${callout.dot}`}
+                        aria-hidden="true"
+                      />
+                      {callout.label}
+                    </p>
+                    <p className="mt-1.5 text-sm leading-6 text-foreground">{callout.insight}</p>
+                  </div>
                 </ScrollReveal>
               ))}
-            </div>
+            </ol>
           </div>
         </div>
-      </section>
 
-      <section className="bg-secondary">
-        <div className="mx-auto flex max-w-7xl flex-col gap-7 px-4 py-14 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-          <ScrollReveal>
-            <div>
-            <h2 className="display-serif text-3xl text-foreground sm:text-4xl">Start with the resume you need.</h2>
-            <p className="mt-2 text-base text-muted-foreground">Build one from scratch or improve the draft you already have.</p>
-            </div>
-          </ScrollReveal>
-          <ScrollReveal delay={80}>
-            <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg" className="h-11 px-4">
-              <Link href="/create-resume">
-                Build a resume
+        <aside className="sticky bottom-0 border-t border-border bg-background/95 backdrop-blur-sm">
+          <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+            <p className="text-sm text-muted-foreground">One AI check per account, free to start.</p>
+            <Button asChild size="lg" className="h-11 justify-between gap-2 px-4 text-base sm:w-auto">
+              <Link href="/analysis/new">
+                Check my resume
                 <ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="h-11 border-primary/20 bg-white px-4">
-              <Link href="/analysis/new">
-                Check a resume
-              </Link>
-            </Button>
-            </div>
-          </ScrollReveal>
-        </div>
+          </div>
+        </aside>
       </section>
 
-      <footer className="border-t border-border bg-background">
-        <ScrollReveal>
-          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <span className="inline-flex items-center gap-2 font-medium text-foreground">
-            <BrandMark />
-            Deep Focus
-          </span>
-          <span>Clear resumes. Specific feedback.</span>
+      <footer className="bg-background">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-baseline sm:justify-between">
+            <Link
+              href="/"
+              className="brand-logo inline-flex items-center gap-2 text-base font-semibold tracking-tight text-foreground"
+            >
+              <BrandMark />
+              <span className="font-display">Deep Focus</span>
+            </Link>
+            <p className="max-w-[36ch] text-sm text-muted-foreground sm:text-right">
+              Line-by-line notes, tied to the job post you&rsquo;re targeting.
+            </p>
           </div>
-        </ScrollReveal>
+
+          <nav
+            aria-label="Footer navigation"
+            className="mt-6 flex flex-wrap items-center gap-x-2 gap-y-2 text-sm text-muted-foreground"
+          >
+            <Link href="/create-resume" className="motion-link hover:text-foreground">
+              Build a resume
+            </Link>
+            <span aria-hidden="true">·</span>
+            <Link href="/analysis/new" className="motion-link hover:text-foreground">
+              Check a resume
+            </Link>
+            <span aria-hidden="true">·</span>
+            <Link href="/analyses" className="motion-link hover:text-foreground">
+              Saved checks
+            </Link>
+          </nav>
+
+          <div className="mt-10 flex flex-col gap-2 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+            <p>Sign in to run one AI check per account. Drafts stay in your browser until you save one.</p>
+            <p className="font-mono tracking-[0.08em] uppercase">Deep Focus</p>
+          </div>
+        </div>
       </footer>
     </main>
   );
