@@ -20,7 +20,7 @@ export const bulletEnhancementService = {
     existingBullets: string[];
   }): Promise<string[]> {
     if (!this.isEnabled()) {
-      throw new Error("Vertex AI is not configured.");
+      throw new Error("OPENAI_API_KEY is not configured.");
     }
 
     const context = existingBullets.length > 0

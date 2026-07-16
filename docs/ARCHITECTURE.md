@@ -60,7 +60,7 @@ routes -> controllers -> services -> analyzers/repositories/storage
 - `schemas/`: Zod request schemas.
 - `types/`: Shared API-domain types.
 
-Optional dependencies stay conditional: the API should run locally without database, Vertex AI, R2, or OpenAI credentials.
+Optional dependencies stay conditional: the API should run locally without database, R2, or OpenAI credentials.
 
 ### Cache Policy
 

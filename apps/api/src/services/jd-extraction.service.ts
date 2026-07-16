@@ -42,7 +42,7 @@ export const jdExtractionService = {
     } catch (error) {
       const reason = error instanceof Error ? error.message : "Unknown error";
       console.warn(
-        `[jd-extraction] Vertex AI extraction failed, falling back to empty keywords. Reason: ${reason}`,
+        `[jd-extraction] AI extraction failed, falling back to empty keywords. Reason: ${reason}`,
       );
       return {
         keywords: [],

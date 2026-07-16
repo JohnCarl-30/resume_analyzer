@@ -24,13 +24,23 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   APP_ORIGIN: z.string().url().default("http://localhost:3000"),
   DATABASE_URL: optionalString,
-  GCP_PROJECT_ID: optionalString,
-  GCP_LOCATION: z.string().min(1).default("us-central1"),
-  AI_EXTRACTION_MODEL: z.string().min(1).default("gemini-2.5-flash"),
+  AI_EXTRACTION_MODEL: z.string().min(1).default("gpt-4o-mini"),
   OPENAI_API_KEY: optionalString,
   SUPABASE_URL: optionalUrl,
   R2_BUCKET_NAME: optionalString,
   R2_PUBLIC_BASE_URL: optionalUrl,
+  R2_ACCOUNT_ID: optionalString,
+  R2_ACCESS_KEY_ID: optionalString,
+  R2_SECRET_ACCESS_KEY: optionalString,
 });
 
 export const env = envSchema.parse(process.env);
+
+export function isR2Configured(): boolean {
+  return Boolean(
+    env.R2_BUCKET_NAME &&
+      env.R2_ACCOUNT_ID &&
+      env.R2_ACCESS_KEY_ID &&
+      env.R2_SECRET_ACCESS_KEY,
+  );
+}

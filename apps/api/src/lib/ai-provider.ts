@@ -1,19 +1,24 @@
-import { createVertex } from "@ai-sdk/google-vertex";
+import { createOpenAI } from "@ai-sdk/openai";
 import { env } from "../config/env.js";
 
-export const vertex = createVertex({
-  project: env.GCP_PROJECT_ID,
-  location: env.GCP_LOCATION,
-});
+const openai = env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }) : null;
 
 export const aiProvider = {
-  provider: "google-vertex" as const,
+  provider: openai ? ("openai" as const) : ("none" as const),
 
   isEnabled() {
-    return Boolean(env.GCP_PROJECT_ID);
+    return openai !== null;
   },
 
   getModel(modelId?: string) {
-    return vertex(modelId ?? env.AI_EXTRACTION_MODEL);
+    if (!openai) {
+      throw new Error("OPENAI_API_KEY is not configured");
+    }
+
+    return openai(modelId ?? env.AI_EXTRACTION_MODEL);
+  },
+
+  getExtractionProviderLabel(): "openai" | "parser" {
+    return openai ? "openai" : "parser";
   },
 };

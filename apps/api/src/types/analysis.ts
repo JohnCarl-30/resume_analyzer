@@ -27,7 +27,7 @@ export interface ResumeAnalysis {
   sourceFileContentType?: string;
   extractedCharacterCount?: number;
   extractedProfile?: ExtractedResumeProfile | null;
-  extractionProvider?: "parser" | "vertex" | "openai";
+  extractionProvider?: "parser" | "openai";
   // AI Pipeline fields
   jobEmbedding?: number[] | null;
   resumeEmbedding?: number[] | null;

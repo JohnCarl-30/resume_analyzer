@@ -1,16 +1,14 @@
-import type { ResumeAnalysis, AnalysisSuggestion } from "../types/analysis.js";
+import type { ResumeAnalysis } from "../types/analysis.js";
 import type { ExtractedResumeProfile } from "../types/resume-extraction.js";
+import { env } from "../config/env.js";
+import { aiProvider } from "../lib/ai-provider.js";
 import { resumeParserService } from "./resume-parser.service.js";
 import { resumeExtractionService } from "./resume-extraction.service.js";
 import { jdExtractionService } from "./jd-extraction.service.js";
+import { resumeAnalysisService } from "./resume-analysis.service.js";
 import { embeddingService } from "./embedding.service.js";
 import { fewShotService } from "./few-shot.service.js";
 import { evaluationService } from "./evaluation.service.js";
-import { analyzeKeywords } from "../analyzers/keyword.analyzer.js";
-import { analyzeWritingQuality } from "../analyzers/writing.analyzer.js";
-import { analyzeImpactMetrics } from "../analyzers/impact.analyzer.js";
-import { analyzeAtsAlignment } from "../analyzers/ats.analyzer.js";
-import { computeScore } from "../scoring/score.js";
 
 interface PipelineInput {
   targetRole: string;
@@ -124,44 +122,12 @@ export const llmPipelineService = {
     stages.push({ name: "analysis", status: "running" });
     const analysisStart = Date.now();
 
-    const [keywordResult, writingResult, impactResult, atsSuggestions] = await Promise.all([
-      Promise.resolve(
-        analyzeKeywords(extractedText, input.jobDescription, {
-          jdKeywords: jdExtraction.keywords.length > 0 ? jdExtraction.keywords : undefined,
-        }),
-      ),
-      Promise.resolve(analyzeWritingQuality(extractedText)),
-      Promise.resolve(analyzeImpactMetrics(extractedText)),
-      Promise.resolve(
-        analyzeAtsAlignment({
-          resumeText: extractedText,
-          targetRole: input.targetRole,
-          jdKeywords: jdExtraction.keywords,
-          matchedKeywords: [],
-          missingKeywords: [],
-          requiredSkills: jdExtraction.requiredSkills,
-        }),
-      ),
-    ]);
-
-    const allSuggestions: AnalysisSuggestion[] = [
-      ...buildKeywordSuggestions(keywordResult.missingKeywords, jdExtraction.requiredSkills),
-      ...writingResult.suggestions,
-      ...impactResult.suggestions,
-      ...atsSuggestions,
-    ];
-
-    const highSeverityCount = allSuggestions.filter((s) => s.severity === "high").length;
-
-    const { score } = computeScore({
-      keywordScore: keywordResult.keywordScore,
-      requiredSkillsMatched: keywordResult.matchedKeywords.filter((kw) =>
-        jdExtraction.requiredSkills.map((s) => s.toLowerCase()).includes(kw.toLowerCase()),
-      ).length,
-      requiredSkillsTotal: jdExtraction.requiredSkills.length,
-      writingPenalty: writingResult.penalty,
-      impactPenalty: impactResult.penalty,
-      highSeverityCount,
+    const analysisResult = await resumeAnalysisService.analyze({
+      resumeText: extractedText,
+      jobDescription: input.jobDescription,
+      targetRole: jdExtraction.targetRoleTitle || input.targetRole,
+      jdKeywords: jdExtraction.keywords,
+      requiredSkills: jdExtraction.requiredSkills,
     });
 
     stages[3].status = "completed";
@@ -195,8 +161,8 @@ export const llmPipelineService = {
 
     const keywordMetrics = evaluationService.evaluateKeywords(
       jdExtraction.keywords,
-      keywordResult.matchedKeywords,
-      keywordResult.missingKeywords,
+      analysisResult.matchedKeywords,
+      analysisResult.missingKeywords,
     );
 
     stages[stages.length - 1].status = "completed";
@@ -207,11 +173,11 @@ export const llmPipelineService = {
     return {
       analysis: {
         targetRole: jdExtraction.targetRoleTitle || input.targetRole,
-        score,
-        metricsFound: impactResult.metricsFound,
-        matchedKeywords: keywordResult.matchedKeywords,
-        missingKeywords: keywordResult.missingKeywords,
-        suggestions: allSuggestions,
+        score: analysisResult.score,
+        metricsFound: analysisResult.metricsFound,
+        matchedKeywords: analysisResult.matchedKeywords,
+        missingKeywords: analysisResult.missingKeywords,
+        suggestions: analysisResult.suggestions,
         generatedAt: new Date().toISOString(),
       },
       extractedProfile,
@@ -228,48 +194,9 @@ export const llmPipelineService = {
       fewShotExamplesUsed: fewShotExamples.length,
       metadata: {
         processingTimeMs: totalTime,
-        provider: "vertex-ai",
-        model: "gemini-2.5-flash",
+        provider: aiProvider.isEnabled() ? "openai" : "parser",
+        model: env.AI_EXTRACTION_MODEL,
       },
     };
   },
 };
-
-function buildKeywordSuggestions(
-  missingKeywords: string[],
-  requiredSkills: string[],
-): AnalysisSuggestion[] {
-  if (missingKeywords.length === 0) return [];
-
-  const suggestions: AnalysisSuggestion[] = [];
-
-  const missingRequired = missingKeywords.filter((kw) =>
-    requiredSkills.map((s) => s.toLowerCase()).includes(kw.toLowerCase()),
-  );
-
-  const missingOptional = missingKeywords.filter(
-    (kw) => !requiredSkills.map((s) => s.toLowerCase()).includes(kw.toLowerCase()),
-  );
-
-  if (missingRequired.length > 0) {
-    suggestions.push({
-      id: "missing-required-skills",
-      title: "Missing required skills",
-      detail: `These skills are explicitly required in the JD but absent from your resume: ${missingRequired.slice(0, 5).join(", ")}${missingRequired.length > 5 ? ` (+${missingRequired.length - 5} more)` : ""}.`,
-      severity: "high",
-      category: "keywords",
-    });
-  }
-
-  if (missingOptional.length > 0) {
-    suggestions.push({
-      id: "missing-keywords",
-      title: "Add relevant JD keywords",
-      detail: `Consider naturally incorporating: ${missingOptional.slice(0, 4).join(", ")} to improve alignment with the role.`,
-      severity: "medium",
-      category: "keywords",
-    });
-  }
-
-  return suggestions;
-}

@@ -136,7 +136,7 @@ export const resumeExtractionService = {
     } catch (error) {
       const reason = error instanceof Error ? error.message : "Unknown error";
       console.warn(
-        `[resume-extraction] Vertex AI enrichment skipped for model "${env.AI_EXTRACTION_MODEL}". Falling back to parser-only mode. Reason: ${reason}`,
+        `[resume-extraction] AI enrichment skipped for model "${env.AI_EXTRACTION_MODEL}". Falling back to parser-only mode. Reason: ${reason}`,
       );
 
       return null;

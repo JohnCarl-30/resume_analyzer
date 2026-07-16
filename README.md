@@ -17,7 +17,7 @@ Resume Analyzer is a full-stack monorepo for AI-powered resume creation and anal
 | --- | --- |
 | Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS v4 |
 | Backend | Express, TypeScript, ESM |
-| AI | Google Vertex AI (Gemini 2.5 Flash) via Vercel AI SDK |
+| AI | OpenAI via Vercel AI SDK |
 | Validation | Zod |
 | Database | Neon, Drizzle ORM (optional) |
 | Storage | Cloudflare R2 (optional, mocked locally) |
@@ -84,9 +84,8 @@ PORT=4000
 APP_ORIGIN=http://localhost:3000
 
 # Optional: enables AI extraction and analysis
-GCP_PROJECT_ID=your-gcp-project-id
-GCP_LOCATION=us-central1
-VERTEX_AI_MODEL=gemini-2.5-flash
+OPENAI_API_KEY=sk-...
+AI_EXTRACTION_MODEL=gpt-4o-mini
 
 # Optional: enables database persistence
 DATABASE_URL=postgres://user:password@host/database?sslmode=require
@@ -95,8 +94,6 @@ DATABASE_URL=postgres://user:password@host/database?sslmode=require
 R2_BUCKET_NAME=resume-analyzer
 R2_PUBLIC_BASE_URL=https://your-bucket.r2.dev
 ```
-
-> **Note:** `GOOGLE_APPLICATION_CREDENTIALS` is not required. The API uses Application Default Credentials (ADC). Run `gcloud auth application-default login` locally.
 
 #### Web environment (`apps/web/.env.local`)
 
@@ -160,7 +157,7 @@ curl -X POST http://localhost:4000/api/enhance/bullets \
 - The API is strictly ESM (`"type": "module"`). Always use `.js` extensions in imports, even for TypeScript files.
 - The API uses Zod for environment validation but starts gracefully with defaults (`PORT=4000`, `APP_ORIGIN=http://localhost:3000`).
 - Without `DATABASE_URL`, the API falls back to in-memory storage. Analysis persistence only lasts while the process is running.
-- Without `GCP_PROJECT_ID`, AI extraction is skipped and the API runs in parser-only mode.
+- Without `OPENAI_API_KEY`, AI extraction and analysis fall back to parser-only mode.
 - Uploaded files go directly from the browser to R2 after the API signs the upload request. Without R2 credentials, a mocked public URL is returned.
 - The frontend uses an MVVM-style feature structure: `views/` for UI, `view-models/` for state, and `model/` for types.
 
@@ -181,15 +178,13 @@ The Express backend in `apps/api` is split into small layers:
 | --- | --- |
 | API fails with `ZodError` on startup | Confirm `apps/api/.env` values match the Zod schema |
 | Frontend cannot connect to API | Confirm `apps/web/.env.local` points to the API base URL |
-| AI extraction returns empty profile | Confirm `gcloud auth application-default login` has been run and `GCP_PROJECT_ID` is set |
+| AI extraction returns empty profile | Confirm `OPENAI_API_KEY` is set in `apps/api/.env` |
 | Upload request fails | Confirm R2 credentials and bucket name if using real R2 |
 | Type errors in `apps/web` tests | Tests are excluded from `tsc`; run `npx vitest` from `apps/web/` instead |
 
 ## Deployment
 
-- The frontend is intended for Vercel deployment.
-- The backend can be deployed to Google Cloud Run via the included GitHub Actions workflow (`.github/workflows/deploy-cloud-run.yml`).
-- See `GCP_SETUP.md` for one-time GCP project setup instructions.
+- See [`docs/DEPLOY.md`](docs/DEPLOY.md) for Vercel (web) + Cloudflare (API/R2) + Supabase setup.
 
 ## Roadmap Ideas
 

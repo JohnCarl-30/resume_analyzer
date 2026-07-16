@@ -13,17 +13,9 @@ import { inMemoryAnalysisRepository } from "../repositories/in-memory-analysis.r
 import { postgresAnalysisRepository } from "../repositories/postgres-analysis.repository.js";
 import { accountService } from "./account.service.js";
 
-// Composable analyzers
-import { analyzeKeywords } from "../analyzers/keyword.analyzer.js";
-import { analyzeWritingQuality } from "../analyzers/writing.analyzer.js";
-import { analyzeImpactMetrics } from "../analyzers/impact.analyzer.js";
-import { analyzeAtsAlignment } from "../analyzers/ats.analyzer.js";
-
-// Vertex AI-powered JD extraction
+import { aiProvider } from "../lib/ai-provider.js";
 import { jdExtractionService } from "./jd-extraction.service.js";
-
-// Scoring
-import { computeScore } from "../scoring/score.js";
+import { resumeAnalysisService } from "./resume-analysis.service.js";
 
 const analysisRepository = db.isConfigured
   ? postgresAnalysisRepository
@@ -37,68 +29,26 @@ export const analysisService = {
   async createAnalysis(input: unknown): Promise<ResumeAnalysis> {
     const payload = createAnalysisSchema.parse(input);
 
-    // Step 1: Extract structured keywords from JD via Vertex AI (if enabled)
     const jdExtraction = await jdExtractionService.extractKeywordsFromJd(
       payload.jobDescription,
       payload.targetRole,
     );
 
-    // Step 2: Run composable analyzers in parallel
-    const [keywordResult, writingResult, impactResult] = await Promise.all([
-      Promise.resolve(
-        analyzeKeywords(payload.resumeText, payload.jobDescription, {
-          jdKeywords: jdExtraction.keywords.length > 0 ? jdExtraction.keywords : undefined,
-        }),
-      ),
-      Promise.resolve(analyzeWritingQuality(payload.resumeText)),
-      Promise.resolve(analyzeImpactMetrics(payload.resumeText)),
-    ]);
-
-    // Step 3: Count required skill matches
-    const normalizedResume = payload.resumeText.toLowerCase();
-    const requiredSkillsMatched = jdExtraction.requiredSkills.filter((skill) =>
-      normalizedResume.includes(skill.toLowerCase()),
-    ).length;
-
-    // Step 4: Collect all suggestions
-    const atsSuggestions = analyzeAtsAlignment({
+    const analysisResult = await resumeAnalysisService.analyze({
       resumeText: payload.resumeText,
+      jobDescription: payload.jobDescription,
       targetRole: jdExtraction.targetRoleTitle || payload.targetRole,
-      jdKeywords: jdExtraction.keywords.length > 0 ? jdExtraction.keywords : [
-        ...keywordResult.matchedKeywords,
-        ...keywordResult.missingKeywords,
-      ],
-      matchedKeywords: keywordResult.matchedKeywords,
-      missingKeywords: keywordResult.missingKeywords,
+      jdKeywords: jdExtraction.keywords,
       requiredSkills: jdExtraction.requiredSkills,
-    });
-
-    const allSuggestions: AnalysisSuggestion[] = [
-      ...atsSuggestions,
-      ...buildKeywordSuggestions(keywordResult.missingKeywords, jdExtraction.requiredSkills),
-      ...writingResult.suggestions,
-      ...impactResult.suggestions,
-    ];
-
-    const highSeverityCount = allSuggestions.filter((s) => s.severity === "high").length;
-
-    // Step 5: Compute weighted score
-    const { score } = computeScore({
-      keywordScore: keywordResult.keywordScore,
-      requiredSkillsMatched,
-      requiredSkillsTotal: jdExtraction.requiredSkills.length,
-      writingPenalty: writingResult.penalty,
-      impactPenalty: impactResult.penalty,
-      highSeverityCount,
     });
 
     return {
       targetRole: jdExtraction.targetRoleTitle || payload.targetRole,
-      score,
-      metricsFound: impactResult.metricsFound,
-      matchedKeywords: keywordResult.matchedKeywords,
-      missingKeywords: keywordResult.missingKeywords,
-      suggestions: allSuggestions,
+      score: analysisResult.score,
+      metricsFound: analysisResult.metricsFound,
+      matchedKeywords: analysisResult.matchedKeywords,
+      missingKeywords: analysisResult.missingKeywords,
+      suggestions: analysisResult.suggestions,
       generatedAt: new Date().toISOString(),
     };
   },
@@ -152,7 +102,7 @@ export const analysisService = {
       sourceFileDataBase64: input.resumeFile.buffer.toString("base64"),
       extractedCharacterCount: extracted.text.length,
       extractedProfile,
-      extractionProvider: extractedProfile ? "vertex" : "parser",
+      extractionProvider: extractedProfile ? aiProvider.getExtractionProviderLabel() : "parser",
     });
 
     await accountService.recordAnalysisRedemption(input.userId, persisted.id);
@@ -194,7 +144,7 @@ export const analysisService = {
       userId: input.userId,
       extractedCharacterCount: input.resumeText.length,
       extractedProfile,
-      extractionProvider: extractedProfile ? "vertex" : "parser",
+      extractionProvider: extractedProfile ? aiProvider.getExtractionProviderLabel() : "parser",
     });
 
     await accountService.recordAnalysisRedemption(input.userId, persisted.id);
@@ -245,46 +195,3 @@ export const analysisService = {
     return analysisRepository.update(analysisId, persisted);
   },
 };
-
-/**
- * Builds keyword suggestions, distinguishing between missing required skills
- * (high severity) and missing general job post keywords (medium severity).
- */
-function buildKeywordSuggestions(
-  missingKeywords: string[],
-  requiredSkills: string[],
-): AnalysisSuggestion[] {
-  if (missingKeywords.length === 0) return [];
-
-  const suggestions: AnalysisSuggestion[] = [];
-
-  const missingRequired = missingKeywords.filter((kw) =>
-    requiredSkills.map((s) => s.toLowerCase()).includes(kw.toLowerCase()),
-  );
-
-  const missingOptional = missingKeywords.filter(
-    (kw) => !requiredSkills.map((s) => s.toLowerCase()).includes(kw.toLowerCase()),
-  );
-
-  if (missingRequired.length > 0) {
-    suggestions.push({
-      id: "missing-required-skills",
-      title: "Missing required skills",
-      detail: `These skills are listed as required in the job post but are missing from your resume: ${missingRequired.slice(0, 5).join(", ")}${missingRequired.length > 5 ? ` (+${missingRequired.length - 5} more)` : ""}.`,
-      severity: "high",
-      category: "keywords",
-    });
-  }
-
-  if (missingOptional.length > 0) {
-    suggestions.push({
-      id: "missing-keywords",
-      title: "Add relevant job post words",
-      detail: `Consider naturally incorporating: ${missingOptional.slice(0, 4).join(", ")} to improve alignment with the role.`,
-      severity: "medium",
-      category: "keywords",
-    });
-  }
-
-  return suggestions;
-}
