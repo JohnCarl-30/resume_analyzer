@@ -3,10 +3,16 @@
   "main": "worker/src/index.ts",
   "compatibility_date": "2026-07-16",
   "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "APP_ORIGIN": "https://resumae.tech,https://www.resumae.tech,https://resume-analyzer-chi-gray.vercel.app",
+    "PORT": "8080",
+    "AI_EXTRACTION_MODEL": "gpt-4o-mini"
+  },
   "containers": [
     {
       "class_name": "ApiContainer",
-      "image": "./apps/api/Dockerfile",
+      "image": "../apps/api/Dockerfile",
+      "image_build_context": "..",
       "max_instances": 3
     }
   ],

@@ -237,7 +237,8 @@ describe("AnalysisWorkspace — unit tests (task 7.7)", () => {
 
     // The loading overlay should now be visible
     await waitFor(() => {
-      expect(screen.getByText(/checking your resume against the new job post/i)).toBeInTheDocument();
+      expect(screen.getByText(/re-checking your resume/i)).toBeInTheDocument();
+      expect(screen.getByText(/analyzing…/i)).toBeInTheDocument();
     });
   });
 

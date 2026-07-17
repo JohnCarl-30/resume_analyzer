@@ -11,11 +11,11 @@ vi.mock("next/link", () => ({
 }));
 
 describe("NotFound page", () => {
-  it("renders recovery links for create and saved checks", () => {
+  it("renders recovery links for create and home", () => {
     render(<NotFound />);
 
     expect(screen.getByRole("heading", { name: /page not found/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /create resume/i })).toHaveAttribute("href", "/create-resume");
-    expect(screen.getByRole("link", { name: /saved checks/i })).toHaveAttribute("href", "/analyses");
+    expect(screen.getByRole("link", { name: /^home$/i })).toHaveAttribute("href", "/home");
   });
 });

@@ -45,6 +45,13 @@ async function initializeSchema() {
         missing_keywords jsonb NOT NULL,
         suggestions jsonb NOT NULL,
         extracted_profile jsonb,
+        job_embedding jsonb,
+        resume_embedding jsonb,
+        pipeline_stages jsonb,
+        evaluation_metrics jsonb,
+        few_shot_examples_used integer,
+        processing_time_ms integer,
+        user_id text,
         generated_at timestamptz NOT NULL,
         created_at timestamptz NOT NULL DEFAULT now()
       )
@@ -71,6 +78,36 @@ async function initializeSchema() {
     `);
 
     await drizzleClient.execute(sql`
+      ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
+      ADD COLUMN IF NOT EXISTS job_embedding jsonb
+    `);
+
+    await drizzleClient.execute(sql`
+      ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
+      ADD COLUMN IF NOT EXISTS resume_embedding jsonb
+    `);
+
+    await drizzleClient.execute(sql`
+      ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
+      ADD COLUMN IF NOT EXISTS pipeline_stages jsonb
+    `);
+
+    await drizzleClient.execute(sql`
+      ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
+      ADD COLUMN IF NOT EXISTS evaluation_metrics jsonb
+    `);
+
+    await drizzleClient.execute(sql`
+      ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
+      ADD COLUMN IF NOT EXISTS few_shot_examples_used integer
+    `);
+
+    await drizzleClient.execute(sql`
+      ALTER TABLE ${sql.raw(databaseTables.resumeAnalyses)}
+      ADD COLUMN IF NOT EXISTS processing_time_ms integer
+    `);
+
+    await drizzleClient.execute(sql`
       CREATE TABLE IF NOT EXISTS ${sql.raw(databaseTables.accountAnalysisUsage)} (
         user_id text PRIMARY KEY,
         analysis_id text NOT NULL,
@@ -88,8 +125,12 @@ async function initializeSchema() {
   }
 }
 
-// Fire-and-forget schema initialization
+// Fire-and-forget schema initialization for modules that import db early.
 void initializeSchema();
+
+export async function ensureDatabaseSchema() {
+  await initializeSchema();
+}
 
 export interface DatabaseClient {
   kind: "drizzle";

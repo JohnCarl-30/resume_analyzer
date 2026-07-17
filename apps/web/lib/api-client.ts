@@ -1,4 +1,4 @@
-import { getAccessToken } from "./auth-token";
+import { getAccessToken, notifyUnauthorized } from "./auth-token";
 
 export interface ApiEnvelope<T> {
   data: T;
@@ -32,6 +32,15 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 const DEFAULT_MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1_000;
 
+export const ANALYSIS_REQUEST_TIMEOUT_MS = 120_000;
+
+export interface RequestOptions {
+  body?: unknown;
+  headers?: Record<string, string>;
+  isFormData?: boolean;
+  timeout?: number;
+}
+
 /**
  * Creates an API client with retry logic, timeout support, and error handling
  */
@@ -55,9 +64,10 @@ export function createApiClient(config: ApiClientConfig) {
   async function fetchWithTimeout(
     url: string,
     options: RequestInit = {},
+    requestTimeout = timeout,
   ): Promise<Response> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    const timeoutId = setTimeout(() => controller.abort(), requestTimeout);
 
     try {
       const response = await fetch(url, {
@@ -67,7 +77,7 @@ export function createApiClient(config: ApiClientConfig) {
       return response;
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        throw new Error(`Request timeout after ${timeout}ms`);
+        throw new Error(`Request timeout after ${requestTimeout}ms`);
       }
       throw error;
     } finally {
@@ -142,15 +152,12 @@ export function createApiClient(config: ApiClientConfig) {
   async function request<T>(
     method: string,
     path: string,
-    options: {
-      body?: unknown;
-      headers?: Record<string, string>;
-      isFormData?: boolean;
-    } = {},
+    options: RequestOptions = {},
   ): Promise<T> {
     const url = `${baseUrl}${path}`;
     const method_upper = method.toUpperCase();
     const canRetry = isSafeToRetry(method_upper);
+    const requestTimeout = options.timeout ?? timeout;
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt <= (canRetry ? maxRetries : 0); attempt++) {
@@ -191,7 +198,7 @@ export function createApiClient(config: ApiClientConfig) {
 
         log(`${method_upper} ${path}`, options.body);
 
-        const response = await fetchWithTimeout(url, fetchOptions);
+        const response = await fetchWithTimeout(url, fetchOptions, requestTimeout);
 
         if (!response.ok) {
           const errorData = await parseErrorResponse(response);
@@ -201,6 +208,10 @@ export function createApiClient(config: ApiClientConfig) {
             errorData.fieldErrors,
             errorData.formErrors,
           );
+
+          if (response.status === 401 && authToken) {
+            notifyUnauthorized();
+          }
 
           // Retry on 5xx errors only for GET requests
           if (canRetry && isRetryableStatus(response.status) && attempt < maxRetries) {
@@ -265,18 +276,79 @@ export function createApiClient(config: ApiClientConfig) {
     throw lastError ?? new Error("Request failed after all retries");
   }
 
+  function normalizePostOptions(
+    options?: boolean | Pick<RequestOptions, "isFormData" | "timeout">,
+  ): Pick<RequestOptions, "isFormData" | "timeout"> {
+    if (typeof options === "boolean") {
+      return { isFormData: options };
+    }
+
+    return options ?? {};
+  }
+
   return {
-    get: <T,>(path: string, headers?: Record<string, string>) =>
-      request<T>("GET", path, { headers }),
+    get: <T,>(path: string, headers?: Record<string, string>, requestOptions?: Pick<RequestOptions, "timeout">) =>
+      request<T>("GET", path, { headers, ...requestOptions }),
 
-    post: <T,>(path: string, body: unknown, isFormData = false) =>
-      request<T>("POST", path, { body, isFormData }),
+    post: <T,>(
+      path: string,
+      body: unknown,
+      options?: boolean | Pick<RequestOptions, "isFormData" | "timeout">,
+    ) => request<T>("POST", path, { body, ...normalizePostOptions(options) }),
 
-    patch: <T,>(path: string, body: unknown) =>
-      request<T>("PATCH", path, { body }),
+    patch: <T,>(path: string, body: unknown, requestOptions?: Pick<RequestOptions, "timeout">) =>
+      request<T>("PATCH", path, { body, ...requestOptions }),
 
     delete: <T,>(path: string) =>
       request<T>("DELETE", path),
+
+    getBlob: async (
+      path: string,
+      options: Pick<RequestOptions, "headers" | "timeout"> = {},
+    ): Promise<{ blob: Blob; contentType: string }> => {
+      const url = `${baseUrl}${path}`;
+      const requestTimeout = options.timeout ?? timeout;
+      const authToken = await getAccessToken();
+      const requestHeaders: Record<string, string> = {
+        ...(options.headers ?? {}),
+      };
+
+      if (authToken) {
+        requestHeaders.Authorization = `Bearer ${authToken}`;
+      }
+
+      log(`GET ${path} (blob)`);
+
+      const response = await fetchWithTimeout(
+        url,
+        {
+          method: "GET",
+          headers: Object.keys(requestHeaders).length > 0 ? requestHeaders : undefined,
+        },
+        requestTimeout,
+      );
+
+      if (!response.ok) {
+        const errorData = await parseErrorResponse(response);
+        const apiError = new ApiError(
+          errorData.message,
+          response.status,
+          errorData.fieldErrors,
+          errorData.formErrors,
+        );
+
+        if (response.status === 401 && authToken) {
+          notifyUnauthorized();
+        }
+
+        throw apiError;
+      }
+
+      const contentType = response.headers.get("content-type") ?? "application/octet-stream";
+      const blob = await response.blob();
+
+      return { blob, contentType };
+    },
 
     request,
   };

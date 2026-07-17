@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Geist, Geist_Mono, Lora } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 
 import "./globals.css";
-import { PageTransition } from "@/components/page-transition";
 import { AuthSessionProvider } from "@/components/auth-session-provider";
+import { PageTransition } from "@/components/page-transition";
 import { cn } from "@/lib/utils";
 
 const geistSans = Geist({
@@ -86,13 +87,15 @@ export const viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={cn(geistSans.variable, geistMono.variable, lora.variable)}>
-      <body className="antialiased">
-        <AuthSessionProvider>
-          <PageTransition />
-          {children}
-        </AuthSessionProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" className={cn(geistSans.variable, geistMono.variable, lora.variable)}>
+        <body className="antialiased">
+          <AuthSessionProvider>
+            <PageTransition />
+            {children}
+          </AuthSessionProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

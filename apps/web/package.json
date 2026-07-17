@@ -9,9 +9,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.14.1",
     "@radix-ui/react-icons": "^1.3.2",
-    "@supabase/ssr": "^0.12.3",
-    "@supabase/supabase-js": "^2.110.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",

@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { Button } from "@/components/ui/button";
+import { HeaderAuthActions } from "@/features/auth/components/header-auth-actions";
 import { ResumeRenderer } from "@/features/editor/components/resume-renderer";
 import { defaultResumeForm } from "@/features/editor/model/resume-form";
 import { HeroAtmosphere } from "@/features/landing/components/hero-atmosphere";
@@ -61,16 +62,9 @@ export default function LandingPage() {
             className="brand-logo inline-flex items-center gap-2 text-base font-semibold tracking-tight"
           >
             <BrandMark />
-            <span className="font-display">Deep Focus</span>
+            <span className="font-brand">Deep Focus</span>
           </Link>
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="h-9 px-3 text-muted-foreground hover:text-foreground"
-          >
-            <Link href="/auth/sign-in?next=/analysis/new">Sign in</Link>
-          </Button>
+          <HeaderAuthActions />
         </div>
       </header>
 
@@ -79,7 +73,7 @@ export default function LandingPage() {
 
         <div className="relative z-10 mx-auto max-w-3xl px-4 pt-16 pb-14 sm:px-6 sm:pt-20 sm:pb-16 lg:px-8">
           <h1
-            className="animate-enter-up display-serif max-w-[28ch] text-[clamp(2rem,3vw+1.4rem,3.25rem)] text-foreground"
+            className="animate-enter-up display-serif max-w-[28ch] text-[length:var(--text-display)] text-foreground"
             style={enterDelay(0)}
           >
             Paste a job post. See what your <RotatingWord /> needs.
@@ -194,7 +188,7 @@ export default function LandingPage() {
               className="brand-logo inline-flex items-center gap-2 text-base font-semibold tracking-tight text-foreground"
             >
               <BrandMark />
-              <span className="font-display">Deep Focus</span>
+              <span className="font-brand">Deep Focus</span>
             </Link>
             <p className="max-w-[36ch] text-sm text-muted-foreground sm:text-right">
               Line-by-line notes, tied to the job post you&rsquo;re targeting.
@@ -209,11 +203,11 @@ export default function LandingPage() {
               Build a resume
             </Link>
             <span aria-hidden="true">·</span>
-            <Link href="/analysis/new" className="motion-link hover:text-foreground">
+            <Link href="/auth/sign-in?next=%2Fanalysis%2Fnew" className="motion-link hover:text-foreground">
               Check a resume
             </Link>
             <span aria-hidden="true">·</span>
-            <Link href="/analyses" className="motion-link hover:text-foreground">
+            <Link href="/auth/sign-in?next=%2Fhome" className="motion-link hover:text-foreground">
               Saved checks
             </Link>
           </nav>

@@ -3,13 +3,13 @@ import type { AddressInfo } from "node:net";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { generateObjectMock, verifySupabaseAccessTokenMock } = vi.hoisted(() => ({
+const { generateObjectMock, verifyClerkAccessTokenMock } = vi.hoisted(() => ({
   generateObjectMock: vi.fn(),
-  verifySupabaseAccessTokenMock: vi.fn(async () => "test-user-id"),
+  verifyClerkAccessTokenMock: vi.fn(async () => "test-user-id"),
 }));
 
-vi.mock("../lib/supabase-auth.js", () => ({
-  verifySupabaseAccessToken: verifySupabaseAccessTokenMock,
+vi.mock("../lib/clerk-auth.js", () => ({
+  verifyClerkAccessToken: verifyClerkAccessTokenMock,
 }));
 
 vi.mock("ai", () => ({
@@ -63,7 +63,7 @@ describe("POST /api/analysis", () => {
 
   beforeEach(async () => {
     generateObjectMock.mockReset();
-    verifySupabaseAccessTokenMock.mockClear();
+    verifyClerkAccessTokenMock.mockClear();
     vi.spyOn(aiProvider, "isEnabled").mockReturnValue(false);
     vi.spyOn(aiProvider, "getModel").mockReturnValue("mock-model" as never);
     testServer = await startTestServer();
@@ -97,7 +97,7 @@ describe("POST /api/analysis", () => {
     });
 
     expect(response.status).toBe(201);
-    expect(verifySupabaseAccessTokenMock).toHaveBeenCalledWith("test-token");
+    expect(verifyClerkAccessTokenMock).toHaveBeenCalledWith("test-token");
 
     const payload = (await response.json()) as {
       data?: {

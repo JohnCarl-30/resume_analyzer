@@ -1,25 +1,22 @@
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
-
 let accessTokenGetter: (() => Promise<string | null>) | null = null;
+let unauthorizedHandler: (() => void) | null = null;
 
 export function setAccessTokenGetter(getter: () => Promise<string | null>) {
   accessTokenGetter = getter;
 }
 
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  unauthorizedHandler = handler;
+}
+
+export function notifyUnauthorized() {
+  unauthorizedHandler?.();
+}
+
 export async function getAccessToken() {
-  if (accessTokenGetter) {
-    return accessTokenGetter();
-  }
-
-  if (!isSupabaseConfigured()) {
+  if (!accessTokenGetter) {
     return null;
   }
 
-  const supabase = createClient();
-  if (!supabase) {
-    return null;
-  }
-
-  const { data } = await supabase.auth.getSession();
-  return data.session?.access_token ?? null;
+  return accessTokenGetter();
 }

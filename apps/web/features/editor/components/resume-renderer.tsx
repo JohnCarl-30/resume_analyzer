@@ -59,7 +59,7 @@ export function ResumeRenderer({ form, variantId, showPlaceholders = false }: Re
 
 function HarvardClassicLayout({ form }: { form: ResumeForm }) {
   return (
-    <div className="font-serif text-[#0f172a] h-full">
+    <div className="resume-document text-[#0f172a]">
       <header className="text-center mb-8 border-b border-gray-300 pb-6">
         <h1 className="text-4xl font-bold uppercase tracking-tight mb-3">
           {form.personalInfo.fullName || "Your Name"}
@@ -189,7 +189,7 @@ function HarvardClassicLayout({ form }: { form: ResumeForm }) {
 
 function ModernSansLayout({ form }: { form: ResumeForm }) {
   return (
-    <div className="font-sans text-[#1e293b] h-full">
+    <div className="font-sans text-[#1e293b]">
       <header className="mb-10 flex justify-between items-end border-b-2 border-slate-900 pb-8">
         <div>
           <h1 className="text-5xl font-extrabold tracking-tighter uppercase leading-none mb-2 text-slate-900">
@@ -344,7 +344,7 @@ function RubyAccentLayout({ form }: { form: ResumeForm }) {
   const accentColor = "#991b1b"; // ruby-800
   
   return (
-    <div className="font-serif text-[#1a1a1a] h-full">
+    <div className="resume-document text-[#1a1a1a]">
       <header className="text-center mb-10">
         <h1 className="text-4xl font-bold tracking-tight mb-4" style={{ color: accentColor }}>
           {(form.personalInfo.fullName || "Your Name").toUpperCase()}
@@ -503,7 +503,7 @@ function MinimalistGridLayout({
   const shouldShowProjectsPlaceholder = showPlaceholders && form.projects.length === 0;
 
   return (
-    <div className="h-full space-y-10">
+    <div className="resume-document space-y-10">
       <header className="space-y-4 border-b border-[color:var(--page-line)] pb-8">
         <h1 className="text-4xl font-bold tracking-tight text-[color:var(--page-text)] uppercase text-center">
           {form.personalInfo.fullName || "Your Name"}

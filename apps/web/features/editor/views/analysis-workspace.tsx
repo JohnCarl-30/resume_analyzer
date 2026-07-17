@@ -6,6 +6,15 @@ import { TemplateCard } from "../../templates/components/template-card";
 import { useResumeEditor } from "../view-models/use-resume-editor";
 import { getCreateResumeGuideState, type BuilderGuideAction } from "../view-models/create-resume-guide";
 import { getAnalysisNextStepsState, type AnalysisNextStepAction } from "../view-models/analysis-next-steps";
+import {
+  buildAnalysisReviewItems,
+  hasDismissedAnalysisReview,
+  markAnalysisReviewDismissed,
+  type ReviewSuggestionItem,
+} from "../view-models/analysis-review-items";
+import { useWorkspaceEnhance } from "../view-models/use-workspace-enhance";
+import { useWorkspaceExport } from "../view-models/use-workspace-export";
+import { useWorkspaceReanalyze } from "../view-models/use-workspace-reanalyze";
 import { PersonalInfoEditor } from "../components/editors/personal-info-editor";
 import { ExperienceEditor } from "../components/editors/experience-editor";
 import { EducationEditor } from "../components/editors/education-editor";
@@ -14,7 +23,7 @@ import { AwardsEditor } from "../components/editors/awards-editor";
 import { ResumeRenderer } from "../components/resume-renderer";
 import { CreateResumeGuide } from "../components/workspace/create-resume-guide";
 import { AnalysisNextSteps } from "../components/workspace/analysis-next-steps";
-import { apiClient } from "../../../lib/api-instance";
+import { AnalysisSuggestionsReviewModal } from "../components/workspace/analysis-suggestions-review-modal";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +31,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { AccountMenu } from "@/features/auth/components/account-menu";
+import { AnalysisProgressStatus } from "../../onboarding/components/analysis-progress-status";
 
 import {
   ArrowLeftIcon,
@@ -72,6 +83,7 @@ interface AnalysisWorkspaceProps {
   onJobDescriptionChange?: (jd: string) => void;
   onRename?: (name: string) => void;
   onResetDraft?: () => void;
+  initialSuggestionsReviewOpen?: boolean;
 }
 
 const workspaceSections = [
@@ -244,15 +256,6 @@ function humanizeFileName(fileName: string) {
     .trim();
 }
 
-function slugifyFileName(value: string) {
-  const slug = humanizeFileName(value)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-
-  return slug || "resume";
-}
-
 function normalizeApplyTerm(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9+.#]+/g, " ").replace(/\s+/g, " ").trim();
 }
@@ -360,7 +363,7 @@ function ParsedTextPreview({ text }: { text: string }) {
   const blocks = normalizeResumeBlocks(text).slice(0, 28);
 
   return (
-    <div className="font-serif text-[0.96rem] leading-7 text-slate-800">
+    <div className="resume-document text-slate-800">
       {blocks.map((block, blockIndex) => {
         const firstLine = block[0] ?? "";
         const remainingLines = block.slice(1);
@@ -426,6 +429,7 @@ export function AnalysisWorkspace({
   onJobDescriptionChange,
   onRename,
   onResetDraft,
+  initialSuggestionsReviewOpen = false,
 }: AnalysisWorkspaceProps) {
   const {
     form,
@@ -462,9 +466,6 @@ export function AnalysisWorkspace({
   const [awardsEditorMode, setAwardsEditorMode] = useState<AwardsEditorMode>("awards");
   const [leadershipEditorMode, setLeadershipEditorMode] = useState<LeadershipEditorMode>("leadership");
   const [previewZoom, setPreviewZoom] = useState(100);
-  const [isUpdatingAnalysis, setIsUpdatingAnalysis] = useState(false);
-  const [newJobDescription, setNewJobDescription] = useState(analysisResult?.jobDescription ?? "");
-  const [updateError, setUpdateError] = useState("");
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(resumeFileName);
@@ -476,6 +477,7 @@ export function AnalysisWorkspace({
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileCreateView, setMobileCreateView] = useState<MobileCreateView>("editor");
   const [mounted, setMounted] = useState(false);
+  const [suggestionsReviewOpen, setSuggestionsReviewOpen] = useState(false);
   const [previewMode, setPreviewMode] = useState<"uploaded" | "structured" | "parsed" | "empty">(
     resumePreviewUrl
       ? "uploaded"
@@ -492,17 +494,52 @@ export function AnalysisWorkspace({
     analysisResult?.extractedProfile?.fullName.trim() ||
     humanizeFileName(resumeFileName) ||
     (createMode ? "New Resume" : "Uploaded Resume");
+  const defaultTemplateId = sampleTemplates[0]?.id ?? "minimalist-grid";
+  const selectedTemplate = sampleTemplates.find((template) => template.id === activeTemplateId) ?? sampleTemplates[0];
+  const showToast = (message: string, type: "error" | "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), type === "error" ? 5000 : 3000);
+  };
+  const { enhanceBullets } = useWorkspaceEnhance({
+    onSuccess: (message) => showToast(message, "success"),
+    onError: (message) => showToast(message, "error"),
+  });
+  const { exportJson: handleExportJson, downloadSource: handleDownloadSource } = useWorkspaceExport({
+    resumeTitle,
+    activeTemplateId,
+    selectedTemplateName: selectedTemplate?.name ?? activeTemplateId,
+    form,
+    resumeSourceUrl,
+    resumeFileName,
+  });
+  const {
+    newJobDescription,
+    setNewJobDescription,
+    isUpdatingAnalysis,
+    updateError,
+    reanalyzeProgress,
+    tailorToJob: handleTailorToJob,
+  } = useWorkspaceReanalyze({
+    analysisId: analysisResult?.id,
+    targetRole,
+    initialJobDescription: analysisResult?.jobDescription ?? "",
+    onAnalysisUpdate,
+    onJobDescriptionChange,
+    onComplete: () => setModalView(null),
+  });
   const hasStructuredPreview = previewMode === "structured";
   const canZoomDocument = previewMode !== "uploaded";
   const hasSourcePreviewChoice = Boolean(resumePreviewUrl || analysisResult?.parsedResumeText);
   const lastSavedLabel = relativeTimeLabel(analysisResult?.generatedAt);
-  const defaultTemplateId = sampleTemplates[0]?.id ?? "minimalist-grid";
-  const selectedTemplate = sampleTemplates.find((template) => template.id === activeTemplateId) ?? sampleTemplates[0];
   const createResumeGuide = getCreateResumeGuideState(form, {
     hasSelectedTemplate: Boolean(selectedTemplate),
   });
   const analysisNextSteps =
     !createMode && analysisResult ? getAnalysisNextStepsState(form, analysisResult, targetRole) : null;
+  const analysisReviewItems =
+    analysisResult && analysisNextSteps
+      ? buildAnalysisReviewItems(analysisResult, analysisNextSteps)
+      : [];
   const draftStatusLabel =
     createMode && autosaveKey
       ? draftStatus === "saving"
@@ -560,6 +597,18 @@ export function AnalysisWorkspace({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (createMode || !analysisResult?.id || analysisReviewItems.length === 0) {
+      return;
+    }
+
+    if (!initialSuggestionsReviewOpen || hasDismissedAnalysisReview(analysisResult.id)) {
+      return;
+    }
+
+    setSuggestionsReviewOpen(true);
+  }, [analysisResult?.id, analysisReviewItems.length, createMode, initialSuggestionsReviewOpen]);
 
   useEffect(() => {
     if (createMode && autosaveKey) {
@@ -944,6 +993,19 @@ export function AnalysisWorkspace({
     setModalView("tailor");
   }
 
+  function handleReviewSuggestionApprove(item: ReviewSuggestionItem) {
+    if (item.kind === "editable" && item.action) {
+      handleApplyAnalysisStepAction(item.action);
+    }
+  }
+
+  function handleSuggestionsReviewFinish() {
+    if (analysisResult?.id) {
+      markAnalysisReviewDismissed(analysisResult.id);
+    }
+    setSuggestionsReviewOpen(false);
+  }
+
   function handleResetCreateDraft() {
     resetForm(emptyResumeForm);
     setEditedTitle("New Resume");
@@ -976,21 +1038,7 @@ export function AnalysisWorkspace({
           onAddBullet={addExperienceBullet}
           onUpdateBullet={updateExperienceBullet}
           onRemoveBullet={removeExperienceBullet}
-          onEnhanceBullets={async (id, role, bullets) => {
-            try {
-              const data = await apiClient.post<string[]>("/api/enhance/bullets", {
-                role,
-                bullets,
-              });
-              setToast({ message: "Bullets enhanced successfully", type: "success" });
-              setTimeout(() => setToast(null), 3000);
-              return data;
-            } catch (err) {
-              setToast({ message: err instanceof Error ? err.message : "Enhancement failed", type: "error" });
-              setTimeout(() => setToast(null), 5000);
-              throw err;
-            }
-          }}
+          onEnhanceBullets={async (_id, role, bullets) => enhanceBullets(role, bullets)}
           onBack={() => setActiveSectionId(null)}
         />
       );
@@ -1192,73 +1240,20 @@ export function AnalysisWorkspace({
     setPreviewZoom((currentZoom) => Math.max(70, Math.min(160, currentZoom + delta)));
   }
 
-  function handleExportJson() {
-    const payload = {
-      title: resumeTitle,
-      selectedTemplateId: activeTemplateId,
-      selectedTemplateName: selectedTemplate?.name ?? activeTemplateId,
-      form,
-      exportedAt: new Date().toISOString(),
-    };
-    const fallback = new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json",
-    });
-    const fallbackUrl = URL.createObjectURL(fallback);
-    const anchor = document.createElement("a");
-    anchor.href = fallbackUrl;
-    anchor.download = `${slugifyFileName(resumeTitle)}-draft.json`;
-    anchor.click();
-    URL.revokeObjectURL(fallbackUrl);
-  }
-
-  function handleExportResume() {
-    if (resumeSourceUrl) {
-      const anchor = document.createElement("a");
-      anchor.href = resumeSourceUrl;
-      anchor.download = resumeFileName;
-      anchor.click();
-      return;
-    }
-
-    handleExportJson();
-  }
-
-  function handleDownloadSource() {
-    handleExportResume();
-  }
-
-  async function handleTailorToJob() {
-    if (!analysisResult?.id) return;
-
-    setUpdateError("");
-    setIsUpdatingAnalysis(true);
-
-    try {
-      const { updateResumeAnalysis } = await import("../../onboarding/utils/analysis-api");
-      const updated = await updateResumeAnalysis(analysisResult.id, {
-        jobDescription: newJobDescription,
-        targetRole,
-      });
-
-      onAnalysisUpdate?.(updated);
-      onJobDescriptionChange?.(newJobDescription);
-      closeModal();
-    } catch (error) {
-      setUpdateError(error instanceof Error ? error.message : "Failed to re-analyze resume.");
-    } finally {
-      setIsUpdatingAnalysis(false);
-    }
-  }
-
   function renderDocumentPreview() {
+    const previewCardClassName =
+      "mx-auto w-full max-w-[860px] rounded-lg border border-[color:var(--page-line)] bg-white shadow-sm";
+    const previewZoomStyle =
+      previewZoom === 100 ? undefined : ({ zoom: previewZoom / 100 } as React.CSSProperties);
+
     if (previewMode === "uploaded" && resumePreviewUrl) {
       return (
-        <div className="mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-lg border border-[color:var(--page-line)] bg-white shadow-sm">
+        <div className={`${previewCardClassName} overflow-hidden`}>
           <iframe
             key={`${resumePreviewUrl}-${previewZoom}`}
             title="Uploaded resume preview"
-            src={`${resumePreviewUrl}#toolbar=0&navpanes=0&scrollbar=0&zoom=${previewZoom}`}
-            className="h-full w-full bg-white"
+            src={`${resumePreviewUrl}#toolbar=0&navpanes=0&zoom=${previewZoom}`}
+            className="min-h-[calc(100dvh-10rem)] w-full bg-white"
           />
         </div>
       );
@@ -1267,11 +1262,8 @@ export function AnalysisWorkspace({
     if (previewMode === "parsed" && analysisResult?.parsedResumeText) {
       return (
         <div
-          className="print-resume mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-lg border border-[color:var(--page-line)] bg-white px-10 py-12 shadow-sm sm:px-14 sm:py-16"
-          style={{
-            transform: `scale(${previewZoom / 100})`,
-            transformOrigin: "top center",
-          }}
+          className={`print-resume ${previewCardClassName} px-10 py-12 sm:px-14 sm:py-16`}
+          style={previewZoomStyle}
         >
           <ParsedTextPreview text={analysisResult.parsedResumeText} />
         </div>
@@ -1281,11 +1273,8 @@ export function AnalysisWorkspace({
     if (hasStructuredPreview) {
       return (
         <div
-          className="print-resume mx-auto aspect-[1/1.414] w-full max-w-[860px] overflow-hidden rounded-lg border border-[color:var(--page-line)] bg-white px-8 py-10 shadow-sm sm:px-12 sm:py-14 lg:px-16 lg:py-16"
-          style={{
-            transform: `scale(${previewZoom / 100})`,
-            transformOrigin: "top center",
-          }}
+          className={`print-resume ${previewCardClassName} px-8 py-10 sm:px-12 sm:py-14 lg:px-16 lg:py-16`}
+          style={previewZoomStyle}
         >
           <ResumeRenderer form={form} variantId={activeTemplateId} showPlaceholders={createMode} />
         </div>
@@ -1310,18 +1299,57 @@ export function AnalysisWorkspace({
     );
   }
 
+  function renderCompactReviewPreview() {
+    const compactCardClassName =
+      "mx-auto w-full rounded-md border border-[color:var(--page-line)] bg-white shadow-sm";
+
+    if (previewMode === "uploaded" && resumePreviewUrl) {
+      return (
+        <div className={`${compactCardClassName} overflow-hidden`}>
+          <iframe
+            title="Resume preview"
+            src={`${resumePreviewUrl}#toolbar=0&navpanes=0&zoom=page-width`}
+            className="h-56 w-full bg-white"
+          />
+        </div>
+      );
+    }
+
+    if (previewMode === "parsed" && analysisResult?.parsedResumeText) {
+      return (
+        <div className={`print-resume ${compactCardClassName} px-4 py-5 text-sm`}>
+          <ParsedTextPreview text={analysisResult.parsedResumeText} />
+        </div>
+      );
+    }
+
+    if (hasStructuredPreview) {
+      return (
+        <div className={`print-resume ${compactCardClassName} px-4 py-5 text-[0.82rem]`}>
+          <ResumeRenderer form={form} variantId={activeTemplateId} showPlaceholders={createMode} />
+        </div>
+      );
+    }
+
+    return (
+      <div className={`${compactCardClassName} px-4 py-8 text-center text-sm text-[color:var(--page-muted)]`}>
+        Preview unavailable for this file.
+      </div>
+    );
+  }
+
   const openTailorModal = () => setModalView("tailor");
 
   return (
     <div className="relative flex h-[100dvh] max-h-[100dvh] min-h-0 flex-1 flex-col overflow-hidden bg-[color:var(--page-surface)] text-[color:var(--page-text)]">
       {isUpdatingAnalysis && (
-        <div className="absolute inset-0 z-[60] flex items-center justify-center bg-white/70 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-4">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-[color:var(--brand)] border-t-transparent"></div>
-            <p className="text-lg font-medium text-[color:var(--page-text)]">
-              Checking your resume against the new job post...
-            </p>
-          </div>
+        <div className="absolute inset-0 z-[60] flex items-center justify-center bg-white/70 px-4 backdrop-blur-sm">
+          <AnalysisProgressStatus
+            variant="overlay"
+            title="Re-checking your resume"
+            steps={reanalyzeProgress.steps}
+            activeStepIndex={reanalyzeProgress.activeStepIndex}
+          />
         </div>
       )}
       {toast && (
@@ -1344,6 +1372,26 @@ export function AnalysisWorkspace({
           </div>
         </div>
       )}
+
+      {analysisResult && analysisReviewItems.length > 0 ? (
+        <AnalysisSuggestionsReviewModal
+          key={analysisResult.id}
+          open={suggestionsReviewOpen}
+          onOpenChange={(open) => {
+            setSuggestionsReviewOpen(open);
+            if (!open && analysisResult.id) {
+              markAnalysisReviewDismissed(analysisResult.id);
+            }
+          }}
+          analysisResult={analysisResult}
+          resumeTitle={resumeTitle}
+          items={analysisReviewItems}
+          preview={renderCompactReviewPreview()}
+          onApprove={handleReviewSuggestionApprove}
+          onFinish={handleSuggestionsReviewFinish}
+        />
+      ) : null}
+
       <header className="shrink-0 border-b border-[color:var(--page-line)] bg-white px-3 py-2 sm:px-4">
         <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex min-w-0 items-center gap-2 text-sm sm:gap-3">
@@ -1449,6 +1497,16 @@ export function AnalysisWorkspace({
               </div>
             )}
 
+            {!createMode && analysisReviewItems.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setSuggestionsReviewOpen(true)}
+                className="hidden shrink-0 rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-xs font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] sm:inline-flex"
+              >
+                Review suggestions
+              </button>
+            ) : null}
+
             <div className={`shrink-0 items-center gap-1 ${createMode ? "hidden" : "hidden md:inline-flex"}`}>
               <button
                 type="button"
@@ -1545,6 +1603,8 @@ export function AnalysisWorkspace({
                 {resumeSourceUrl ? "Download original" : "Backup copy"}
               </button>
             )}
+
+            <AccountMenu />
           </div>
         </div>
       </header>
@@ -1686,7 +1746,7 @@ export function AnalysisWorkspace({
                 </div>
               </div>
 
-              <div className="h-full overflow-auto px-4 pb-8 pt-16 sm:px-6 sm:pt-[4.5rem]">
+              <div className="absolute inset-0 overflow-y-auto px-4 pb-8 pt-16 sm:px-6 sm:pt-[4.5rem]">
                 {renderDocumentPreview()}
               </div>
             </div>

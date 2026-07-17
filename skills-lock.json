@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "skills": {
+    "animation-vocabulary": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/animation-vocabulary/SKILL.md",
+      "computedHash": "39319fc9a33c15be08666b3685f58666f042ff36bb902b7814c0834a5ba99df4"
+    },
+    "apple-design": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/apple-design/SKILL.md",
+      "computedHash": "8b94db67cb9edaad5f1501010804caa610131f1d2dfda0a27664b2e858deade3"
+    },
+    "emil-design-eng": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/emil-design-eng/SKILL.md",
+      "computedHash": "8bdf9e4e6de7a4969147bf4828a4ad2c5aacd9fba4b690b250a85e0467ca387d"
+    },
+    "font-pairing-suggester": {
+      "source": "onewave-ai/claude-skills",
+      "sourceType": "github",
+      "skillPath": "font-pairing-suggester/SKILL.md",
+      "computedHash": "03b9ac9b499f962f9676bbd669584c262becb77193646c30c2c14c20ca5b353f"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "4eabc66183767153e404b39d1b839b1c37f2d82d86f0a0d7e880a579d8d62336"
+    },
+    "hallmark": {
+      "source": "nutlope/hallmark",
+      "sourceType": "github",
+      "skillPath": "skills/hallmark/SKILL.md",
+      "computedHash": "8a8ecafd613f09e701330b5aa4a591ac539abb2605596df4a2394f03628d1d76"
+    },
+    "impeccable": {
+      "source": "pbakaus/impeccable",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/impeccable/SKILL.md",
+      "computedHash": "e07098370ad7fd4605b67d305d8c06623a5c7d7737d2364e30932294ef880ff6"
+    },
+    "improve-animations": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/improve-animations/SKILL.md",
+      "computedHash": "32f23d860467841f5b07cef198fb53efc70f2adaaa6144cf1a3434d782aed246"
+    },
+    "minimalist-ui": {
+      "source": "leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/minimalist-skill/SKILL.md",
+      "computedHash": "08873a3131d3be27bef9bf3304b310b16b44ca6e3561aebe532797be3443f6bd"
+    },
+    "review-animations": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/review-animations/SKILL.md",
+      "computedHash": "c92905bff59c3007d07c2638a2a83d5d71c901feef108cce1da0bf3c7cafd579"
+    },
+    "tdd": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/tdd/SKILL.md",
+      "computedHash": "c9326b88419cfba1d54dd713b7ddb23020e6a93f4b0d13aea58cebba58cda2ee"
+    }
+  }
+}

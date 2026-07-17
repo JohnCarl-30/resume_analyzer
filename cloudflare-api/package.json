@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "deploy": "cd .. && wrangler deploy --config cloudflare-api/wrangler.jsonc",
+    "deploy:cf": "cd .. && wrangler deploy --config cloudflare-api/wrangler.jsonc",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

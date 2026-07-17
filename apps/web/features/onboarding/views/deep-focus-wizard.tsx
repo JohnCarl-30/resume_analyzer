@@ -9,13 +9,13 @@ import React, {
   type ChangeEvent,
   type DragEvent,
 } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeftIcon, BrandMark } from "../components/wizard-icons";
+import { AccountMenu } from "@/features/auth/components/account-menu";
 import { StepTargetRole } from "../components/step-target-role";
 import { StepJobDescription } from "../components/step-job-description";
 import { StepDocumentUpload } from "../components/step-document-upload";
 import { StepTemplateSelection } from "../components/step-template-selection";
-import { StepSuggestions } from "../components/step-suggestions";
 import { AnalysisWorkspace } from "../../editor/views/analysis-workspace";
 import type { ResumeAnalysisResult } from "../../editor/model/resume-analysis";
 import {
@@ -33,10 +33,14 @@ import {
   createResumeAnalysis,
   createAnalysisFromTemplate,
   getResumeAnalysis,
-  getResumeAnalysisSourceUrl,
+  loadResumeAnalysisSourcePreview,
 } from "../utils/analysis-api";
-import { getAnalysisQuota, type AnalysisQuota } from "@/lib/account-api";
+import { useAnalysisQuota } from "@/features/account/hooks/use-analysis-quota";
+import { getAnalysisQuotaNavigationState } from "@/lib/analysis-quota-navigation";
+import { Button } from "@/components/ui/button";
 import { formatFileSize, isSupportedFile, maxFileSize } from "../utils/wizard-utils";
+import { useAnalysisProgress } from "../hooks/use-analysis-progress";
+import type { AnalysisProgressMode } from "../model/analysis-progress";
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
 type ViewMode = "wizard" | "workspace";
@@ -58,9 +62,30 @@ function normalizeTemplateId(
 
 export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const scratchMode = searchParams.get("mode") === "scratch";
+  const {
+    quota: analysisQuota,
+    error: quotaError,
+    isLoading: quotaLoading,
+    refetch: refetchQuota,
+  } = useAnalysisQuota();
+  const quotaNav = getAnalysisQuotaNavigationState(analysisQuota, {
+    isLoading: quotaLoading,
+    error: quotaError,
+  });
+  const uploadBlocked = !initialAnalysisId && !quotaNav.canUpload;
   const resumeInputId = useId();
   const resumeInputRef = useRef<HTMLInputElement>(null);
   const restoredAnalysisIdRef = useRef<string | null>(null);
+  const resumeObjectUrlRef = useRef<string | null>(null);
+
+  function revokeStoredResumeObjectUrl() {
+    if (resumeObjectUrlRef.current) {
+      URL.revokeObjectURL(resumeObjectUrlRef.current);
+      resumeObjectUrlRef.current = null;
+    }
+  }
   const defaultTemplateId = sampleTemplates[0]?.id ?? "minimalist-grid";
 
   const [step, setStep] = useState<WizardStep>(1);
@@ -74,7 +99,6 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
   const [isDragActive, setIsDragActive] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<ResumeAnalysisResult | null>(null);
   const [analysisError, setAnalysisError] = useState("");
-  const [analysisQuota, setAnalysisQuota] = useState<AnalysisQuota | null>(null);
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   const [isRestoringAnalysis, setIsRestoringAnalysis] = useState(false);
   const [analysisIdFromUrl, setAnalysisIdFromUrl] = useState<string | null>(initialAnalysisId ?? null);
@@ -82,12 +106,17 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
   const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
   const [useTemplateContent, setUseTemplateContent] = useState(false);
   const [createFromScratch, setCreateFromScratch] = useState(false);
+  const [openSuggestionsReview, setOpenSuggestionsReview] = useState(false);
+
+  const analysisProgressMode: AnalysisProgressMode = useTemplateContent ? "template" : "upload";
+  const analysisProgress = useAnalysisProgress(isGeneratingAnalysis, analysisProgressMode);
 
   const trimmedTargetRole = targetRole.trim();
   const trimmedJobDescription = jobDescription.trim();
   const canContinueFromTargetRole = trimmedTargetRole.length >= 2;
   const canContinueFromJobDescription = trimmedJobDescription.length >= 30;
-  const canContinueFromUpload = resumeFile !== null || useTemplateContent || createFromScratch;
+  const canContinueFromUpload =
+    createFromScratch || (!uploadBlocked && (resumeFile !== null || useTemplateContent));
   const initialWorkspaceForm = useMemo(
     () =>
       createFromScratch
@@ -142,11 +171,16 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
   }
 
   function handleExitToDashboard() {
-    router.push("/");
+    router.push("/home");
     onExit?.();
   }
 
   function handleValidatedFile(fileList: FileList | null) {
+    if (uploadBlocked) {
+      setUploadError(quotaNav.uploadBlockedMessage);
+      return;
+    }
+
     const candidateFile = fileList?.[0];
     if (!candidateFile) return;
 
@@ -176,11 +210,16 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
   }
 
   function handleNext() {
-    if (step === 1 && canContinueFromTargetRole) {
+    if (uploadBlocked && !createFromScratch && step < 3) {
+      setStep(3);
+      return;
+    }
+
+    if (step === 1 && canContinueFromTargetRole && !uploadBlocked) {
       setStep(2);
       return;
     }
-    if (step === 2 && canContinueFromJobDescription) {
+    if (step === 2 && canContinueFromJobDescription && !uploadBlocked) {
       setStep(3);
       return;
     }
@@ -196,24 +235,22 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
       void handleGenerateAnalysis();
       return;
     }
-    if (step === 5) {
-      setViewMode("workspace");
-    }
   }
 
   function handleBack() {
     if (viewMode === "workspace") {
+      if (initialAnalysisId) {
+        handleExitToDashboard();
+        return;
+      }
+
       setViewMode("wizard");
       if (createFromScratch) {
         setStep(3);
         setCreateFromScratch(false);
       } else {
-        setStep(5);
+        setStep(4);
       }
-      return;
-    }
-    if (step === 5) {
-      setStep(4);
       return;
     }
     if (step === 4) {
@@ -241,13 +278,17 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
       return;
     }
 
-    if (analysisQuota && !analysisQuota.canAnalyze) {
+    if (quotaLoading) {
+      return;
+    }
+
+    if (!quotaNav.canUpload) {
       setAnalysisError(
-        analysisQuota.analysisId
+        analysisQuota?.analysisId
           ? "This account already used its one resume analysis. Open your saved check to review or update it."
-          : "This account already used its one resume analysis.",
+          : quotaError || quotaNav.uploadBlockedMessage,
       );
-      if (analysisQuota.analysisId) {
+      if (analysisQuota?.analysisId) {
         router.replace(`/analysis/${analysisQuota.analysisId}`);
       }
       return;
@@ -289,7 +330,9 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
         normalizeTemplateId(nextAnalysis.selectedTemplateId, templateIdToUse),
       );
       replaceAnalysisParam(nextAnalysis.id ?? null, { soft: true });
-      setStep(5);
+      setOpenSuggestionsReview(true);
+      setViewMode("workspace");
+      void refetchQuota();
     } catch (error) {
       setAnalysisError(
         error instanceof Error ? error.message : "Unable to generate analysis right now.",
@@ -304,16 +347,20 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
   }
 
   useEffect(() => {
-    if (initialAnalysisId) {
+    if (initialAnalysisId || quotaLoading) {
       return;
     }
 
-    void getAnalysisQuota()
-      .then((quota) => setAnalysisQuota(quota))
-      .catch(() => {
-        setAnalysisQuota(null);
-      });
-  }, [initialAnalysisId]);
+    if (scratchMode) {
+      setStep(3);
+      setCreateFromScratch(true);
+      return;
+    }
+
+    if (uploadBlocked && analysisQuota) {
+      setStep(3);
+    }
+  }, [analysisQuota, initialAnalysisId, quotaLoading, scratchMode, uploadBlocked]);
 
   useEffect(() => {
     if (!resumeFile) {
@@ -335,17 +382,39 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
     }
 
     if (!analysisResult?.id || !analysisResult.sourceFileContentType) {
+      revokeStoredResumeObjectUrl();
       setResumeSourceUrl(null);
       setResumePreviewUrl(null);
       return;
     }
 
-    const nextSourceUrl = getResumeAnalysisSourceUrl(analysisResult.id);
-    setResumeSourceUrl(nextSourceUrl);
-    setResumePreviewUrl(
-      analysisResult.sourceFileContentType === "application/pdf" ? nextSourceUrl : null,
-    );
-  }, [analysisResult, resumeFile]);
+    let isCancelled = false;
+
+    void loadResumeAnalysisSourcePreview(analysisResult.id)
+      .then((result) => {
+        if (isCancelled) {
+          URL.revokeObjectURL(result.sourceUrl);
+          return;
+        }
+
+        revokeStoredResumeObjectUrl();
+        resumeObjectUrlRef.current = result.sourceUrl;
+        setResumeSourceUrl(result.sourceUrl);
+        setResumePreviewUrl(result.previewUrl);
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          revokeStoredResumeObjectUrl();
+          setResumeSourceUrl(null);
+          setResumePreviewUrl(null);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+      revokeStoredResumeObjectUrl();
+    };
+  }, [analysisResult?.id, analysisResult?.sourceFileContentType, resumeFile]);
 
   useEffect(() => {
     setAnalysisIdFromUrl(initialAnalysisId ?? null);
@@ -431,6 +500,7 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
               onTemplateChange={setSelectedTemplateId}
               onAnalysisUpdate={setAnalysisResult}
               onJobDescriptionChange={setJobDescription}
+              initialSuggestionsReviewOpen={openSuggestionsReview}
             />
           ) : (
             <>
@@ -451,8 +521,9 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
                   Deep Focus
                 </div>
 
-                <div className="hidden sm:block">
-                  <span className="step-pill">{`STEP ${step} OF 5`}</span>
+                <div className="flex items-center gap-3">
+                  <span className="step-pill hidden sm:inline">{`STEP ${step} OF 5`}</span>
+                  <AccountMenu />
                 </div>
               </header>
 
@@ -517,14 +588,56 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
                       </p>
                     </div>
                   </div>
-                ) : step === 1 ? (
+                ) : !initialAnalysisId && quotaLoading ? (
+                  <div className="flex flex-1 items-center justify-center px-6 py-16">
+                    <div className="max-w-md space-y-3 text-center">
+                      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[color:var(--brand)]">
+                        Checking plan
+                      </p>
+                      <h2 className="display-serif text-3xl text-[color:var(--page-text)]">
+                        Loading your account status
+                      </h2>
+                      <p className="text-base text-[color:var(--page-muted)]">
+                        We&apos;ll confirm whether your free resume check is available before you upload.
+                      </p>
+                    </div>
+                  </div>
+                ) : !initialAnalysisId && quotaNav.hasError ? (
+                  <div className="flex flex-1 items-center justify-center px-6 py-16">
+                    <div className="max-w-md space-y-4 text-center">
+                      <h2 className="display-serif text-3xl text-[color:var(--page-text)]">
+                        Plan status unavailable
+                      </h2>
+                      <p className="text-base leading-7 text-[color:var(--page-muted)]">
+                        {quotaError || quotaNav.uploadBlockedMessage}
+                      </p>
+                      <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+                        <Button type="button" onClick={() => void refetchQuota()}>
+                          Try again
+                        </Button>
+                        {quotaNav.canUseScratchBuilder ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setStep(3);
+                              setCreateFromScratch(true);
+                            }}
+                          >
+                            Start blank draft
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                ) : step === 1 && !uploadBlocked ? (
                   <StepTargetRole
                     targetRole={targetRole}
                     setTargetRole={setTargetRole}
                     onNext={handleNext}
                     canContinue={canContinueFromTargetRole}
                   />
-                ) : step === 2 ? (
+                ) : step === 2 && !uploadBlocked ? (
                   <StepJobDescription
                     jobDescription={jobDescription}
                     setJobDescription={setJobDescription}
@@ -548,9 +661,12 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
                     canContinue={canContinueFromUpload}
                     createFromScratch={createFromScratch}
                     setCreateFromScratch={setCreateFromScratch}
+                    uploadDisabled={uploadBlocked}
+                    quotaExhaustedMessage={uploadBlocked ? quotaNav.exhaustedMessage : undefined}
+                    savedCheckPath={quotaNav.savedCheckPath}
                   />
                 ) : null}
-                {step === 4 ? (
+                {step === 4 && !uploadBlocked ? (
                   <StepTemplateSelection
                     selectedTemplateId={selectedTemplateId}
                     setSelectedTemplateId={setSelectedTemplateId}
@@ -561,13 +677,10 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
                     onSkipTemplate={handleSkipTemplate}
                     isSubmitting={isGeneratingAnalysis}
                     errorMessage={analysisError}
-                  />
-                ) : null}
-                {step === 5 && analysisResult !== null ? (
-                  <StepSuggestions
-                    analysisResult={analysisResult}
-                    onEnterEditor={() => setViewMode("workspace")}
-                    onBack={handleBack}
+                    analysisProgressSteps={
+                      isGeneratingAnalysis ? analysisProgress.steps : undefined
+                    }
+                    analysisProgressActiveStepIndex={analysisProgress.activeStepIndex}
                   />
                 ) : null}
               </div>

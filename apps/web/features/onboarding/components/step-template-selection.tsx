@@ -14,6 +14,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { sampleTemplates, type ResumeTemplate } from "../../templates/model/template";
 import { TemplateRealPreview } from "../../templates/components/template-preview";
+import { AnalysisProgressStatus } from "./analysis-progress-status";
+import type { AnalysisProgressStep } from "../model/analysis-progress";
 
 interface StepTemplateSelectionProps {
   selectedTemplateId: ResumeTemplate["id"];
@@ -25,6 +27,8 @@ interface StepTemplateSelectionProps {
   onSkipTemplate?: () => void;
   isSubmitting?: boolean;
   errorMessage?: string;
+  analysisProgressSteps?: AnalysisProgressStep[];
+  analysisProgressActiveStepIndex?: number;
 }
 
 export function StepTemplateSelection({
@@ -37,6 +41,8 @@ export function StepTemplateSelection({
   onSkipTemplate,
   isSubmitting = false,
   errorMessage,
+  analysisProgressSteps,
+  analysisProgressActiveStepIndex = 0,
 }: StepTemplateSelectionProps) {
   const selectedTemplate = sampleTemplates.find((t) => t.id === selectedTemplateId);
 
@@ -186,7 +192,13 @@ export function StepTemplateSelection({
 
       {/* Footer Actions */}
       <div className="mx-auto mt-6 flex w-full max-w-6xl flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-end">
-        {errorMessage ? (
+        {isSubmitting && analysisProgressSteps && analysisProgressSteps.length > 0 ? (
+          <AnalysisProgressStatus
+            className="mr-auto w-full sm:max-w-md"
+            steps={analysisProgressSteps}
+            activeStepIndex={analysisProgressActiveStepIndex}
+          />
+        ) : errorMessage ? (
           <Alert variant="destructive" className="mr-auto">
             <AlertDescription>{errorMessage}</AlertDescription>
           </Alert>

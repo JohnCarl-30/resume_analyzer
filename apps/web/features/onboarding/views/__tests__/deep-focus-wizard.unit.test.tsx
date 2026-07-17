@@ -22,26 +22,68 @@ import type { ResumeAnalysisResult } from "../../../editor/model/resume-analysis
 const {
   mockCreateResumeAnalysis,
   mockGetResumeAnalysis,
-  mockGetResumeAnalysisSourceUrl,
+  mockLoadResumeAnalysisSourcePreview,
   mockUpdateResumeAnalysis,
+  mockRouter,
+  mockUseAnalysisQuota,
+  mockUseSearchParams,
 } = vi.hoisted(() => ({
   mockCreateResumeAnalysis: vi.fn(),
   mockGetResumeAnalysis: vi.fn(),
-  mockGetResumeAnalysisSourceUrl: vi.fn(() => "http://localhost/source"),
+  mockLoadResumeAnalysisSourcePreview: vi.fn(() =>
+    Promise.resolve({
+      sourceUrl: "blob:http://localhost/source",
+      previewUrl: "blob:http://localhost/source",
+    }),
+  ),
   mockUpdateResumeAnalysis: vi.fn(),
+  mockRouter: {
+    push: vi.fn(),
+    replace: vi.fn(),
+  },
+  mockUseAnalysisQuota: vi.fn(() => ({
+    quota: {
+      limit: 1,
+      used: 0,
+      canAnalyze: true,
+      analysisId: null,
+      redeemedAt: null,
+    },
+    error: "",
+    isLoading: false,
+    refetch: vi.fn(),
+  })),
+  mockUseSearchParams: vi.fn(() => new URLSearchParams()),
 }));
 
 vi.mock("../../utils/analysis-api", () => ({
   createResumeAnalysis: mockCreateResumeAnalysis,
   getResumeAnalysis: mockGetResumeAnalysis,
-  getResumeAnalysisSourceUrl: mockGetResumeAnalysisSourceUrl,
+  loadResumeAnalysisSourcePreview: mockLoadResumeAnalysisSourcePreview,
   updateResumeAnalysis: mockUpdateResumeAnalysis,
 }));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-    replace: vi.fn(),
+  useRouter: () => mockRouter,
+  useSearchParams: () => mockUseSearchParams(),
+}));
+
+vi.mock("@/features/account/hooks/use-analysis-quota", () => ({
+  useAnalysisQuota: () => mockUseAnalysisQuota(),
+}));
+
+vi.mock("@clerk/nextjs", () => ({
+  SignedIn: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  SignOutButton: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  useAuth: () => ({
+    isLoaded: true,
+    isSignedIn: true,
+    getToken: vi.fn(),
+    signOut: vi.fn(),
+  }),
+  useUser: () => ({
+    isLoaded: true,
+    user: { fullName: "Alex Example", primaryEmailAddress: { emailAddress: "alex@example.com" } },
   }),
 }));
 
@@ -106,8 +148,17 @@ function hasStepPill(text: string): boolean {
   return screen.getAllByText(text).length > 0;
 }
 
+/** Wait until quota loading finishes and wizard content is shown. */
+async function waitForWizardReady() {
+  await waitFor(() => {
+    expect(screen.queryByText(/loading your account status/i)).not.toBeInTheDocument();
+  });
+}
+
 /** Fill in target role and job description, then advance to upload step. */
 async function advanceToStep2() {
+  await waitForWizardReady();
+
   const targetRoleInput = screen.getByPlaceholderText(/senior frontend engineer/i);
   fireEvent.change(targetRoleInput, {
     target: { value: "Software Engineer" },
@@ -156,8 +207,8 @@ describe("DeepFocusWizard unit tests", () => {
   // Test 1: Back navigation from workspace restores suggestions step
   // Validates: Requirement 6.3
   // -------------------------------------------------------------------------
-  describe("Back navigation from workspace restores suggestions step", () => {
-    it("shows step 5 (STEP 5 OF 5) after clicking Back from the workspace", async () => {
+  describe("Back navigation from workspace restores template step", () => {
+    it("shows step 4 (STEP 4 OF 5) after clicking Back from the workspace", async () => {
       mockCreateResumeAnalysis.mockResolvedValue(minimalAnalysisResult);
 
       render(<DeepFocusWizard />);
@@ -170,16 +221,7 @@ describe("DeepFocusWizard unit tests", () => {
       const generateBtn = screen.getByRole("button", { name: /check my resume/i });
       fireEvent.click(generateBtn);
 
-      // Wait for the API call to resolve and suggestions step to appear
-      await waitFor(() => {
-        expect(hasStepPill("STEP 5 OF 5")).toBe(true);
-      });
-
-      // Click "Open Resume Editor" to go to workspace
-      const enterEditorBtn = screen.getByRole("button", { name: /open editor/i });
-      fireEvent.click(enterEditorBtn);
-
-      // Workspace should be shown
+      // Wait for workspace after analysis completes
       await waitFor(() => {
         expect(screen.getByTestId("analysis-workspace")).toBeTruthy();
       });
@@ -188,9 +230,9 @@ describe("DeepFocusWizard unit tests", () => {
       const backBtn = screen.getByRole("button", { name: /back/i });
       fireEvent.click(backBtn);
 
-      // Should be back on suggestions step
+      // Should be back on template step
       await waitFor(() => {
-        expect(hasStepPill("STEP 5 OF 5")).toBe(true);
+        expect(hasStepPill("STEP 4 OF 5")).toBe(true);
       });
     });
   });
@@ -223,14 +265,27 @@ describe("DeepFocusWizard unit tests", () => {
         expect(hasStepPill("STEP 1 OF 5")).toBe(true);
       });
     });
+
+    it("returns to home when Back is clicked from a restored saved check", async () => {
+      mockGetResumeAnalysis.mockResolvedValue(minimalAnalysisResult);
+      render(<DeepFocusWizard initialAnalysisId="test-analysis-123" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("analysis-workspace")).toBeTruthy();
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: /back/i }));
+
+      expect(mockRouter.push).toHaveBeenCalledWith("/home");
+    });
   });
 
   // -------------------------------------------------------------------------
   // Test 3: handleGenerateAnalysis transitions template -> suggestions on success
   // Validates: Requirement 6.3
   // -------------------------------------------------------------------------
-  describe("handleGenerateAnalysis transitions step 4 -> step 5 on success", () => {
-    it("shows step 5 (STEP 5 OF 5) after Check my resume succeeds", async () => {
+  describe("handleGenerateAnalysis transitions template -> workspace on success", () => {
+    it("opens the workspace after Check my resume succeeds", async () => {
       mockCreateResumeAnalysis.mockResolvedValue(minimalAnalysisResult);
 
       render(<DeepFocusWizard />);
@@ -245,9 +300,8 @@ describe("DeepFocusWizard unit tests", () => {
       const generateBtn = screen.getByRole("button", { name: /check my resume/i });
       fireEvent.click(generateBtn);
 
-      // Wait for suggestions step to appear
       await waitFor(() => {
-        expect(hasStepPill("STEP 5 OF 5")).toBe(true);
+        expect(screen.getByTestId("analysis-workspace")).toBeTruthy();
       });
 
       // Verify the API was called
@@ -285,13 +339,6 @@ describe("DeepFocusWizard unit tests", () => {
       fireEvent.click(generateBtn);
 
       await waitFor(() => {
-        expect(hasStepPill("STEP 5 OF 5")).toBe(true);
-      });
-
-      const enterEditorBtn = screen.getByRole("button", { name: /open editor/i });
-      fireEvent.click(enterEditorBtn);
-
-      await waitFor(() => {
         expect(screen.getByTestId("analysis-workspace")).toBeTruthy();
       });
 
@@ -299,6 +346,69 @@ describe("DeepFocusWizard unit tests", () => {
         "data-selected-template-id",
         "minimalist-grid",
       );
+    });
+  });
+
+  describe("analysis quota enforcement", () => {
+    it("shows upload-disabled step 3 when quota is exhausted", async () => {
+      mockUseAnalysisQuota.mockReturnValue({
+        quota: {
+          limit: 1,
+          used: 1,
+          canAnalyze: false,
+          analysisId: "saved-analysis-1",
+          redeemedAt: "2026-01-01T00:00:00.000Z",
+        },
+        error: "",
+        isLoading: false,
+        refetch: vi.fn(),
+      });
+
+      render(<DeepFocusWizard />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/free check already used/i)).toBeInTheDocument();
+      });
+      expect(screen.queryByRole("button", { name: /next: paste job post/i })).not.toBeInTheDocument();
+    });
+
+    it("allows scratch builder when quota is exhausted", async () => {
+      mockUseAnalysisQuota.mockReturnValue({
+        quota: {
+          limit: 1,
+          used: 1,
+          canAnalyze: false,
+          analysisId: "saved-analysis-1",
+          redeemedAt: "2026-01-01T00:00:00.000Z",
+        },
+        error: "",
+        isLoading: false,
+        refetch: vi.fn(),
+      });
+
+      render(<DeepFocusWizard />);
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /start with a blank resume/i })).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: /start with a blank resume/i }));
+      fireEvent.click(screen.getByRole("button", { name: /open builder/i }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("analysis-workspace")).toBeInTheDocument();
+      });
+      expect(mockCreateResumeAnalysis).not.toHaveBeenCalled();
+    });
+
+    it("opens scratch mode directly from query param", async () => {
+      mockUseSearchParams.mockReturnValue(new URLSearchParams("mode=scratch"));
+
+      render(<DeepFocusWizard />);
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /open builder/i })).toBeInTheDocument();
+      });
     });
   });
 });

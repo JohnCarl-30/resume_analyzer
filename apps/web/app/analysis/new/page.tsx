@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+
 import { DeepFocusWizard } from "@/features/onboarding/views/deep-focus-wizard";
 
 export const metadata: Metadata = {
@@ -11,5 +13,9 @@ export const metadata: Metadata = {
 };
 
 export default function NewAnalysisPage() {
-  return <DeepFocusWizard />;
+  return (
+    <Suspense fallback={null}>
+      <DeepFocusWizard />
+    </Suspense>
+  );
 }

@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 
-import { verifySupabaseAccessToken } from "../lib/supabase-auth.js";
+import { verifyClerkAccessToken } from "../lib/clerk-auth.js";
 import { HttpError } from "../utils/http-error.js";
 
 export async function requireAuth(req: Request, _res: Response, next: NextFunction) {
@@ -17,7 +17,7 @@ export async function requireAuth(req: Request, _res: Response, next: NextFuncti
       throw new HttpError(401, "Sign in to check your resume.");
     }
 
-    req.userId = await verifySupabaseAccessToken(token);
+    req.userId = await verifyClerkAccessToken(token);
     next();
   } catch (error) {
     next(error);

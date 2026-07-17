@@ -26,7 +26,7 @@ const envSchema = z.object({
   DATABASE_URL: optionalString,
   AI_EXTRACTION_MODEL: z.string().min(1).default("gpt-4o-mini"),
   OPENAI_API_KEY: optionalString,
-  SUPABASE_URL: optionalUrl,
+  CLERK_SECRET_KEY: optionalString,
   R2_BUCKET_NAME: optionalString,
   R2_PUBLIC_BASE_URL: optionalUrl,
   R2_ACCOUNT_ID: optionalString,

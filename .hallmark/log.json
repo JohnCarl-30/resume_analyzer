@@ -1,5 +1,14 @@
 [
   {
+    "date": "2026-07-17",
+    "macrostructure": "Index-First + Tabular Spec Sheet",
+    "theme": "custom",
+    "theme_axes": "light / sans-product / cool",
+    "vibe": "authenticated home index, account spec sheet",
+    "enrichment": "none",
+    "brief": "Deep Focus · /home + /account app surfaces"
+  },
+  {
     "date": "2026-07-15",
     "macrostructure": "Split Studio",
     "theme": "custom",

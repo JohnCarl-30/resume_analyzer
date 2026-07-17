@@ -30,6 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { AppShellHeader } from "@/features/auth/components/app-shell-header";
 import { ResumeStatusBadge } from "../components/resume-status-badge";
 import type { ResumeSummary } from "../model/resume";
 import { useResumeDashboard } from "../view-models/use-resume-dashboard";
@@ -52,7 +53,6 @@ type BadgeVariant = React.ComponentProps<typeof Badge>["variant"];
 interface DashboardViewProps {
   onNewAnalysis: () => void;
   onOpenAnalysis: (analysisId: string) => void;
-  onViewAll: () => void;
 }
 
 function getScoreVariant(score: number): BadgeVariant {
@@ -171,7 +171,7 @@ function AnalysisMobileCard({
           <span className="truncate">{formatDate(resume.uploadedAt)}</span>
         </div>
         <Button type="button" variant="outline" size="sm" onClick={() => onOpenAnalysis(resume.id)}>
-          Open
+          View
           <OpenInNewWindowIcon data-icon="inline-end" aria-hidden="true" />
         </Button>
       </div>
@@ -179,8 +179,15 @@ function AnalysisMobileCard({
   );
 }
 
-export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewProps) {
+export function DashboardView({
+  onNewAnalysis,
+  onOpenAnalysis,
+}: DashboardViewProps) {
   const { resumes, isLoading, error, stats } = useResumeDashboard();
+  const pageTitle = "Your resumes";
+  const pageDescription =
+    "Review uploaded resumes, match scores, and jump back into any saved check.";
+  const uploadLabel = "Upload New Resume";
 
   const displayStats = [
     {
@@ -201,18 +208,18 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
   ];
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <>
+      <AppShellHeader active="home" />
+      <main className="min-h-screen bg-background text-foreground">
       <section className={`mx-auto flex w-full max-w-7xl flex-col ${GAP.major} px-4 py-12 sm:px-6 lg:px-8 lg:py-16`}>
         <header className={`flex flex-col ${GAP.default} border-b border-border pb-8 md:flex-row md:items-end md:justify-between`}>
           <div className={`flex max-w-2xl flex-col ${GAP.inline}`}>
-            <h1 className="display-serif text-3xl sm:text-4xl">Saved resume checks</h1>
-            <p className="text-sm text-muted-foreground sm:text-base">
-              Review match scores, missing job words, and next steps from one focused workspace.
-            </p>
+            <h1 className="display-serif text-3xl sm:text-4xl">{pageTitle}</h1>
+            <p className="text-sm text-muted-foreground sm:text-base">{pageDescription}</p>
           </div>
           <Button type="button" onClick={onNewAnalysis}>
             <PlusIcon data-icon="inline-start" aria-hidden="true" />
-            New resume check
+            {uploadLabel}
           </Button>
         </header>
 
@@ -239,9 +246,9 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
         <section className={`flex flex-col ${GAP.compact}`}>
           <div className={`flex flex-col ${GAP.tight} sm:flex-row sm:items-end sm:justify-between`}>
             <div>
-              <h2 className="text-xl font-semibold tracking-tight">Recent checks</h2>
+              <h2 className="text-xl font-semibold tracking-tight">Uploaded resumes</h2>
               <p className="text-sm text-muted-foreground">
-                Open a saved check to continue editing or print the resume.
+                View a saved check to open its stored results without running analysis again.
               </p>
             </div>
             <p className="text-sm text-muted-foreground">{resumes.length} total</p>
@@ -255,15 +262,16 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
                 <EmptyMedia variant="icon">
                   <ArchiveIcon aria-hidden="true" />
                 </EmptyMedia>
-                <EmptyTitle>No resume checks yet</EmptyTitle>
+                <EmptyTitle>No resumes yet</EmptyTitle>
                 <EmptyDescription>
-                  Start by checking one resume against a job post. Your saved checks will appear here.
+                  Upload a resume to run your first check. Results stay on the analysis page when
+                  processing finishes.
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
                 <Button type="button" onClick={onNewAnalysis}>
                   <PlusIcon data-icon="inline-start" aria-hidden="true" />
-                  New resume check
+                  {uploadLabel}
                 </Button>
               </EmptyContent>
             </Empty>
@@ -279,7 +287,8 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
                       <TableHead>Target role</TableHead>
                       <TableHead>Match</TableHead>
                       <TableHead>Gaps</TableHead>
-                      <TableHead>Updated</TableHead>
+                      <TableHead>Uploaded</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead className="text-right">Action</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -312,6 +321,9 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
                         </TableCell>
                         <TableCell>{formatDate(resume.uploadedAt)}</TableCell>
                         <TableCell>
+                          <ResumeStatusBadge status={resume.status} />
+                        </TableCell>
+                        <TableCell>
                           <div className="flex justify-end">
                             <Button
                               type="button"
@@ -319,7 +331,7 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
                               size="sm"
                               onClick={() => onOpenAnalysis(resume.id)}
                             >
-                              Open
+                              View
                               <OpenInNewWindowIcon data-icon="inline-end" aria-hidden="true" />
                             </Button>
                           </div>
@@ -340,5 +352,6 @@ export function DashboardView({ onNewAnalysis, onOpenAnalysis }: DashboardViewPr
         </section>
       </section>
     </main>
+    </>
   );
 }

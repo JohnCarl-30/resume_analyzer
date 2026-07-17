@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import {
   ArrowRightIcon,
   CheckCircledIcon,
@@ -26,6 +27,9 @@ interface StepDocumentUploadProps {
   canContinue: boolean;
   createFromScratch: boolean;
   setCreateFromScratch: (value: boolean) => void;
+  uploadDisabled?: boolean;
+  quotaExhaustedMessage?: string;
+  savedCheckPath?: string | null;
 }
 
 export function StepDocumentUpload({
@@ -43,7 +47,17 @@ export function StepDocumentUpload({
   canContinue,
   createFromScratch,
   setCreateFromScratch,
+  uploadDisabled = false,
+  quotaExhaustedMessage,
+  savedCheckPath = null,
 }: StepDocumentUploadProps) {
+  const uploadAreaClassName = uploadDisabled
+    ? "flex min-h-72 cursor-not-allowed flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 px-6 py-8 text-center opacity-70"
+    : cn(
+        "flex min-h-72 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed px-6 py-8 text-center transition-colors",
+        isDragActive ? "border-primary bg-accent" : "border-border bg-background hover:bg-muted/40",
+      );
+
   return (
     <section className="section-reveal flex flex-1 flex-col overflow-y-auto bg-background px-4 py-8 sm:px-8 lg:px-10">
       <div className={`mx-auto flex w-full max-w-6xl flex-1 flex-col ${GAP.section}`}>
@@ -58,6 +72,20 @@ export function StepDocumentUpload({
         </div>
 
         <div className={`mx-auto flex w-full max-w-3xl flex-col ${GAP.default}`}>
+          {uploadDisabled && quotaExhaustedMessage ? (
+            <Alert>
+              <AlertTitle>Free check already used</AlertTitle>
+              <AlertDescription className="space-y-3">
+                <p>{quotaExhaustedMessage}</p>
+                {savedCheckPath ? (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={savedCheckPath}>Open saved check</Link>
+                  </Button>
+                ) : null}
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
           <div className={`flex flex-col ${GAP.inline} border-b ${PADDING_Y.default}`}>
             <h2 className="text-base font-semibold text-foreground">Your resume</h2>
             <p className="text-sm text-muted-foreground">Use a PDF or Word file up to 10 MB.</p>
@@ -66,15 +94,25 @@ export function StepDocumentUpload({
             <label
               htmlFor={resumeInputId}
               onDragOver={(event) => {
+                if (uploadDisabled) {
+                  return;
+                }
                 event.preventDefault();
                 setIsDragActive(true);
               }}
-              onDragLeave={() => setIsDragActive(false)}
-              onDrop={handleDrop}
-              className={cn(
-                "flex min-h-72 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed px-6 py-8 text-center transition-colors",
-                isDragActive ? "border-primary bg-accent" : "border-border bg-background hover:bg-muted/40",
-              )}
+              onDragLeave={() => {
+                if (!uploadDisabled) {
+                  setIsDragActive(false);
+                }
+              }}
+              onDrop={(event) => {
+                if (uploadDisabled) {
+                  event.preventDefault();
+                  return;
+                }
+                handleDrop(event);
+              }}
+              className={uploadAreaClassName}
             >
               <input
                 id={resumeInputId}
@@ -83,6 +121,7 @@ export function StepDocumentUpload({
                 accept=".pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 className="sr-only"
                 onChange={handleFileChange}
+                disabled={uploadDisabled}
               />
 
               <div className="flex size-12 items-center justify-center rounded-lg bg-background text-muted-foreground ring-1 ring-border">
@@ -97,7 +136,9 @@ export function StepDocumentUpload({
                     className={buttonVariants({ variant: "outline", size: "sm" })}
                     onClick={(event) => {
                       event.preventDefault();
-                      openFilePicker();
+                      if (!uploadDisabled) {
+                        openFilePicker();
+                      }
                     }}
                   >
                     Replace file
@@ -105,13 +146,21 @@ export function StepDocumentUpload({
                 </div>
               ) : (
                 <div className={`mt-5 flex max-w-md flex-col items-center ${GAP.inline}`}>
-                  <p className="text-lg font-semibold text-foreground">Drag your resume here</p>
-                  <p className="text-sm text-muted-foreground">PDF or Word file, up to 10 MB</p>
+                  <p className="text-lg font-semibold text-foreground">
+                    {uploadDisabled ? "Upload unavailable" : "Drag your resume here"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {uploadDisabled
+                      ? "Start with a blank resume below, or open your saved check."
+                      : "PDF or Word file, up to 10 MB"}
+                  </p>
                   <span
                     className={buttonVariants({ variant: "outline", size: "sm" })}
                     onClick={(event) => {
                       event.preventDefault();
-                      openFilePicker();
+                      if (!uploadDisabled) {
+                        openFilePicker();
+                      }
                     }}
                   >
                     <FilePlusIcon data-icon="inline-start" aria-hidden="true" />
@@ -154,9 +203,11 @@ export function StepDocumentUpload({
         <p className="text-sm leading-6 text-muted-foreground">
           {createFromScratch
             ? "You'll start with a blank resume and build it in the editor."
-            : resumeFile
-              ? `Selected file: ${resumeFile.name}`
-              : "Add a PDF or Word resume to continue."}
+            : uploadDisabled
+              ? "Uploading for a new check is unavailable on this account."
+              : resumeFile
+                ? `Selected file: ${resumeFile.name}`
+                : "Add a PDF or Word resume to continue."}
         </p>
         <Button type="button" onClick={onNext} disabled={!canContinue}>
           {createFromScratch ? "Open Builder" : "Next: Pick Layout"}

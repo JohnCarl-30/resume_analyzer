@@ -16,7 +16,7 @@ export default function NotFound() {
             <Link href="/create-resume">Create Resume</Link>
           </Button>
           <Button asChild variant="outline">
-            <Link href="/analyses">Saved Checks</Link>
+            <Link href="/home">Home</Link>
           </Button>
         </div>
       </section>

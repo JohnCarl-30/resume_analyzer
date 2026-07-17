@@ -53,12 +53,6 @@ analysisRouter.post(
   asyncHandler(analysisController.createFromTemplate),
 );
 analysisRouter.post(
-  "/pipeline",
-  requireAuth,
-  analysisUpload.single("resume"),
-  asyncHandler(analysisController.runPipeline),
-);
-analysisRouter.post(
   "/search",
   requireAuth,
   asyncHandler(analysisController.semanticSearch),

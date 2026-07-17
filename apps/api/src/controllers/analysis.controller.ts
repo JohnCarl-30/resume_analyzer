@@ -1,7 +1,6 @@
 import type { Request, Response } from "express";
 
 import { analysisService } from "../services/analysis.service.js";
-import { llmPipelineService } from "../services/llm-pipeline.service.js";
 import { semanticSearchService } from "../services/semantic-search.service.js";
 import { evaluationService } from "../services/evaluation.service.js";
 import { fewShotService } from "../services/few-shot.service.js";
@@ -76,19 +75,6 @@ export const analysisController = {
       `inline; filename="${encodeURIComponent(sourceFile.fileName)}"`,
     );
     res.send(Buffer.from(sourceFile.dataBase64, "base64"));
-  },
-
-  async runPipeline(req: Request, res: Response) {
-    const result = await llmPipelineService.runPipeline({
-      targetRole: req.body.targetRole,
-      jobDescription: req.body.jobDescription,
-      resumeFile: req.file,
-      resumeText: req.body.resumeText,
-      useFewShot: req.body.useFewShot ?? false,
-      generateEmbedding: req.body.generateEmbedding ?? false,
-    });
-
-    res.status(201).json({ data: result });
   },
 
   async semanticSearch(req: Request, res: Response) {

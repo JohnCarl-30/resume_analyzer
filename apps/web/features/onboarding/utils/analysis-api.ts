@@ -1,6 +1,5 @@
-import { type ApiError } from "../../../lib/api-client";
+import { type ApiError, ANALYSIS_REQUEST_TIMEOUT_MS } from "../../../lib/api-client";
 import { apiClient } from "../../../lib/api-instance";
-import { buildApiUrl } from "../../../lib/api";
 import type { ResumeAnalysisResult } from "../../editor/model/resume-analysis";
 import { resumeFormToText } from "../../editor/model/resume-form";
 
@@ -20,6 +19,10 @@ interface CreateTemplateAnalysisInput {
 
 function buildErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error) {
+    if (error.message.includes("Request timeout after")) {
+      return "This resume check is taking longer than expected. Please wait a moment and try again.";
+    }
+
     if ("fieldErrors" in error && error.fieldErrors) {
       const orderedFieldLabels: Record<string, string> = {
         targetRole: "Target role",
@@ -56,7 +59,10 @@ export async function createResumeAnalysis(
     formData.set("selectedTemplateId", input.selectedTemplateId);
     formData.set("resume", input.resumeFile);
 
-    return await apiClient.post<ResumeAnalysisResult>("/api/analysis/upload", formData, true);
+    return await apiClient.post<ResumeAnalysisResult>("/api/analysis/upload", formData, {
+      isFormData: true,
+      timeout: ANALYSIS_REQUEST_TIMEOUT_MS,
+    });
   } catch (error) {
     throw new Error(buildErrorMessage(error, "Unable to check this resume right now."));
   }
@@ -66,7 +72,9 @@ export async function createAnalysisFromTemplate(
   input: CreateTemplateAnalysisInput,
 ): Promise<ResumeAnalysisResult> {
   try {
-    return await apiClient.post<ResumeAnalysisResult>("/api/analysis/template", input);
+    return await apiClient.post<ResumeAnalysisResult>("/api/analysis/template", input, {
+      timeout: ANALYSIS_REQUEST_TIMEOUT_MS,
+    });
   } catch (error) {
     throw new Error(buildErrorMessage(error, "Unable to check this resume right now."));
   }
@@ -89,7 +97,30 @@ export async function listResumeAnalyses(): Promise<ResumeAnalysisResult[]> {
 }
 
 export function getResumeAnalysisSourceUrl(analysisId: string) {
-  return buildApiUrl(`/api/analysis/${analysisId}/source`);
+  return `/api/analysis/${analysisId}/source`;
+}
+
+export interface ResumeAnalysisSourcePreview {
+  sourceUrl: string;
+  previewUrl: string | null;
+}
+
+export async function loadResumeAnalysisSourcePreview(
+  analysisId: string,
+): Promise<ResumeAnalysisSourcePreview> {
+  try {
+    const { blob, contentType } = await apiClient.getBlob(
+      getResumeAnalysisSourceUrl(analysisId),
+    );
+    const sourceUrl = URL.createObjectURL(blob);
+
+    return {
+      sourceUrl,
+      previewUrl: contentType === "application/pdf" ? sourceUrl : null,
+    };
+  } catch {
+    throw new Error("Unable to load the saved resume file right now.");
+  }
 }
 
 export async function updateResumeAnalysis(
@@ -97,7 +128,9 @@ export async function updateResumeAnalysis(
   input: { jobDescription: string; targetRole?: string },
 ): Promise<ResumeAnalysisResult> {
   try {
-    return await apiClient.patch<ResumeAnalysisResult>(`/api/analysis/${analysisId}`, input);
+    return await apiClient.patch<ResumeAnalysisResult>(`/api/analysis/${analysisId}`, input, {
+      timeout: ANALYSIS_REQUEST_TIMEOUT_MS,
+    });
   } catch (error) {
     throw new Error(buildErrorMessage(error, "Failed to update this resume check."));
   }
