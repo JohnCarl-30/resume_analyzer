@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { SignOutButton, useUser } from "@clerk/nextjs";
 
+import { Button } from "@/components/ui/button";
+
 interface AlreadySignedInPanelProps {
   redirectPath: string;
 }
@@ -12,36 +14,38 @@ export function AlreadySignedInPanel({ redirectPath }: AlreadySignedInPanelProps
   const email = user?.primaryEmailAddress?.emailAddress;
 
   return (
-    <div className="space-y-4 text-sm">
-      <p className="leading-6 text-muted-foreground">
-        You&apos;re already signed in
-        {email ? (
-          <>
-            {" "}
-            as <span className="font-medium text-foreground">{email}</span>
-          </>
-        ) : null}
-        .
-      </p>
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <Link
-          href={redirectPath}
-          className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          Continue to resume check
-        </Link>
-        <SignOutButton
-          signOutOptions={{
-            redirectUrl: `/auth/sign-in?next=${encodeURIComponent(redirectPath)}`,
-          }}
-        >
-          <button
-            type="button"
-            className="inline-flex h-11 items-center justify-center rounded-md border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+    <div className="app-auth-card overflow-hidden">
+      <div className="space-y-6 px-5 py-6 sm:px-6 sm:py-7">
+        <header>
+          <h1 className="display-serif text-2xl text-foreground sm:text-[1.75rem]">
+            You&apos;re signed in
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground text-pretty">
+            {email ? (
+              <>
+                Continue as <span className="font-medium text-foreground">{email}</span>, or switch
+                accounts.
+              </>
+            ) : (
+              "Continue to your resume check, or switch accounts."
+            )}
+          </p>
+        </header>
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button asChild className="h-11 px-4 sm:flex-1">
+            <Link href={redirectPath}>Continue to resume check</Link>
+          </Button>
+          <SignOutButton
+            signOutOptions={{
+              redirectUrl: `/auth/sign-in?next=${encodeURIComponent(redirectPath)}`,
+            }}
           >
-            Use another account
-          </button>
-        </SignOutButton>
+            <Button type="button" variant="outline" className="h-11 px-4 sm:flex-1">
+              Use another account
+            </Button>
+          </SignOutButton>
+        </div>
       </div>
     </div>
   );
