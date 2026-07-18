@@ -83,7 +83,7 @@ export function AppShellHeader({ active, quotaNav: quotaNavProp }: AppShellHeade
           className="brand-logo inline-flex min-w-0 items-center gap-2 text-base font-semibold tracking-tight"
         >
           <BrandMark />
-          <span className="font-brand">Deep Focus</span>
+          <span className="font-brand">Resumae</span>
         </Link>
 
         <nav
