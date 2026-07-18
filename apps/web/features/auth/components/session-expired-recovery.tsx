@@ -34,8 +34,12 @@ export function SessionExpiredRecovery() {
   }
 
   return (
-    <p className="mb-6 text-sm leading-6 text-muted-foreground" role="status">
-      Your previous session couldn&apos;t be verified. Signing you out so you can sign in again…
+    <p
+      className="mb-6 rounded-md border border-border bg-muted px-3 py-2.5 text-sm leading-6 text-foreground"
+      role="status"
+      aria-live="polite"
+    >
+      Session expired. Signing you out so you can sign in again…
     </p>
   );
 }
