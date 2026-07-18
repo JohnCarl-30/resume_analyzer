@@ -210,16 +210,11 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
   }
 
   function handleNext() {
-    if (uploadBlocked && !createFromScratch && step < 3) {
-      setStep(3);
-      return;
-    }
-
-    if (step === 1 && canContinueFromTargetRole && !uploadBlocked) {
+    if (step === 1 && canContinueFromTargetRole) {
       setStep(2);
       return;
     }
-    if (step === 2 && canContinueFromJobDescription && !uploadBlocked) {
+    if (step === 2 && canContinueFromJobDescription) {
       setStep(3);
       return;
     }
@@ -574,6 +569,32 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
                   </nav>
                 </div>
 
+                {!initialAnalysisId && !quotaLoading && quotaNav.hasError && (
+                  <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-800">
+                    Couldn&apos;t verify your plan status.
+                    <button
+                      type="button"
+                      onClick={() => void refetchQuota()}
+                      className="ml-2 underline hover:text-amber-900"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+
+                {!initialAnalysisId && !quotaLoading && !quotaNav.hasError && !quotaNav.canUpload && (
+                  <div className="border-b border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-4 py-2 text-center text-sm text-[color:var(--page-muted)]">
+                    Free check used.{" "}
+                    {quotaNav.savedCheckPath ? (
+                      <a href={quotaNav.savedCheckPath} className="underline hover:text-[color:var(--page-text)]">
+                        Open your saved check
+                      </a>
+                    ) : (
+                      <span>You can still start a blank draft below.</span>
+                    )}
+                  </div>
+                )}
+
                 {analysisIdFromUrl && isRestoringAnalysis ? (
                   <div className="flex flex-1 items-center justify-center px-6 py-16">
                     <div className="max-w-md space-y-3 text-center">
@@ -585,20 +606,6 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
                       </h2>
                       <p className="text-base text-[color:var(--page-muted)]">
                         We&apos;re loading the last result so you can keep working after a refresh.
-                      </p>
-                    </div>
-                  </div>
-                ) : !initialAnalysisId && quotaLoading ? (
-                  <div className="flex flex-1 items-center justify-center px-6 py-16">
-                    <div className="max-w-md space-y-3 text-center">
-                      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[color:var(--brand)]">
-                        Checking plan
-                      </p>
-                      <h2 className="display-serif text-3xl text-[color:var(--page-text)]">
-                        Loading your account status
-                      </h2>
-                      <p className="text-base text-[color:var(--page-muted)]">
-                        We&apos;ll confirm whether your free resume check is available before you upload.
                       </p>
                     </div>
                   </div>
@@ -630,14 +637,14 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
                       </div>
                     </div>
                   </div>
-                ) : step === 1 && !uploadBlocked ? (
+                ) : step === 1 ? (
                   <StepTargetRole
                     targetRole={targetRole}
                     setTargetRole={setTargetRole}
                     onNext={handleNext}
                     canContinue={canContinueFromTargetRole}
                   />
-                ) : step === 2 && !uploadBlocked ? (
+                ) : step === 2 ? (
                   <StepJobDescription
                     jobDescription={jobDescription}
                     setJobDescription={setJobDescription}
