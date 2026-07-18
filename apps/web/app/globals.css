@@ -35,6 +35,12 @@
   /* Hallmark · landing-page redesign (app/page.tsx): the one net-new token this
    * build needed. Everything else reuses the tokens already declared above. */
   --tag-bullet: oklch(62% 0.15 68);
+  --auth-stage: oklch(30% 0.038 258);
+  --auth-stage-deep: oklch(24% 0.042 258);
+  --auth-stage-mid: oklch(34% 0.035 259);
+  --auth-stage-text: oklch(96.5% 0.008 258);
+  --auth-stage-muted: oklch(74% 0.02 258);
+  --auth-stage-keyword: oklch(100% 0 0);
   --shadow-lg: 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 1px 4px rgba(0, 0, 0, 0.03);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
@@ -355,6 +361,24 @@ textarea {
   }
 }
 
+@keyframes enter-up-safe {
+  from {
+    transform: translateY(12px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes auth-callout-enter {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes atmosphere-drift {
   0%,
   100% {
@@ -404,6 +428,14 @@ textarea {
   animation-delay: var(--enter-delay, 0ms);
 }
 
+/* Functional surfaces: visible by default; motion enhances transform only */
+.animate-enter-up-safe {
+  opacity: 1;
+  transform: translateY(0);
+  animation: enter-up-safe 520ms var(--ease-out-expo) both;
+  animation-delay: var(--enter-delay, 0ms);
+}
+
 .atmosphere-label {
   color: var(--page-muted);
   animation: atmosphere-drift 22s ease-in-out infinite;
@@ -427,23 +459,452 @@ textarea {
   animation-delay: var(--enter-delay, 0ms);
 }
 
-.auth-document-art {
-  animation: subtle-float 9s ease-in-out infinite;
+/* Auth · intake desk: dark editorial stage + light form pane */
+.app-auth-stage {
+  background:
+    radial-gradient(
+      ellipse 90% 70% at 12% 0%,
+      color-mix(in srgb, var(--brand) 22%, transparent),
+      transparent 58%
+    ),
+    linear-gradient(
+      165deg,
+      var(--auth-stage-deep) 0%,
+      var(--auth-stage) 42%,
+      var(--auth-stage-mid) 100%
+    );
+  color: var(--auth-stage-text);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .auth-document-art {
-    animation: none;
+.app-auth-stage .brand-logo,
+.app-auth-stage .brand-logo .font-brand,
+.app-auth-stage .display-serif {
+  color: var(--auth-stage-text);
+}
+
+.app-auth-stage .text-muted-foreground {
+  color: var(--auth-stage-muted);
+}
+
+.app-auth-stage .brand-logo [aria-hidden] {
+  color: var(--auth-stage-text);
+}
+
+.app-auth-stage-keywords {
+  color: var(--auth-stage-keyword);
+  opacity: 0.16;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.app-auth-stage .auth-document-art {
+  filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.28));
+}
+
+.app-auth-stage .auth-document-art rect[fill="var(--card)"],
+.app-auth-stage .auth-document-art rect:first-of-type {
+  fill: oklch(98.2% 0.004 258);
+}
+
+.app-auth-stage .auth-document-art text {
+  fill: oklch(52% 0.02 258);
+}
+
+.app-auth-form-pane {
+  background: var(--page-bg);
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 1023px) {
+  .app-auth-form-pane::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse 80% 50% at 50% 100%,
+      color-mix(in srgb, var(--brand) 6%, transparent),
+      transparent 70%
+    );
+    opacity: 0.7;
   }
 }
 
+.app-auth-shell {
+  min-height: 100dvh;
+}
+
+@media (min-width: 1024px) {
+  .app-auth-shell {
+    grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
+  }
+}
+
+.app-auth-card {
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 0.125rem);
+  background: var(--card);
+  box-shadow: var(--shadow-md);
+}
+
+.app-auth-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  background: color-mix(in srgb, var(--muted) 55%, var(--card));
+  text-align: center;
+}
+
+.app-auth-card-footer a {
+  color: var(--brand) !important;
+  display: inline-flex;
+  align-items: center;
+}
+
+.app-auth-clerk .cl-card,
+.app-auth-clerk .cl-cardBox,
+.app-auth-clerk .cl-main,
+.app-auth-clerk .cl-rootBox {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.app-auth-clerk--sign-in .cl-main,
+.app-auth-clerk--sign-in .cl-card,
+.app-auth-clerk--sign-in .cl-form,
+.app-auth-clerk--sign-in .cl-main > *,
+.app-auth-clerk--sign-in .cl-form > * {
+  gap: 0.75rem !important;
+}
+
+.app-auth-clerk--sign-in .cl-formFieldRow,
+.app-auth-clerk--sign-in .cl-formField {
+  gap: 0.375rem !important;
+}
+
+.app-auth-clerk--sign-in .cl-dividerRow {
+  margin-block: 0 !important;
+  gap: 0.375rem !important;
+}
+
+.app-auth-clerk--sign-in .cl-formFieldRow,
+.app-auth-clerk--sign-in .cl-formField,
+.app-auth-clerk--sign-in .cl-dividerRow,
+.app-auth-clerk--sign-in .cl-formButtonPrimary,
+.app-auth-clerk--sign-in .cl-socialButtonsBlockButton {
+  margin-block: 0 !important;
+}
+
+.app-auth-clerk .cl-formButtonPrimary,
+.app-auth-clerk .cl-formButtonPrimary.cl-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  width: 100% !important;
+  min-height: 2.75rem !important;
+  padding-inline: 1rem !important;
+  text-align: center !important;
+  color: var(--background) !important;
+}
+
+.app-auth-clerk .cl-formButtonPrimary span {
+  display: inline !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: inherit !important;
+  text-align: center !important;
+  line-height: 1.25 !important;
+}
+
+/* Hide trailing arrow icons only — never hide the label span (often wraps text + svg). */
+.app-auth-clerk .cl-formButtonPrimaryIcon,
+.app-auth-clerk .cl-formButtonPrimary svg,
+.app-auth-clerk .cl-formButtonPrimary [class*="Arrow"],
+.app-auth-clerk .cl-formButtonPrimary [class*="arrow"] {
+  display: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.app-auth-clerk .cl-form {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.app-auth-clerk .cl-formFieldRow,
+.app-auth-clerk .cl-formField {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  padding-inline: 1px !important;
+  margin: 0 !important;
+}
+
+.app-auth-clerk .cl-dividerRow {
+  margin-block: 0.25rem !important;
+}
+
+.app-auth-clerk {
+  overflow: visible !important;
+}
+
+.app-auth-clerk .cl-formField > div:not([class*="ShowPassword"]),
+.app-auth-clerk .cl-formFieldInput__wrapper,
+.app-auth-clerk .cl-formFieldInputGroup {
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+.app-auth-clerk .cl-formFieldInput__wrapper,
+.app-auth-clerk .cl-formFieldInputGroup {
+  position: relative !important;
+  display: block !important;
+}
+
+.app-auth-clerk .cl-formFieldInput,
+.app-auth-clerk .cl-input,
+.app-auth-clerk input[type="email"],
+.app-auth-clerk input[type="password"],
+.app-auth-clerk input[type="text"] {
+  box-sizing: border-box !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 2.75rem !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: color-mix(in srgb, var(--page-text) 28%, var(--page-line-strong)) !important;
+  border-radius: 0.5rem !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: var(--foreground) !important;
+  box-shadow: none !important;
+  padding-inline: 0.875rem !important;
+}
+
+.app-auth-clerk input[type="password"] {
+  padding-inline-end: 2.75rem !important;
+}
+
+.app-auth-clerk .cl-formFieldInputShowPasswordButton {
+  position: absolute !important;
+  top: 50% !important;
+  right: 0.5rem !important;
+  z-index: 2 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 2rem !important;
+  min-width: 2rem !important;
+  max-width: 2rem !important;
+  height: 2rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  inset-inline-end: 0.5rem !important;
+  inset-inline-start: auto !important;
+  transform: translateY(-50%) !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--muted-foreground) !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.app-auth-clerk .cl-formFieldInputShowPasswordIcon,
+.app-auth-clerk .cl-formFieldInputShowPasswordButton svg {
+  position: static !important;
+  display: block !important;
+  flex-shrink: 0 !important;
+  width: 1rem !important;
+  height: 1rem !important;
+  min-width: 1rem !important;
+  min-height: 1rem !important;
+  max-width: 1rem !important;
+  max-height: 1rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  transform: none !important;
+  pointer-events: none !important;
+}
+
+@media (hover: hover) {
+  .app-auth-clerk .cl-formFieldInputShowPasswordButton:hover {
+    color: var(--foreground) !important;
+    background: transparent !important;
+  }
+}
+
+.app-auth-clerk .cl-formFieldInputShowPasswordButton:focus-visible {
+  outline: 2px solid var(--ring) !important;
+  outline-offset: 1px !important;
+  border-radius: 0.25rem !important;
+}
+
+.app-auth-clerk .cl-formFieldLabel,
+.app-auth-clerk label {
+  color: var(--foreground) !important;
+  font-weight: 500 !important;
+}
+
+.app-auth-clerk .cl-formFieldInput::placeholder,
+.app-auth-clerk .cl-input::placeholder,
+.app-auth-clerk input::placeholder {
+  color: var(--page-muted) !important;
+  opacity: 1 !important;
+}
+
+@media (hover: hover) {
+  .app-auth-clerk .cl-formFieldInput:hover:not(:focus-visible),
+  .app-auth-clerk .cl-input:hover:not(:focus-visible),
+  .app-auth-clerk input:hover:not(:focus-visible) {
+    border-color: color-mix(in srgb, var(--foreground) 28%, var(--page-line-strong)) !important;
+  }
+}
+
+.app-auth-clerk .cl-socialButtonsBlockButton {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-height: 2.75rem !important;
+  text-align: center !important;
+}
+
+.app-auth-clerk .cl-footer,
+.app-auth-clerk a[href*="clerk.com"],
+.app-auth-clerk a[href*="clerk.dev"],
+.app-auth-clerk a[href*="clerk.accounts"],
+.app-auth-clerk .cl-badge,
+.app-auth-clerk .cl-formFieldAction,
+.app-auth-clerk .cl-formFieldHintText,
+.app-auth-clerk .cl-formFieldInfoText,
+.app-auth-clerk .cl-formFieldSuccessText,
+.app-auth-clerk [class*="lastAuthentication"],
+.app-auth-clerk [class*="LastUsed"] {
+  display: none !important;
+}
+
+/* Drop Clerk “Last used” outline on social buttons */
+.app-auth-clerk .cl-socialButtonsBlockButton::before,
+.app-auth-clerk .cl-socialButtonsBlockButton::after {
+  display: none !important;
+  content: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.app-auth-clerk .cl-formButtonPrimary:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent) !important;
+}
+
+.app-auth-clerk .cl-formFieldInput:focus-visible,
+.app-auth-clerk .cl-input:focus-visible,
+.app-auth-clerk input:focus-visible,
+.app-auth-clerk .cl-socialButtonsBlockButton:focus-visible {
+  outline: none !important;
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent) !important;
+}
+
+.app-auth-clerk .cl-dividerText {
+  background: var(--card) !important;
+}
+
+/* Sign-up: compact stack — name row side-by-side, shorter fields */
+.app-auth-clerk--sign-up .cl-main,
+.app-auth-clerk--sign-up .cl-card,
+.app-auth-clerk--sign-up .cl-form,
+.app-auth-clerk--sign-up .cl-main > *,
+.app-auth-clerk--sign-up .cl-form > * {
+  gap: 0.625rem !important;
+}
+
+.app-auth-clerk--sign-up .cl-socialButtons,
+.app-auth-clerk--sign-up .cl-socialButtonsBlock {
+  gap: 0.375rem !important;
+}
+
+.app-auth-clerk--sign-up .cl-formFieldRow,
+.app-auth-clerk--sign-up .cl-formField {
+  gap: 0.25rem !important;
+}
+
+.app-auth-clerk--sign-up .cl-formFieldRow:has(> :nth-child(2)) {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem !important;
+}
+
+.app-auth-clerk--sign-up .cl-dividerRow {
+  margin-block: 0 !important;
+  gap: 0.375rem !important;
+}
+
+.app-auth-clerk--sign-up .cl-dividerText {
+  padding-inline: 0.5rem !important;
+}
+
+.app-auth-clerk--sign-up .cl-formFieldRow,
+.app-auth-clerk--sign-up .cl-formField,
+.app-auth-clerk--sign-up .cl-dividerRow,
+.app-auth-clerk--sign-up .cl-formButtonPrimary,
+.app-auth-clerk--sign-up .cl-socialButtonsBlockButton {
+  margin-block: 0 !important;
+}
+
+.app-auth-clerk--sign-up input[type="password"] {
+  padding-inline-end: 2.5rem !important;
+}
+
+.app-auth-clerk--sign-up input,
+.app-auth-clerk--sign-up .cl-formFieldInput,
+.app-auth-clerk--sign-up .cl-input,
+.app-auth-clerk--sign-up .cl-formButtonPrimary,
+.app-auth-clerk--sign-up .cl-socialButtonsBlockButton {
+  min-height: 2.5rem !important;
+}
+
 .brand-logo {
-  transition: transform 280ms var(--ease-out-expo);
+  transition: transform var(--motion-base) var(--ease-out-expo);
 }
 
 @media (hover: hover) {
   .brand-logo:hover {
-    transform: scale(1.05);
+    transform: scale(1.03);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-logo,
+  .auth-document-art {
+    transition: none;
+  }
+
+  .brand-logo:hover,
+  .auth-document-art:hover {
+    transform: none;
   }
 }
 
@@ -459,7 +920,12 @@ select:focus {
 }
 
 .auth-document-art {
-  transition: transform 500ms var(--ease-out-expo);
+  transition: transform var(--motion-base) var(--ease-out-expo);
+}
+
+.auth-callout-pin {
+  animation: auth-callout-enter 480ms var(--ease-out-expo) both;
+  animation-delay: var(--pin-delay, 0ms);
 }
 
 @media (hover: hover) {
@@ -506,7 +972,9 @@ button:disabled {
   .section-reveal,
   .scroll-reveal,
   .animate-enter-up,
+  .animate-enter-up-safe,
   .animate-enter-right,
+  .auth-callout-pin,
   .atmosphere-label,
   .callout-pin {
     animation: none;
@@ -641,87 +1109,82 @@ button:disabled {
   }
 }
 
-/* Hallmark · /home: Workbench (Impeccable redesign) · /account: Tabular Spec Sheet
- * genre: editorial · theme: custom (existing tokens) · nav: N9 · enrichment: none
- * pre-emit critique: P5 H4 E5 S4 R5 V5 */
+/* Impeccable · /home launchpad · product register · motion: state-only
+ * Single column: masthead (greeting + primary CTA) → quota strip → saved checks */
 
-/* Impeccable · /home: Workbench · product register · motion: state-only */
-
-.app-home-workbench {
-  display: grid;
-  gap: 2rem;
-  min-width: 0;
-}
-
-@media (min-width: 1024px) {
-  .app-home-workbench {
-    grid-template-columns: minmax(15rem, 17.5rem) minmax(0, 1fr);
-    gap: 2.5rem;
-    align-items: start;
-  }
-
-  .app-workbench-aside {
-    position: sticky;
-    top: 5.5rem;
-  }
-}
-
-.app-workbench-aside {
+.app-home-launchpad {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  min-width: 0;
-  padding: 1.25rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--muted) 30%, var(--background));
-}
-
-.app-workbench-main {
+  gap: 2.5rem;
   min-width: 0;
 }
 
-.app-workbench-quota {
-  padding-top: 0.25rem;
-  border-top: 1px solid var(--border);
-}
-
-.app-metric-row {
+.app-home-masthead-block {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.app-metric-chip {
-  flex: 1 1 5.5rem;
+  flex-direction: column;
+  gap: 1.25rem;
   min-width: 0;
-  padding: 0.625rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--background);
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
 }
 
-.app-metric-chip dt {
+.app-home-masthead-block .app-home-masthead {
+  align-items: flex-start;
+  gap: 1.25rem;
+}
+
+.app-home-eyebrow {
+  font-family: var(--font-mono);
   font-size: var(--text-caption);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--muted-foreground);
 }
 
-.app-metric-chip dd {
-  margin-top: 0.125rem;
-  font-family: var(--font-mono);
-  font-size: var(--text-data);
+.app-home-masthead-title {
+  font-family: var(--font-display);
   font-weight: 600;
-  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.app-home-avatar-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding-inline: 0.375rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  font-size: 0.6875rem;
+  font-weight: 600;
   color: var(--foreground);
 }
 
-.app-metric-chip-note {
-  margin-left: 0.25rem;
-  font-family: var(--font-ui);
+.app-home-account-link {
   font-size: var(--text-caption);
-  font-weight: 400;
   color: var(--muted-foreground);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--motion-fast) var(--ease-out-quart);
+}
+
+@media (hover: hover) {
+  .app-home-account-link:hover {
+    color: var(--foreground);
+  }
+}
+
+.app-home-quota-strip {
+  min-width: 0;
+}
+
+.app-home-checks {
+  min-width: 0;
 }
 
 .app-checks-list {
@@ -751,12 +1214,30 @@ button:disabled {
   align-items: center;
   width: 100%;
   min-height: 2.75rem;
-  padding: 0.75rem;
+  padding: 0.75rem 0.75rem 0.75rem 0.875rem;
   border: 0;
   border-bottom: 1px solid var(--border);
+  border-left: 2px solid color-mix(in srgb, var(--page-line-strong) 70%, transparent);
   background: transparent;
   text-align: left;
-  transition: background-color var(--motion-fast) var(--ease-out-quart);
+  transition:
+    background-color var(--motion-fast) var(--ease-out-quart),
+    border-left-color var(--motion-fast) var(--ease-out-quart);
+}
+
+.app-checks-score-stamp {
+  display: inline-flex;
+  min-width: 2.75rem;
+  justify-content: center;
+  padding: 0.125rem 0.375rem;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--muted) 35%, var(--background));
+  font-family: var(--font-mono);
+  font-size: var(--text-data);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 @media (min-width: 768px) {
@@ -774,6 +1255,7 @@ button:disabled {
 @media (hover: hover) and (pointer: fine) {
   .app-checks-row:hover {
     background: color-mix(in srgb, var(--muted) 50%, transparent);
+    border-left-color: var(--brand);
   }
 }
 
