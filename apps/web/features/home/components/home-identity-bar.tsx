@@ -5,28 +5,16 @@ import { Pencil1Icon, PlusIcon, ReloadIcon } from "@radix-ui/react-icons";
 import { useUser } from "@clerk/nextjs";
 
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import type { AnalysisQuota } from "@/lib/account-api";
 import type { AnalysisQuotaNavigationState } from "@/lib/analysis-quota-navigation";
 import { cn } from "@/lib/utils";
 
+import {
+  getHomeMastheadEyebrow,
+  getHomeMastheadHeadline,
+  getInitials,
+} from "../lib/home-display";
 import { HomeIdentitySkeleton } from "./home-identity-skeleton";
-
-function getInitials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) {
-    return "?";
-  }
-  if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase();
-  }
-  return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
-}
-
-function getFirstName(displayName: string) {
-  const first = displayName.trim().split(/\s+/)[0];
-  return first && first !== "Your" ? first : null;
-}
 
 interface HomeIdentityBarProps {
   quota: AnalysisQuota | null;
@@ -60,12 +48,10 @@ export function HomeIdentityBar({
     user?.fullName?.trim() ||
     user?.primaryEmailAddress?.emailAddress ||
     "Your account";
-  const firstName = getFirstName(displayName);
   const email = user?.primaryEmailAddress?.emailAddress;
   const initials = getInitials(displayName);
   const quotaUsed = quota?.used ?? 0;
   const quotaLimit = quota?.limit ?? 1;
-  const quotaPercent = quotaLimit > 0 ? Math.round((quotaUsed / quotaLimit) * 100) : 0;
 
   const planLabel = quotaError
     ? "Plan unavailable"
@@ -73,30 +59,75 @@ export function HomeIdentityBar({
       ? "Check ready"
       : "Check used";
 
+  const eyebrow = getHomeMastheadEyebrow(quotaError, quotaNav.canUpload);
+  const headline = getHomeMastheadHeadline(quotaError, quotaNav.canUpload);
+
+  const supportingCopy = quotaError
+    ? null
+    : quotaNav.canUpload
+      ? "Match a resume to a job post. Results stay on the analysis page."
+      : quotaNav.exhaustedMessage;
+
   return (
-    <aside
-      className={cn("app-workbench-aside", className)}
-      aria-label="Your workspace"
-    >
-      <div className="flex min-w-0 items-start gap-3">
-        <div
-          className="app-home-avatar flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-background text-sm font-semibold text-foreground"
-          aria-label={`Signed in as ${displayName}`}
-        >
-          <span aria-hidden="true">{initials}</span>
-        </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-semibold tracking-tight text-foreground text-balance">
-            {firstName ? `Welcome, ${firstName}` : "Welcome back"}
+    <header className={cn("app-home-masthead-block", className)} aria-label="Your workspace">
+      <div className="app-home-masthead">
+        <div className="app-home-hero min-w-0">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="app-home-eyebrow">{eyebrow}</span>
+            <span
+              className="app-home-avatar-chip"
+              aria-label={`Signed in as ${displayName}`}
+              title={displayName}
+            >
+              <span aria-hidden="true">{initials}</span>
+            </span>
+          </div>
+
+          <h1 className="app-home-masthead-title mt-2 text-2xl text-foreground sm:text-[1.75rem]">
+            {headline}
           </h1>
-          {email ? (
-            <p className="mt-0.5 truncate text-caption text-muted-foreground">{email}</p>
+
+          {supportingCopy ? (
+            <p className="mt-2 max-w-[48ch] text-sm leading-6 text-muted-foreground text-pretty">
+              {supportingCopy}
+            </p>
           ) : null}
+
+          {email ? (
+            <p className="mt-2 truncate text-caption text-muted-foreground">{email}</p>
+          ) : null}
+        </div>
+
+        <div className="app-home-actions flex w-full flex-col gap-2 sm:w-auto sm:min-w-[12rem]">
+          {quotaNav.canUpload ? (
+            <Button
+              type="button"
+              className="w-full"
+              onClick={onNewAnalysis}
+              disabled={quotaNav.hasError}
+            >
+              <PlusIcon data-icon="inline-start" aria-hidden="true" />
+              Upload resume
+            </Button>
+          ) : quotaNav.savedCheckPath ? (
+            <Button asChild className="w-full">
+              <Link href={quotaNav.savedCheckPath}>Open saved check</Link>
+            </Button>
+          ) : null}
+          {!quotaNav.canUpload && quotaNav.canUseScratchBuilder ? (
+            <Button type="button" variant="outline" className="w-full" onClick={onScratchBuilder}>
+              <Pencil1Icon data-icon="inline-start" aria-hidden="true" />
+              Build from scratch
+            </Button>
+          ) : null}
+          <Link href="/account" className="app-home-account-link min-h-11 self-center sm:self-end">
+            Account settings
+          </Link>
         </div>
       </div>
 
-      <div className="app-workbench-quota space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="app-home-quota-strip">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <span
             className={cn(
               "app-plan-pill",
@@ -107,25 +138,13 @@ export function HomeIdentityBar({
           </span>
           {quota && !quotaError ? (
             <span className="text-data text-muted-foreground">
-              {quotaUsed}/{quotaLimit} used
+              {quotaUsed}/{quotaLimit} checks used
             </span>
           ) : null}
         </div>
 
-        {quota && !quotaError ? (
-          <>
-            <Progress
-              value={quotaPercent}
-              aria-label={`${quotaUsed} of ${quotaLimit} checks used`}
-            />
-            <p className="text-sm leading-6 text-muted-foreground text-pretty">
-              {quotaNav.canUpload
-                ? "Upload a resume to run your check against a job post."
-                : quotaNav.exhaustedMessage}
-            </p>
-          </>
-        ) : quotaError ? (
-          <div className="app-inline-notice" role="alert">
+        {quotaError ? (
+          <div className="app-inline-notice mt-3" role="alert">
             <p className="text-sm leading-6 text-muted-foreground">{quotaError}</p>
             <Button type="button" variant="outline" size="sm" onClick={onQuotaRetry}>
               <ReloadIcon aria-hidden="true" />
@@ -134,28 +153,6 @@ export function HomeIdentityBar({
           </div>
         ) : null}
       </div>
-
-      <div className="flex flex-col gap-2">
-        {quotaNav.canUpload ? (
-          <Button type="button" className="w-full" onClick={onNewAnalysis} disabled={quotaNav.hasError}>
-            <PlusIcon data-icon="inline-start" aria-hidden="true" />
-            Upload resume
-          </Button>
-        ) : quotaNav.savedCheckPath ? (
-          <Button asChild className="w-full">
-            <Link href={quotaNav.savedCheckPath}>Open saved check</Link>
-          </Button>
-        ) : null}
-        {!quotaNav.canUpload && quotaNav.canUseScratchBuilder ? (
-          <Button type="button" variant="outline" className="w-full" onClick={onScratchBuilder}>
-            <Pencil1Icon data-icon="inline-start" aria-hidden="true" />
-            Build from scratch
-          </Button>
-        ) : null}
-        <Button asChild variant="ghost" size="sm" className="w-full text-muted-foreground">
-          <Link href="/account">Account settings</Link>
-        </Button>
-      </div>
-    </aside>
+    </header>
   );
 }
