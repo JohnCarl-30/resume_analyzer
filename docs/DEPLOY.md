@@ -88,9 +88,15 @@ wrangler secret put OPENAI_API_KEY --config cloudflare-api/wrangler.jsonc
 |----------|-------|
 | `NEXT_PUBLIC_API_BASE_URL` | Cloudflare Worker URL from step 4 |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
-| `CLERK_SECRET_KEY` | Clerk secret key |
+| `CLERK_SECRET_KEY` | Clerk secret key (same Clerk app as the publishable key) |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | `/auth/sign-in` |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | `/auth/sign-up` |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | `/home` |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` | `/home` |
 
-4. Deploy. Update `APP_ORIGIN` on the API to match the final Vercel URL if it differs from what you set earlier.
+Remove any legacy `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` / `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` values — they are deprecated and trigger Clerk console warnings when both old and new vars are set.
+
+4. Deploy. Update `APP_ORIGIN` on the API to match the final Vercel URL if it differs from what you set earlier. The API `CLERK_SECRET_KEY` must be from the **same** Clerk application as the web publishable key, or authenticated API calls return 401.
 
 ## 6. Smoke test
 
