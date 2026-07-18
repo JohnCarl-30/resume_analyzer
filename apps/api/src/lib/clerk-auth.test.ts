@@ -17,6 +17,12 @@ vi.mock("@clerk/backend", () => ({
   verifyToken: verifyTokenMock,
 }));
 
+function unsignedJwt(payload: Record<string, unknown>) {
+  const header = Buffer.from(JSON.stringify({ alg: "none", typ: "JWT" })).toString("base64url");
+  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  return `${header}.${body}.sig`;
+}
+
 describe("verifyClerkAccessToken", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -34,14 +40,28 @@ describe("verifyClerkAccessToken", () => {
     });
   });
 
-  it("returns the Clerk subject when token verification succeeds", async () => {
+  it("skips authorizedParties when the token has no azp claim", async () => {
     envMock.CLERK_SECRET_KEY = "sk_test_example";
     verifyTokenMock.mockResolvedValue({ sub: "user_123" });
+    const token = unsignedJwt({ sub: "user_123" });
 
     const { verifyClerkAccessToken } = await import("./clerk-auth.js");
 
-    await expect(verifyClerkAccessToken("valid-token")).resolves.toBe("user_123");
-    expect(verifyTokenMock).toHaveBeenCalledWith("valid-token", {
+    await expect(verifyClerkAccessToken(token)).resolves.toBe("user_123");
+    expect(verifyTokenMock).toHaveBeenCalledWith(token, {
+      secretKey: "sk_test_example",
+    });
+  });
+
+  it("enforces authorizedParties when the token includes azp", async () => {
+    envMock.CLERK_SECRET_KEY = "sk_test_example";
+    verifyTokenMock.mockResolvedValue({ sub: "user_123", azp: "http://localhost:3000" });
+    const token = unsignedJwt({ sub: "user_123", azp: "http://localhost:3000" });
+
+    const { verifyClerkAccessToken } = await import("./clerk-auth.js");
+
+    await expect(verifyClerkAccessToken(token)).resolves.toBe("user_123");
+    expect(verifyTokenMock).toHaveBeenCalledWith(token, {
       secretKey: "sk_test_example",
       authorizedParties: [
         "http://localhost:3000",
