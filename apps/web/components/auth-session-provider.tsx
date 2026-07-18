@@ -8,20 +8,26 @@ import { resolveSafeRedirectPath } from "@/lib/auth-redirect";
 import { setAccessTokenGetter, setUnauthorizedHandler } from "@/lib/auth-token";
 
 export function AuthSessionProvider({ children }: { children: React.ReactNode }) {
-  const { getToken, isLoaded, signOut } = useAuth();
+  const { getToken, isLoaded, isSignedIn, signOut } = useAuth();
   const pathname = usePathname();
   const isHandlingUnauthorizedRef = useRef(false);
-  const authRef = useRef({ getToken, isLoaded });
-  authRef.current = { getToken, isLoaded };
+  const authRef = useRef({ getToken, isLoaded, isSignedIn });
+  authRef.current = { getToken, isLoaded, isSignedIn };
 
   useMemo(() => {
     setAccessTokenGetter(async () => {
-      const { getToken: resolveToken, isLoaded: loaded } = authRef.current;
-      if (!loaded) {
+      const { getToken: resolveToken, isLoaded: loaded, isSignedIn: signedIn } = authRef.current;
+      if (!loaded || !signedIn) {
         return null;
       }
 
-      return resolveToken();
+      const cached = await resolveToken();
+      if (cached) {
+        return cached;
+      }
+
+      // Fresh sessions can be signed-in before a JWT is cached; force one network fetch.
+      return resolveToken({ skipCache: true });
     });
   }, []);
 
