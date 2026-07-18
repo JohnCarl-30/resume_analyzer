@@ -87,7 +87,10 @@ export const viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      signInFallbackRedirectUrl="/home"
+      signUpFallbackRedirectUrl="/home"
+    >
       <html lang="en" className={cn(geistSans.variable, geistMono.variable, lora.variable)}>
         <body className="antialiased">
           <AuthSessionProvider>
