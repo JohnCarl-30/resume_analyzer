@@ -4,7 +4,7 @@ import { HomePageClient } from "./home-page-client";
 
 export const metadata: Metadata = {
   title: "Home",
-  description: "Your profile, saved resume checks, and quick access to upload a new resume.",
+  description: "See your check allowance, reopen saved analyses, or upload a resume for a new match.",
   alternates: {
     canonical: "/home",
   },
