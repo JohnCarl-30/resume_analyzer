@@ -21,7 +21,9 @@ describe("AlreadySignedInPanel", () => {
   it("shows the signed-in email and actions instead of auto-redirecting", () => {
     render(<AlreadySignedInPanel redirectPath="/analysis/new" />);
 
-    expect(screen.getByText((_, element) => element?.textContent === "You're already signed in as alex@example.com.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /you're signed in/i })).toBeInTheDocument();
+    expect(screen.getByText(/continue as/i)).toBeInTheDocument();
+    expect(screen.getByText("alex@example.com")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /continue to resume check/i })).toHaveAttribute(
       "href",
       "/analysis/new",
