@@ -37,7 +37,7 @@ describe("AppShellHeader", () => {
   it("renders app navigation and account actions", () => {
     render(<AppShellHeader active="home" />);
 
-    expect(screen.getByRole("link", { name: /deep focus/i })).toHaveAttribute("href", "/home");
+    expect(screen.getByRole("link", { name: /resumae/i })).toHaveAttribute("href", "/home");
     expect(screen.getByRole("link", { name: /^home$/i })).toHaveAttribute("href", "/home");
     expect(screen.getByRole("link", { name: /upload resume/i })).toHaveAttribute("href", "/analysis/new");
     expect(screen.getByRole("navigation", { name: /app navigation/i })).toBeInTheDocument();

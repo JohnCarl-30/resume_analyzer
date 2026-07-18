@@ -45,6 +45,9 @@ describe("verifyClerkAccessToken", () => {
       secretKey: "sk_test_example",
       authorizedParties: [
         "http://localhost:3000",
+        "https://resumae.tech",
+        "https://www.resumae.tech",
+        "https://resume-analyzer-chi-gray.vercel.app",
         "http://localhost:3001",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3001",

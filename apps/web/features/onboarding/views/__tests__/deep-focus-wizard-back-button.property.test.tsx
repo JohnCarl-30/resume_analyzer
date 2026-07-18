@@ -31,6 +31,16 @@ vi.mock("next/navigation", () => ({
     push: vi.fn(),
     replace: vi.fn(),
   }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
+vi.mock("@/features/account/hooks/use-analysis-quota", () => ({
+  useAnalysisQuota: () => ({
+    quota: { canAnalyze: true, limit: 1, used: 0, analysisId: null, redeemedAt: null },
+    error: "",
+    isLoading: false,
+    refetch: vi.fn(),
+  }),
 }));
 
 async function navigateToStep2(container: HTMLElement, user: ReturnType<typeof userEvent.setup>) {
