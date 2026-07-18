@@ -8,17 +8,17 @@ import { errorHandler } from "./middlewares/error-handler.js";
 
 export const app = express();
 
-const allowedOrigins = new Set(resolveAppOrigins());
-
 app.use(
   cors({
     origin(origin, callback) {
+      const allowedOrigins = new Set(resolveAppOrigins());
+
       if (!origin || allowedOrigins.has(origin)) {
         callback(null, true);
         return;
       }
 
-      callback(new Error("Origin is not allowed by CORS."));
+      callback(null, false);
     },
   }),
 );
