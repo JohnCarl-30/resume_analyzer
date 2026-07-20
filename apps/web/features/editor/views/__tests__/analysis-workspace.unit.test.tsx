@@ -13,19 +13,42 @@
  */
 
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import type { ResumeTemplateVariant } from "../../../templates/model/template";
 import { emptyResumeForm, type ResumeForm } from "../../model/resume-form";
 import type { ResumeAnalysisResult } from "../../model/resume-analysis";
 
+const { mockTailorResumeDraft } = vi.hoisted(() => ({
+  mockTailorResumeDraft: vi.fn().mockResolvedValue({
+    summary: { before: "Experienced engineer", after: "Software engineer with React and GraphQL experience." },
+    skills: { before: "React, TypeScript", after: "React, TypeScript, GraphQL" },
+    experience: [],
+  }),
+}));
+
 // ---------------------------------------------------------------------------
 // Mock ResumeRenderer to avoid rendering complexity in jsdom
 // ---------------------------------------------------------------------------
 vi.mock("../../components/resume-renderer", () => ({
-  ResumeRenderer: ({ variantId }: { variantId: ResumeTemplateVariant; form: ResumeForm }) => (
-    <div data-testid="resume-renderer" data-variant-id={variantId} />
+  ResumeRenderer: ({
+    variantId,
+    showPlaceholders,
+  }: {
+    variantId: ResumeTemplateVariant;
+    form: ResumeForm;
+    showPlaceholders?: boolean;
+  }) => (
+    <div
+      data-testid="resume-renderer"
+      data-variant-id={variantId}
+      data-show-placeholders={String(Boolean(showPlaceholders))}
+    />
   ),
+}));
+
+vi.mock("../../lib/tailor-api", () => ({
+  tailorResumeDraft: mockTailorResumeDraft,
 }));
 
 // Mock TemplateRealPreview to avoid image loading issues in jsdom
@@ -84,6 +107,7 @@ function renderWorkspace(overrides: {
   resumeSourceUrl?: string | null;
   analysisResult?: ResumeAnalysisResult | null;
   initialForm?: ResumeForm;
+  initialSuggestionsReviewOpen?: boolean;
 } = {}) {
   return render(
     <AnalysisWorkspace
@@ -94,6 +118,7 @@ function renderWorkspace(overrides: {
       resumePreviewUrl={null}
       analysisResult={overrides.analysisResult !== undefined ? overrides.analysisResult : minimalAnalysisResult}
       initialForm={overrides.initialForm}
+      initialSuggestionsReviewOpen={overrides.initialSuggestionsReviewOpen}
       onBack={vi.fn()}
     />,
   );
@@ -115,6 +140,16 @@ function checklistStep(title: string) {
 describe("AnalysisWorkspace — unit tests (task 7.7)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear();
+    mockTailorResumeDraft.mockResolvedValue({
+      summary: { before: "Experienced engineer", after: "Software engineer with React and GraphQL experience." },
+      skills: { before: "React, TypeScript", after: "React, TypeScript, GraphQL" },
+      experience: [],
+    });
+  });
+
+  afterEach(() => {
+    sessionStorage.clear();
   });
 
   // -------------------------------------------------------------------------
@@ -297,5 +332,110 @@ describe("AnalysisWorkspace — unit tests (task 7.7)", () => {
     // (they belong to StepSuggestions, not the workspace)
     // The suggestion title "Add metrics" should not be visible outside a modal
     expect(screen.queryByText("Add metrics")).not.toBeInTheDocument();
+  });
+});
+
+describe("AnalysisWorkspace — tailor review flow", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    mockTailorResumeDraft.mockResolvedValue({
+      summary: { before: "Experienced engineer", after: "Software engineer with React and GraphQL experience." },
+      skills: { before: "React, TypeScript", after: "React, TypeScript, GraphQL" },
+      experience: [],
+    });
+  });
+
+  afterEach(() => {
+    sessionStorage.clear();
+  });
+
+  it("auto-opens the tailor review modal when initialSuggestionsReviewOpen is true", async () => {
+    renderWorkspace({ initialSuggestionsReviewOpen: true });
+
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { name: /review job-tailored edits/i })).toBeInTheDocument();
+    });
+  });
+
+  it("does not auto-open the tailor review modal when the review was dismissed", async () => {
+    sessionStorage.setItem("analysis-review-dismissed:test-analysis-unit", "1");
+
+    renderWorkspace({ initialSuggestionsReviewOpen: true });
+
+    await waitFor(() => {
+      expect(mockTailorResumeDraft).toHaveBeenCalled();
+    });
+
+    expect(screen.queryByRole("dialog", { name: /review job-tailored edits/i })).not.toBeInTheDocument();
+  });
+
+  it("shows a sidebar banner and header action for job-tailored edits", async () => {
+    renderWorkspace({ initialForm: emptyResumeForm });
+
+    await waitFor(() => {
+      expect(screen.getByText("Job-tailored edits ready")).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole("button", { name: /review 2 edits/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /review job edits/i })).toBeInTheDocument();
+  });
+
+  it("opens the tailor review modal from the header action", async () => {
+    renderWorkspace({ initialSuggestionsReviewOpen: false });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /review job edits/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /review job edits/i }));
+
+    expect(screen.getByRole("dialog", { name: /review job-tailored edits/i })).toBeInTheDocument();
+  });
+
+  it("hides manual Add suggestion buttons while tailor proposals are available", async () => {
+    renderWorkspace({ initialForm: emptyResumeForm });
+
+    await waitFor(() => {
+      expect(screen.getByText("Job-tailored edits ready")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole("button", { name: /add suggestion for add job words to skills/i })).not.toBeInTheDocument();
+    expect(
+      within(checklistStep("Add job words to Skills")).getByRole("button", { name: /edit section/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("passes showPlaceholders to the layout preview when summary and skills are empty", async () => {
+    renderWorkspace({ initialForm: emptyResumeForm });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("resume-renderer")).toHaveAttribute("data-show-placeholders", "true");
+    });
+  });
+
+  it("does not pass showPlaceholders when summary and skills are already filled", async () => {
+    renderWorkspace();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("resume-renderer")).toHaveAttribute("data-show-placeholders", "false");
+    });
+  });
+
+  it("falls back to Review suggestions when tailor returns no proposals", async () => {
+    mockTailorResumeDraft.mockResolvedValue({
+      summary: { before: "Same", after: "Same" },
+      skills: { before: "React", after: "React" },
+      experience: [],
+    });
+
+    renderWorkspace({ initialForm: emptyResumeForm, initialSuggestionsReviewOpen: false });
+
+    await waitFor(() => {
+      expect(mockTailorResumeDraft).toHaveBeenCalled();
+    });
+
+    expect(screen.queryByText("Job-tailored edits ready")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /review suggestions/i })).toBeInTheDocument();
   });
 });
