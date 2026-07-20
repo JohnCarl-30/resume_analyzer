@@ -68,7 +68,7 @@ function renderStep(type: string, size: number) {
       onNext={vi.fn()}
       canContinue={canContinue}
       createFromScratch={false}
-      setCreateFromScratch={vi.fn()}
+      onChooseScratchBuilder={vi.fn()}
     />,
   );
 
