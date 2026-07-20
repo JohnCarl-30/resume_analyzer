@@ -34,7 +34,7 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-vi.mock("@/features/account/hooks/use-analysis-quota", () => ({
+vi.mock("@/features/account/view-models/use-analysis-quota", () => ({
   useAnalysisQuota: () => ({
     quota: { canAnalyze: true, limit: 1, used: 0, analysisId: null, redeemedAt: null },
     error: "",
