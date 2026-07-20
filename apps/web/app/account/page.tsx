@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { AccountPageView } from "@/features/account/views/account-page-view";
+import { AccountPageClient } from "./account-page-client";
 
 export const metadata: Metadata = {
   title: "Account",
@@ -15,5 +15,5 @@ export const metadata: Metadata = {
 };
 
 export default function AccountPage() {
-  return <AccountPageView />;
+  return <AccountPageClient />;
 }
