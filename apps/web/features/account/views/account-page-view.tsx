@@ -2,7 +2,6 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
-import { useUser } from "@clerk/nextjs";
 import { ArrowLeftIcon } from "@radix-ui/react-icons";
 
 import { Button } from "@/components/ui/button";
@@ -10,9 +9,9 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SessionActionsMenu } from "@/features/account/components/session-actions-menu";
 import { AppShellHeader } from "@/features/auth/components/app-shell-header";
+import type { AnalysisQuota } from "@/lib/account-api";
+import type { AnalysisQuotaNavigationState } from "@/lib/analysis-quota-navigation";
 import { cn } from "@/lib/utils";
-
-import { useAnalysisQuota } from "../hooks/use-analysis-quota";
 
 function getInitials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -58,24 +57,32 @@ function SpecRowSkeleton({ label }: { label: string }) {
   );
 }
 
-export function AccountPageView() {
-  const { user, isLoaded } = useUser();
-  const { quota, error: quotaError, isLoading: quotaLoading } = useAnalysisQuota();
+interface AccountPageViewProps {
+  quota: AnalysisQuota | null;
+  quotaError: string;
+  quotaNav: AnalysisQuotaNavigationState;
+  isProfileLoaded: boolean;
+  displayName: string;
+  email?: string;
+}
 
-  const displayName =
-    user?.fullName?.trim() ||
-    user?.primaryEmailAddress?.emailAddress ||
-    "Your account";
-  const email = user?.primaryEmailAddress?.emailAddress;
+export function AccountPageView({
+  quota,
+  quotaError,
+  quotaNav,
+  isProfileLoaded,
+  displayName,
+  email,
+}: AccountPageViewProps) {
   const quotaUsed = quota?.used ?? 0;
   const quotaLimit = quota?.limit ?? 1;
   const quotaPercent = quotaLimit > 0 ? Math.round((quotaUsed / quotaLimit) * 100) : 0;
-  const profileLoading = !isLoaded;
-  const planLoading = quotaLoading && !quota && !quotaError;
+  const profileLoading = !isProfileLoaded;
+  const planLoading = quotaNav.isLoading && !quota && !quotaError;
 
   return (
     <>
-      <AppShellHeader active="settings" />
+      <AppShellHeader active="settings" quotaNav={quotaNav} />
       <main className="app-account page-enter min-h-screen bg-background text-foreground">
         <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
           <header className="app-account-masthead app-surface-enter">
