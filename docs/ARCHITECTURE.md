@@ -16,24 +16,42 @@ apps/web/features/
     view-models/    UI state and pure view-state helpers.
     components/     Reusable editor pieces.
     views/          Route-sized screens that compose components and state.
+  account/
+    view-models/    Quota loading and account state hooks.
+    components/     Account UI pieces.
+    views/          Account page presentation.
+  home/
+    components/     Home launchpad UI pieces.
+    lib/            Pure display helpers.
+    views/          Home page presentation.
+  landing/
+    components/     Landing page UI pieces.
+    views/          Landing page presentation.
   onboarding/
+    model/          Progress step definitions.
+    view-models/    Wizard progress and state hooks.
     components/     Step UI for the analysis wizard.
     utils/          API adapters and wizard helpers.
     views/          Wizard orchestration.
   resumes/
+    model/          Resume summary types.
     view-models/    Dashboard data loading.
     views/          Dashboard page UI.
   templates/
     model/          Template metadata.
+    view-models/    Template selection state.
     components/     Template cards and previews.
 ```
+
+Route shells in `app/` should stay thin: metadata and a `*-client.tsx` wrapper that calls view-models, then passes props into feature views.
 
 ### Frontend Boundaries
 
 - `model/` files should stay framework-light: types, constants, and data transforms.
 - `view-models/` should own state hooks or pure UI-state helpers.
-- `components/` should render focused pieces that can be understood without route context.
+- `components/` should render focused pieces that can be understood without route context. They receive data via props — no view-model calls.
 - `views/` should compose the flow, wire callbacks, and coordinate route-level state.
+- `app/*-client.tsx` files wire routing, view-models, and navigation handlers before rendering a view.
 
 When a view grows because it contains a complete sub-surface, extract that sub-surface into `components/<surface>/` and move pure calculations into `view-models/`.
 
