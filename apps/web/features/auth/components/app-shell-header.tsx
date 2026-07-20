@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 
-import { useAnalysisQuota } from "@/features/account/hooks/use-analysis-quota";
 import { BrandMark } from "@/features/onboarding/components/wizard-icons";
 import {
-  getAnalysisQuotaNavigationState,
   NEW_ANALYSIS_PATH,
   SCRATCH_BUILDER_PATH,
 } from "@/lib/analysis-quota-navigation";
@@ -18,7 +16,7 @@ type AppShellNav = "home" | "new" | "settings";
 
 interface AppShellHeaderProps {
   active?: AppShellNav;
-  quotaNav?: AnalysisQuotaNavigationState;
+  quotaNav: AnalysisQuotaNavigationState;
 }
 
 const baseNavItems: Array<{ id: AppShellNav; href: string; label: string }> = [
@@ -55,14 +53,7 @@ function getUploadNavItem(quotaNav: AnalysisQuotaNavigationState) {
   };
 }
 
-export function AppShellHeader({ active, quotaNav: quotaNavProp }: AppShellHeaderProps) {
-  const { quota, error: quotaError, isLoading: quotaLoading } = useAnalysisQuota();
-  const quotaNav =
-    quotaNavProp ??
-    getAnalysisQuotaNavigationState(quota, {
-      isLoading: quotaLoading,
-      error: quotaError,
-    });
+export function AppShellHeader({ active, quotaNav }: AppShellHeaderProps) {
   const uploadNav = getUploadNavItem(quotaNav);
 
   const navItems = baseNavItems.map((item) =>
