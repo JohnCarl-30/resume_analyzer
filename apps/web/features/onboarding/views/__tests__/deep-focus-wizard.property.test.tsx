@@ -76,7 +76,7 @@ function renderStep(step: 2 | 3 | 4 | 5): HTMLElement {
         onNext={vi.fn()}
         canContinue={false}
         createFromScratch={false}
-        setCreateFromScratch={vi.fn()}
+        onChooseScratchBuilder={vi.fn()}
       />,
       { container },
     );
