@@ -15,6 +15,8 @@ import {
 import { useWorkspaceEnhance } from "../view-models/use-workspace-enhance";
 import { useWorkspaceExport } from "../view-models/use-workspace-export";
 import { useWorkspaceReanalyze } from "../view-models/use-workspace-reanalyze";
+import { useWorkspaceTailorDraft } from "../view-models/use-workspace-tailor-draft";
+import type { TailorProposal } from "../model/resume-tailor-draft";
 import { PersonalInfoEditor } from "../components/editors/personal-info-editor";
 import { ExperienceEditor } from "../components/editors/experience-editor";
 import { EducationEditor } from "../components/editors/education-editor";
@@ -24,6 +26,7 @@ import { ResumeRenderer } from "../components/resume-renderer";
 import { CreateResumeGuide } from "../components/workspace/create-resume-guide";
 import { AnalysisNextSteps } from "../components/workspace/analysis-next-steps";
 import { AnalysisSuggestionsReviewModal } from "../components/workspace/analysis-suggestions-review-modal";
+import { ResumeTailorReviewModal } from "../components/workspace/resume-tailor-review-modal";
 import {
   Dialog,
   DialogContent,
@@ -478,11 +481,15 @@ export function AnalysisWorkspace({
   const [mobileCreateView, setMobileCreateView] = useState<MobileCreateView>("editor");
   const [mounted, setMounted] = useState(false);
   const [suggestionsReviewOpen, setSuggestionsReviewOpen] = useState(false);
+  const [tailorReviewOpen, setTailorReviewOpen] = useState(false);
+  const hasStructuredResumeData = Boolean(
+    analysisResult?.extractedProfile || initialForm?.personalInfo?.fullName || createMode,
+  );
   const [previewMode, setPreviewMode] = useState<"uploaded" | "structured" | "parsed" | "empty">(
-    resumePreviewUrl
-      ? "uploaded"
-      : analysisResult?.extractedProfile || initialForm?.personalInfo?.fullName || createMode
-        ? "structured"
+    hasStructuredResumeData
+      ? "structured"
+      : resumePreviewUrl
+        ? "uploaded"
         : analysisResult?.parsedResumeText
           ? "parsed"
           : "empty",
@@ -540,6 +547,46 @@ export function AnalysisWorkspace({
     analysisResult && analysisNextSteps
       ? buildAnalysisReviewItems(analysisResult, analysisNextSteps)
       : [];
+  const tailorEnabled = !createMode && Boolean(analysisResult?.extractedProfile);
+  const tailorBaseForm = initialForm ?? form;
+  const {
+    proposals: tailorProposals,
+    isLoading: tailorDraftLoading,
+    error: tailorDraftError,
+    previewForm: tailorPreviewForm,
+    approveProposal,
+    applyApprovedToForm,
+  } = useWorkspaceTailorDraft({
+    enabled: tailorEnabled,
+    baseForm: tailorBaseForm,
+    analysisResult,
+    targetRole,
+  });
+  const preferTailorFlow = tailorProposals.length > 0;
+  const showPrimaryReviewButton =
+    !createMode &&
+    Boolean(analysisResult) &&
+    (preferTailorFlow || tailorDraftLoading || analysisReviewItems.length > 0);
+  const primaryReviewLabel =
+    preferTailorFlow || tailorDraftLoading ? "Review job edits" : "Review suggestions";
+  const showResumePlaceholders =
+    createMode ||
+    Boolean(
+      analysisResult &&
+        !form.personalInfo.summary.trim() &&
+        !form.personalInfo.skills.trim(),
+    );
+
+  function openPrimaryReview() {
+    setPreviewMode("structured");
+    if (tailorEnabled && (tailorDraftLoading || preferTailorFlow || tailorDraftError)) {
+      setTailorReviewOpen(true);
+      return;
+    }
+    if (analysisReviewItems.length > 0) {
+      setSuggestionsReviewOpen(true);
+    }
+  }
   const draftStatusLabel =
     createMode && autosaveKey
       ? draftStatus === "saving"
@@ -599,16 +646,38 @@ export function AnalysisWorkspace({
   }, []);
 
   useEffect(() => {
-    if (createMode || !analysisResult?.id || analysisReviewItems.length === 0) {
+    if (createMode || !analysisResult?.id || hasDismissedAnalysisReview(analysisResult.id)) {
       return;
     }
 
-    if (!initialSuggestionsReviewOpen || hasDismissedAnalysisReview(analysisResult.id)) {
+    if (!initialSuggestionsReviewOpen) {
       return;
     }
 
-    setSuggestionsReviewOpen(true);
-  }, [analysisResult?.id, analysisReviewItems.length, createMode, initialSuggestionsReviewOpen]);
+    if (tailorEnabled) {
+      if (tailorDraftLoading) {
+        return;
+      }
+
+      if (tailorProposals.length > 0) {
+        setTailorReviewOpen(true);
+        setPreviewMode("structured");
+        return;
+      }
+    }
+
+    if (analysisReviewItems.length > 0) {
+      setSuggestionsReviewOpen(true);
+    }
+  }, [
+    analysisResult?.id,
+    analysisReviewItems.length,
+    createMode,
+    initialSuggestionsReviewOpen,
+    tailorDraftLoading,
+    tailorEnabled,
+    tailorProposals.length,
+  ]);
 
   useEffect(() => {
     if (createMode && autosaveKey) {
@@ -640,10 +709,21 @@ export function AnalysisWorkspace({
       return;
     }
 
-    if (resumePreviewUrl && (previewMode === "parsed" || previewMode === "empty")) {
+    if (
+      resumePreviewUrl &&
+      !hasStructuredResumeData &&
+      (previewMode === "parsed" || previewMode === "empty")
+    ) {
       setPreviewMode("uploaded");
     }
-  }, [analysisResult?.extractedProfile, analysisResult?.parsedResumeText, previewMode, resumePreviewUrl, initialForm?.personalInfo?.fullName]);
+  }, [
+    analysisResult?.extractedProfile,
+    analysisResult?.parsedResumeText,
+    hasStructuredResumeData,
+    initialForm?.personalInfo?.fullName,
+    previewMode,
+    resumePreviewUrl,
+  ]);
 
   function sectionIcon(icon: (typeof editorSections)[number]["icon"]) {
     if (icon === "personal") return <UserCircleIcon />;
@@ -1006,6 +1086,25 @@ export function AnalysisWorkspace({
     setSuggestionsReviewOpen(false);
   }
 
+  function handleTailorReviewFinish() {
+    resetForm(applyApprovedToForm());
+    setPreviewMode("structured");
+    setTailorReviewOpen(false);
+
+    if (analysisResult?.id && analysisReviewItems.length > 0) {
+      setSuggestionsReviewOpen(true);
+      return;
+    }
+
+    if (analysisResult?.id) {
+      markAnalysisReviewDismissed(analysisResult.id);
+    }
+  }
+
+  function handleTailorProposalApprove(proposal: TailorProposal) {
+    approveProposal(proposal.id);
+  }
+
   function handleResetCreateDraft() {
     resetForm(emptyResumeForm);
     setEditedTitle("New Resume");
@@ -1123,6 +1222,16 @@ export function AnalysisWorkspace({
                 guide={analysisNextSteps}
                 onAction={handleAnalysisStepAction}
                 onApply={handleApplyAnalysisStepAction}
+                preferTailorFlow={preferTailorFlow}
+                tailor={
+                  tailorEnabled
+                    ? {
+                        isLoading: tailorDraftLoading,
+                        pendingCount: tailorProposals.length,
+                        onReview: openPrimaryReview,
+                      }
+                    : undefined
+                }
               />
             </div>
           )}
@@ -1276,7 +1385,7 @@ export function AnalysisWorkspace({
           className={`print-resume ${previewCardClassName} px-8 py-10 sm:px-12 sm:py-14 lg:px-16 lg:py-16`}
           style={previewZoomStyle}
         >
-          <ResumeRenderer form={form} variantId={activeTemplateId} showPlaceholders={createMode} />
+          <ResumeRenderer form={form} variantId={activeTemplateId} showPlaceholders={showResumePlaceholders} />
         </div>
       );
     }
@@ -1326,7 +1435,7 @@ export function AnalysisWorkspace({
     if (hasStructuredPreview) {
       return (
         <div className={`print-resume ${compactCardClassName} px-4 py-5 text-[0.82rem]`}>
-          <ResumeRenderer form={form} variantId={activeTemplateId} showPlaceholders={createMode} />
+          <ResumeRenderer form={form} variantId={activeTemplateId} showPlaceholders={showResumePlaceholders} />
         </div>
       );
     }
@@ -1372,6 +1481,35 @@ export function AnalysisWorkspace({
           </div>
         </div>
       )}
+
+      {analysisResult && tailorEnabled ? (
+        <ResumeTailorReviewModal
+          key={`${analysisResult.id}-tailor`}
+          open={tailorReviewOpen}
+          onOpenChange={(open) => {
+            setTailorReviewOpen(open);
+            if (!open && analysisResult.id && tailorProposals.length === 0) {
+              if (analysisReviewItems.length > 0) {
+                setSuggestionsReviewOpen(true);
+              } else {
+                markAnalysisReviewDismissed(analysisResult.id);
+              }
+            }
+          }}
+          analysisResult={analysisResult}
+          resumeTitle={resumeTitle}
+          proposals={tailorProposals}
+          isLoading={tailorDraftLoading}
+          error={tailorDraftError}
+          preview={
+            <div className="origin-top-left scale-[0.42]">
+              <ResumeRenderer form={tailorPreviewForm} variantId={activeTemplateId} />
+            </div>
+          }
+          onApprove={handleTailorProposalApprove}
+          onFinish={handleTailorReviewFinish}
+        />
+      ) : null}
 
       {analysisResult && analysisReviewItems.length > 0 ? (
         <AnalysisSuggestionsReviewModal
@@ -1481,7 +1619,7 @@ export function AnalysisWorkspace({
             className={`items-center gap-2 ${
               createMode
                 ? "hidden overflow-x-auto [scrollbar-width:none] sm:flex sm:flex-wrap [&::-webkit-scrollbar]:hidden"
-                : "flex flex-nowrap"
+                : "flex flex-wrap justify-end xl:flex-nowrap"
             }`}
           >
             {!createMode && analysisResult && (
@@ -1497,17 +1635,17 @@ export function AnalysisWorkspace({
               </div>
             )}
 
-            {!createMode && analysisReviewItems.length > 0 ? (
+            {!createMode && showPrimaryReviewButton ? (
               <button
                 type="button"
-                onClick={() => setSuggestionsReviewOpen(true)}
-                className="hidden shrink-0 rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-xs font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] sm:inline-flex"
+                onClick={openPrimaryReview}
+                className="hidden shrink-0 rounded-[12px] border border-[color:var(--brand)]/30 bg-[color:var(--brand-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--brand)] transition hover:border-[color:var(--brand)] hover:bg-[color:var(--brand-soft)] sm:inline-flex"
               >
-                Review suggestions
+                {primaryReviewLabel}
               </button>
             ) : null}
 
-            <div className={`shrink-0 items-center gap-1 ${createMode ? "hidden" : "hidden md:inline-flex"}`}>
+            <div className={`shrink-0 items-center gap-1 ${createMode ? "hidden" : "hidden lg:inline-flex"}`}>
               <button
                 type="button"
                 onClick={undo}
@@ -1530,7 +1668,7 @@ export function AnalysisWorkspace({
               </button>
             </div>
             <div className={`min-w-[6.5rem] shrink-0 items-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-2.5 py-2 text-xs text-[color:var(--page-muted)] sm:px-3 sm:text-sm ${
-              createMode ? "hidden sm:inline-flex" : "hidden sm:inline-flex"
+              createMode ? "hidden sm:inline-flex" : "hidden xl:inline-flex"
             }`}>
               <span className={draftStatusLabel === "Saving..." ? "text-[color:var(--page-muted)]" : "text-emerald-500"}>
                 {draftStatusLabel === "Saving..." ? <ClockIcon /> : <CheckCircleIcon />}
@@ -1569,7 +1707,7 @@ export function AnalysisWorkspace({
               type="button"
               onClick={() => setModalView("templates")}
               aria-label="Choose resume style"
-              className="group hidden max-w-[9rem] shrink-0 items-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-xs font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg-strong)] active:scale-[0.98] sm:inline-flex sm:max-w-none sm:text-sm"
+              className="group hidden max-w-[9rem] shrink-0 items-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-xs font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg-strong)] active:scale-[0.98] lg:inline-flex lg:max-w-none lg:text-sm"
             >
               <span className={createMode ? "hidden sm:inline-flex" : "inline-flex"}>
                 <GridIcon />
