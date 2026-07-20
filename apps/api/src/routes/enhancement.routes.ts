@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { bulletEnhancementService } from "../services/bullet-enhancement.service.js";
+import { resumeTailoringService } from "../services/resume-tailoring.service.js";
+import { tailorResumeSchema } from "../schemas/tailor-resume.schema.js";
 import { asyncHandler } from "../utils/async-handler.js";
 import { HttpError } from "../utils/http-error.js";
 
@@ -22,4 +24,10 @@ enhancementRouter.post("/bullets", asyncHandler(async (req, res) => {
   });
 
   res.json({ data: enhanced });
+}));
+
+enhancementRouter.post("/tailor-resume", asyncHandler(async (req, res) => {
+  const payload = tailorResumeSchema.parse(req.body);
+  const draft = await resumeTailoringService.tailorResume(payload);
+  res.json({ data: draft });
 }));
