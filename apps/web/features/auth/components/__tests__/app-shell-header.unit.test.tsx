@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { getAnalysisQuotaNavigationState } from "@/lib/analysis-quota-navigation";
+
 vi.mock("@clerk/nextjs", () => ({
   SignedIn: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   SignOutButton: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -16,26 +18,19 @@ vi.mock("@clerk/nextjs", () => ({
   }),
 }));
 
-vi.mock("@/features/account/hooks/use-analysis-quota", () => ({
-  useAnalysisQuota: () => ({
-    quota: {
+import { AppShellHeader } from "../app-shell-header";
+
+describe("AppShellHeader", () => {
+  it("renders app navigation and account actions", () => {
+    const quotaNav = getAnalysisQuotaNavigationState({
       limit: 1,
       used: 0,
       canAnalyze: true,
       analysisId: null,
       redeemedAt: null,
-    },
-    error: "",
-    isLoading: false,
-    refetch: vi.fn(),
-  }),
-}));
+    });
 
-import { AppShellHeader } from "../app-shell-header";
-
-describe("AppShellHeader", () => {
-  it("renders app navigation and account actions", () => {
-    render(<AppShellHeader active="home" />);
+    render(<AppShellHeader active="home" quotaNav={quotaNav} />);
 
     expect(screen.getByRole("link", { name: /resumae/i })).toHaveAttribute("href", "/home");
     expect(screen.getByRole("link", { name: /^home$/i })).toHaveAttribute("href", "/home");
