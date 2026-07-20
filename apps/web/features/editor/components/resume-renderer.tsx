@@ -516,11 +516,6 @@ function MinimalistGridLayout({
         {form.personalInfo.summary && (
           <p className="text-center text-[0.95rem] text-[color:var(--page-muted)] leading-relaxed max-w-2xl mx-auto">{form.personalInfo.summary}</p>
         )}
-        {form.personalInfo.skills && (
-          <div className="text-center text-sm text-[color:var(--page-muted)]">
-            <span className="font-semibold">Skills: </span>{form.personalInfo.skills}
-          </div>
-        )}
       </header>
 
       <div className="grid gap-10">
@@ -532,6 +527,15 @@ function MinimalistGridLayout({
             <PlaceholderText>
               Add 2-3 lines about your target role, strongest skills, and the type of impact you make.
             </PlaceholderText>
+          </section>
+        ) : null}
+
+        {form.personalInfo.skills ? (
+          <section className="space-y-4">
+            <h2 className="border-b border-[color:var(--page-line)] pb-2 text-xl font-bold uppercase tracking-widest text-[color:var(--brand)]">
+              Skills
+            </h2>
+            <p className="text-sm leading-7 text-[color:var(--page-muted)]">{form.personalInfo.skills}</p>
           </section>
         ) : null}
 
