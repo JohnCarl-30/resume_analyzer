@@ -26,8 +26,10 @@ interface StepDocumentUploadProps {
   onNext: () => void;
   canContinue: boolean;
   createFromScratch: boolean;
-  setCreateFromScratch: (value: boolean) => void;
+  onChooseScratchBuilder: () => void;
   uploadDisabled?: boolean;
+  quotaLoading?: boolean;
+  quotaExhausted?: boolean;
   quotaExhaustedMessage?: string;
   savedCheckPath?: string | null;
 }
@@ -46,8 +48,10 @@ export function StepDocumentUpload({
   onNext,
   canContinue,
   createFromScratch,
-  setCreateFromScratch,
+  onChooseScratchBuilder,
   uploadDisabled = false,
+  quotaLoading = false,
+  quotaExhausted = false,
   quotaExhaustedMessage,
   savedCheckPath = null,
 }: StepDocumentUploadProps) {
@@ -72,7 +76,7 @@ export function StepDocumentUpload({
         </div>
 
         <div className={`mx-auto flex w-full max-w-3xl flex-col ${GAP.default}`}>
-          {uploadDisabled && quotaExhaustedMessage ? (
+          {quotaExhausted && quotaExhaustedMessage ? (
             <Alert>
               <AlertTitle>Free check already used</AlertTitle>
               <AlertDescription className="space-y-3">
@@ -82,6 +86,15 @@ export function StepDocumentUpload({
                     <Link href={savedCheckPath}>Open saved check</Link>
                   </Button>
                 ) : null}
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
+          {quotaLoading ? (
+            <Alert>
+              <AlertTitle>Checking your allowance</AlertTitle>
+              <AlertDescription>
+                Confirming whether your free resume check is available before you upload.
               </AlertDescription>
             </Alert>
           ) : null}
@@ -174,9 +187,7 @@ export function StepDocumentUpload({
               type="button"
               variant={createFromScratch ? "secondary" : "outline"}
               className={`h-auto justify-start ${GAP.compact} whitespace-normal ${PADDING.default} py-3 text-left`}
-              onClick={() => {
-                setCreateFromScratch(true);
-              }}
+              onClick={onChooseScratchBuilder}
             >
               <Pencil1Icon data-icon="inline-start" aria-hidden="true" />
               <span className={`flex flex-col ${GAP.tight}`}>
@@ -203,13 +214,15 @@ export function StepDocumentUpload({
         <p className="text-sm leading-6 text-muted-foreground">
           {createFromScratch
             ? "You'll start with a blank resume and build it in the editor."
-            : uploadDisabled
-              ? "Uploading for a new check is unavailable on this account."
-              : resumeFile
-                ? `Selected file: ${resumeFile.name}`
-                : "Add a PDF or Word resume to continue."}
+            : quotaLoading
+              ? "Checking your free check allowance…"
+              : quotaExhausted
+                ? "Uploading for a new check is unavailable on this account."
+                : resumeFile
+                  ? `Selected file: ${resumeFile.name}`
+                  : "Add a PDF or Word resume to continue."}
         </p>
-        <Button type="button" onClick={onNext} disabled={!canContinue}>
+        <Button type="button" onClick={onNext} disabled={!canContinue || quotaLoading}>
           {createFromScratch ? "Open Builder" : "Next: Pick Layout"}
           <ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
         </Button>
