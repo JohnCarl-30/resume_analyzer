@@ -69,18 +69,18 @@ export const emptyResumeForm: ResumeForm = {
 
 export function resumeFormFromExtractedProfile(
   extractedProfile: ExtractedResumeProfile | null | undefined,
-) {
+): ResumeForm {
   if (!extractedProfile) {
     return defaultResumeForm;
   }
 
-    return {
+  return {
     personalInfo: {
       fullName: extractedProfile.fullName,
       phone: extractedProfile.phone,
       email: extractedProfile.email,
-      summary: "",
-      skills: "",
+      summary: extractedProfile.summary ?? "",
+      skills: extractedProfile.skills?.join(", ") ?? "",
     },
     education: extractedProfile.education.map((entry, index) => ({
       id: `edu_ai_${index + 1}`,
@@ -102,7 +102,6 @@ export function resumeFormFromExtractedProfile(
       organization: entry.organization,
       location: entry.location,
       dateRange: entry.dateRange,
-      bullets: entry.bullets || [],
     })),
     awards: extractedProfile.awards,
     projects: extractedProfile.projects.map((entry, index) => ({
