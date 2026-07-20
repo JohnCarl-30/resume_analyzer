@@ -12,9 +12,19 @@ export function formatFileSize(bytes: number): string {
 
 export const maxFileSize = 10 * 1024 * 1024; // 10MB
 
+function hasSupportedExtension(fileName: string): boolean {
+  if (!fileName) {
+    return false;
+  }
+
+  const extension = fileName.toLowerCase().split(".").pop();
+  return extension === "pdf" || extension === "docx";
+}
+
 export function isSupportedFile(file: File): boolean {
   return (
     file.type === "application/pdf" ||
-    file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    (file.type === "" && hasSupportedExtension(file.name))
   );
 }
