@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { useAnalysisProgress } from "../../onboarding/hooks/use-analysis-progress";
+import { useAnalysisProgress } from "../../onboarding/view-models/use-analysis-progress";
 import { updateResumeAnalysis } from "../../onboarding/utils/analysis-api";
 import type { ResumeAnalysisResult } from "../model/resume-analysis";
 
