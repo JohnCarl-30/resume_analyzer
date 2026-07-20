@@ -4,16 +4,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import { getAnalysisQuotaNavigationState } from "@/lib/analysis-quota-navigation";
 
-vi.mock("@clerk/nextjs", () => ({
-  useUser: () => ({
-    isLoaded: true,
-    user: {
-      fullName: "Alex Example",
-      primaryEmailAddress: { emailAddress: "alex@example.com" },
-    },
-  }),
-}));
-
 vi.mock("next/link", () => ({
   default: ({
     href,
@@ -48,6 +38,10 @@ describe("HomeIdentityBar", () => {
         quota={quota}
         quotaNav={quotaNav}
         quotaError=""
+        isProfileLoaded
+        displayName="Alex Example"
+        email="alex@example.com"
+        initials="AE"
         onNewAnalysis={onNewAnalysis}
         onScratchBuilder={vi.fn()}
         onQuotaRetry={vi.fn()}
@@ -82,6 +76,10 @@ describe("HomeIdentityBar", () => {
         quota={quota}
         quotaNav={quotaNav}
         quotaError=""
+        isProfileLoaded
+        displayName="Alex Example"
+        email="alex@example.com"
+        initials="AE"
         onNewAnalysis={vi.fn()}
         onScratchBuilder={vi.fn()}
         onQuotaRetry={vi.fn()}
@@ -111,6 +109,10 @@ describe("HomeIdentityBar", () => {
         quota={null}
         quotaNav={quotaNav}
         quotaError="Could not load plan"
+        isProfileLoaded
+        displayName="Alex Example"
+        email="alex@example.com"
+        initials="AE"
         onNewAnalysis={vi.fn()}
         onScratchBuilder={vi.fn()}
         onQuotaRetry={onQuotaRetry}
