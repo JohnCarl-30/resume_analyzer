@@ -68,7 +68,7 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => mockUseSearchParams(),
 }));
 
-vi.mock("@/features/account/hooks/use-analysis-quota", () => ({
+vi.mock("@/features/account/view-models/use-analysis-quota", () => ({
   useAnalysisQuota: () => mockUseAnalysisQuota(),
 }));
 
@@ -92,11 +92,17 @@ vi.mock("../../../editor/views/analysis-workspace", () => ({
   AnalysisWorkspace: ({
     onBack,
     selectedTemplateId,
+    initialSuggestionsReviewOpen,
   }: {
     onBack: () => void;
     selectedTemplateId: string;
+    initialSuggestionsReviewOpen?: boolean;
   }) => (
-    <div data-testid="analysis-workspace" data-selected-template-id={selectedTemplateId}>
+    <div
+      data-testid="analysis-workspace"
+      data-selected-template-id={selectedTemplateId}
+      data-initial-suggestions-review-open={String(Boolean(initialSuggestionsReviewOpen))}
+    >
       <button type="button" onClick={onBack}>
         Back
       </button>
@@ -195,6 +201,19 @@ async function advanceToStep3() {
 describe("DeepFocusWizard unit tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseSearchParams.mockReturnValue(new URLSearchParams());
+    mockUseAnalysisQuota.mockReturnValue({
+      quota: {
+        limit: 1,
+        used: 0,
+        canAnalyze: true,
+        analysisId: null,
+        redeemedAt: null,
+      },
+      error: "",
+      isLoading: false,
+      refetch: vi.fn(),
+    });
     // Reset URL to no params
     window.history.replaceState({}, "", "/");
   });
@@ -250,6 +269,11 @@ describe("DeepFocusWizard unit tests", () => {
       await waitFor(() => {
         expect(screen.getByTestId("analysis-workspace")).toBeTruthy();
       });
+
+      expect(screen.getByTestId("analysis-workspace")).toHaveAttribute(
+        "data-initial-suggestions-review-open",
+        "true",
+      );
     });
 
     it("resets to step 1 when getResumeAnalysis fails", async () => {
@@ -303,6 +327,11 @@ describe("DeepFocusWizard unit tests", () => {
       await waitFor(() => {
         expect(screen.getByTestId("analysis-workspace")).toBeTruthy();
       });
+
+      expect(screen.getByTestId("analysis-workspace")).toHaveAttribute(
+        "data-initial-suggestions-review-open",
+        "true",
+      );
 
       // Verify the API was called
       expect(mockCreateResumeAnalysis).toHaveBeenCalledTimes(1);
@@ -409,6 +438,24 @@ describe("DeepFocusWizard unit tests", () => {
       await waitFor(() => {
         expect(screen.getByRole("button", { name: /open builder/i })).toBeInTheDocument();
       });
+    });
+
+    it("clears an uploaded file when starting from scratch is chosen", async () => {
+      render(<DeepFocusWizard />);
+
+      await advanceToStep2();
+
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const pdfFile = new File(["pdf content"], "resume.pdf", { type: "application/pdf" });
+      Object.defineProperty(fileInput, "files", { value: [pdfFile], configurable: true });
+      fireEvent.change(fileInput);
+
+      expect(screen.getByText("resume.pdf")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: /start with a blank resume/i }));
+
+      expect(screen.queryByText("resume.pdf")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /open builder/i })).toBeInTheDocument();
     });
   });
 });
