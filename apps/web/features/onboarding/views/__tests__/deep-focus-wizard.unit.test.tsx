@@ -226,8 +226,8 @@ describe("DeepFocusWizard unit tests", () => {
   // Test 1: Back navigation from workspace restores suggestions step
   // Validates: Requirement 6.3
   // -------------------------------------------------------------------------
-  describe("Back navigation from workspace restores template step", () => {
-    it("shows step 4 (STEP 4 OF 5) after clicking Back from the workspace", async () => {
+  describe("Back navigation from workspace after a completed check", () => {
+    it("returns home instead of the blocked upload step", async () => {
       mockCreateResumeAnalysis.mockResolvedValue(minimalAnalysisResult);
 
       render(<DeepFocusWizard />);
@@ -249,10 +249,8 @@ describe("DeepFocusWizard unit tests", () => {
       const backBtn = screen.getByRole("button", { name: /back/i });
       fireEvent.click(backBtn);
 
-      // Should be back on template step
-      await waitFor(() => {
-        expect(hasStepPill("STEP 4 OF 5")).toBe(true);
-      });
+      // Free quota is used after a check — don't trap users on the upload step.
+      expect(mockRouter.push).toHaveBeenCalledWith("/home");
     });
   });
 
@@ -456,6 +454,90 @@ describe("DeepFocusWizard unit tests", () => {
 
       expect(screen.queryByText("resume.pdf")).not.toBeInTheDocument();
       expect(screen.getByRole("button", { name: /open builder/i })).toBeInTheDocument();
+    });
+
+    it("stays in the workspace after a successful check even when quota flips to exhausted", async () => {
+      function WizardWithQuotaFlip() {
+        const [quota, setQuota] = React.useState({
+          limit: 1,
+          used: 0,
+          canAnalyze: true,
+          analysisId: null as string | null,
+          redeemedAt: null as string | null,
+        });
+
+        mockUseAnalysisQuota.mockReturnValue({
+          quota,
+          error: "",
+          isLoading: false,
+          refetch: () =>
+            setQuota({
+              limit: 1,
+              used: 1,
+              canAnalyze: false,
+              analysisId: "test-analysis-123",
+              redeemedAt: "2026-01-01T00:00:00.000Z",
+            }),
+        });
+
+        return <DeepFocusWizard />;
+      }
+
+      mockCreateResumeAnalysis.mockResolvedValue(minimalAnalysisResult);
+
+      render(<WizardWithQuotaFlip />);
+
+      await advanceToStep3();
+      fireEvent.click(screen.getByRole("button", { name: /check my resume/i }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("analysis-workspace")).toBeInTheDocument();
+      });
+
+      // Quota refetch from the success path should not kick the user back to upload.
+      await waitFor(() => {
+        expect(screen.getByTestId("analysis-workspace")).toBeInTheDocument();
+      });
+      expect(screen.queryByText(/free check already used/i)).not.toBeInTheDocument();
+    });
+
+    it("opens the saved check when analysis fails after quota was already redeemed", async () => {
+      function WizardWithQuotaRecovery() {
+        const [quota, setQuota] = React.useState({
+          limit: 1,
+          used: 0,
+          canAnalyze: true,
+          analysisId: null as string | null,
+          redeemedAt: null as string | null,
+        });
+
+        mockUseAnalysisQuota.mockReturnValue({
+          quota,
+          error: "",
+          isLoading: false,
+          refetch: () =>
+            setQuota({
+              limit: 1,
+              used: 1,
+              canAnalyze: false,
+              analysisId: "saved-after-timeout",
+              redeemedAt: "2026-01-01T00:00:00.000Z",
+            }),
+        });
+
+        return <DeepFocusWizard />;
+      }
+
+      mockCreateResumeAnalysis.mockRejectedValue(new Error("Request timeout after 120000ms"));
+
+      render(<WizardWithQuotaRecovery />);
+
+      await advanceToStep3();
+      fireEvent.click(screen.getByRole("button", { name: /check my resume/i }));
+
+      await waitFor(() => {
+        expect(mockRouter.replace).toHaveBeenCalledWith("/analysis/saved-after-timeout");
+      });
     });
   });
 });
