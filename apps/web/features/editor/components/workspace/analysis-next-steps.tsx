@@ -5,10 +5,18 @@ import { Progress } from "@/components/ui/progress";
 import { CheckCircleIcon } from "../../../onboarding/components/wizard-icons";
 import type { AnalysisNextStepAction, AnalysisNextStepsState } from "../../view-models/analysis-next-steps";
 
+interface AnalysisNextStepsTailor {
+  isLoading: boolean;
+  pendingCount: number;
+  onReview: () => void;
+}
+
 interface AnalysisNextStepsProps {
   guide: AnalysisNextStepsState;
   onAction: (action: AnalysisNextStepAction) => void;
   onApply?: (action: AnalysisNextStepAction) => void;
+  tailor?: AnalysisNextStepsTailor;
+  preferTailorFlow?: boolean;
 }
 
 const statusVariant: Record<AnalysisNextStepsState["statusTone"], React.ComponentProps<typeof Badge>["variant"]> = {
@@ -17,13 +25,47 @@ const statusVariant: Record<AnalysisNextStepsState["statusTone"], React.Componen
   "needs-work": "destructive",
 };
 
-export function AnalysisNextSteps({ guide, onAction, onApply }: AnalysisNextStepsProps) {
+export function AnalysisNextSteps({
+  guide,
+  onAction,
+  onApply,
+  tailor,
+  preferTailorFlow = false,
+}: AnalysisNextStepsProps) {
   const visibleKeywords = guide.missingKeywordPreview.slice(0, 4);
   const hiddenKeywordCount = Math.max(guide.missingKeywordPreview.length - visibleKeywords.length, 0);
   const incompleteCount = guide.steps.filter((step) => !step.complete).length;
+  const showTailorBanner = Boolean(tailor && (tailor.isLoading || tailor.pendingCount > 0));
 
   return (
     <div className="rounded-lg border border-[color:var(--page-line)] bg-white shadow-none">
+      {showTailorBanner ? (
+        <div className="border-b border-[color:var(--brand)]/20 bg-[color:var(--brand-soft)] px-3 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[color:var(--page-text)]">Job-tailored edits ready</p>
+              <p className="mt-1 text-xs leading-5 text-[color:var(--page-muted)]">
+                {tailor?.isLoading
+                  ? "Preparing light edits for your summary, skills, and bullets."
+                  : "Approve the edits you want reflected in the layout preview."}
+              </p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              onClick={tailor?.onReview}
+              disabled={tailor?.isLoading}
+              className="shrink-0"
+            >
+              {tailor?.isLoading
+                ? "Preparing…"
+                : tailor?.pendingCount === 1
+                  ? "Review edit"
+                  : `Review ${tailor?.pendingCount} edits`}
+            </Button>
+          </div>
+        </div>
+      ) : null}
       <div className="border-b border-[color:var(--page-line)] px-3 py-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -103,7 +145,7 @@ export function AnalysisNextSteps({ guide, onAction, onApply }: AnalysisNextStep
                   >
                     {step.buttonLabel}
                   </Button>
-                  {!step.complete && step.applyLabel && onApply ? (
+                  {!step.complete && step.applyLabel && onApply && !preferTailorFlow ? (
                     <Button
                       type="button"
                       variant="secondary"
