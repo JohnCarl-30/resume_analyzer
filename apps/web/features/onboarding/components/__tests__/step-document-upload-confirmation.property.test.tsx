@@ -69,7 +69,7 @@ describe(
                   onNext={vi.fn()}
                   canContinue={true}
                   createFromScratch={false}
-                  setCreateFromScratch={vi.fn()}
+                  onChooseScratchBuilder={vi.fn()}
                 />,
               );
 
