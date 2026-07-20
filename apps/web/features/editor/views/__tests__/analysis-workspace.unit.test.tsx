@@ -270,10 +270,13 @@ describe("AnalysisWorkspace — unit tests (task 7.7)", () => {
     const updateButton = screen.getByRole("button", { name: /check resume/i });
     fireEvent.click(updateButton);
 
-    // The loading overlay should now be visible
+    // The loading overlay should now be visible (may sit under an open dialog's aria-hidden tree)
     await waitFor(() => {
-      expect(screen.getByText(/re-checking your resume/i)).toBeInTheDocument();
-      expect(screen.getByText(/analyzing…/i)).toBeInTheDocument();
+      const status = document.querySelector('[role="status"][aria-busy="true"]');
+      expect(status).not.toBeNull();
+      expect(status).toHaveAttribute("aria-label", expect.stringMatching(/re-checking your resume/i));
+      expect(status).toHaveTextContent(/analyzing/i);
+      expect(document.querySelector('[role="progressbar"]')).not.toBeNull();
     });
   });
 
