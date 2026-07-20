@@ -15,7 +15,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { ResumeStatusBadge } from "@/features/resumes/components/resume-status-badge";
 import type { ResumeSummary } from "@/features/resumes/model/resume";
-import { useResumeDashboard } from "@/features/resumes/view-models/use-resume-dashboard";
 import type { AnalysisQuotaNavigationState } from "@/lib/analysis-quota-navigation";
 import { cn } from "@/lib/utils";
 
@@ -89,9 +88,13 @@ function IndexRow({
 
 interface SavedChecksPanelProps {
   quotaNav: AnalysisQuotaNavigationState;
+  resumes: ResumeSummary[];
+  isLoading: boolean;
+  error: string;
   onNewAnalysis: () => void;
   onScratchBuilder: () => void;
   onOpenAnalysis: (analysisId: string) => void;
+  onRefetch: () => void;
   layout?: "default" | "workbench";
   className?: string;
 }
@@ -126,14 +129,16 @@ function EmptyActions({
 
 export function SavedChecksPanel({
   quotaNav,
+  resumes,
+  isLoading,
+  error,
   onNewAnalysis,
   onScratchBuilder,
   onOpenAnalysis,
+  onRefetch,
   layout = "default",
   className,
 }: SavedChecksPanelProps) {
-  const { resumes, isLoading, error, refetch } = useResumeDashboard();
-
   return (
     <section
       className={cn("app-home-checks min-w-0", className)}
@@ -158,7 +163,7 @@ export function SavedChecksPanel({
                 : error}
             </p>
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={refetch}>
+          <Button type="button" variant="outline" size="sm" onClick={onRefetch}>
             <ReloadIcon aria-hidden="true" />
             Try again
           </Button>
