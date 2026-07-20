@@ -38,7 +38,7 @@ function renderStep(overrides: Partial<React.ComponentProps<typeof StepDocumentU
     onNext,
     canContinue: false,
     createFromScratch: false,
-    setCreateFromScratch: vi.fn(),
+    onChooseScratchBuilder: vi.fn(),
     ...overrides,
   };
 
