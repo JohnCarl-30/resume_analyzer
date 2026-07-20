@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Pencil1Icon, PlusIcon, ReloadIcon } from "@radix-ui/react-icons";
-import { useUser } from "@clerk/nextjs";
 
 import { Button } from "@/components/ui/button";
 import type { AnalysisQuota } from "@/lib/account-api";
@@ -12,7 +11,6 @@ import { cn } from "@/lib/utils";
 import {
   getHomeMastheadEyebrow,
   getHomeMastheadHeadline,
-  getInitials,
 } from "../lib/home-display";
 import { HomeIdentitySkeleton } from "./home-identity-skeleton";
 
@@ -20,6 +18,10 @@ interface HomeIdentityBarProps {
   quota: AnalysisQuota | null;
   quotaNav: AnalysisQuotaNavigationState;
   quotaError: string;
+  isProfileLoaded: boolean;
+  displayName: string;
+  email?: string;
+  initials: string;
   onNewAnalysis: () => void;
   onScratchBuilder: () => void;
   onQuotaRetry: () => void;
@@ -30,26 +32,22 @@ export function HomeIdentityBar({
   quota,
   quotaNav,
   quotaError,
+  isProfileLoaded,
+  displayName,
+  email,
+  initials,
   onNewAnalysis,
   onScratchBuilder,
   onQuotaRetry,
   className,
 }: HomeIdentityBarProps) {
-  const { user, isLoaded } = useUser();
   const quotaLoading = quotaNav.isLoading;
-
-  const isBootstrapping = !isLoaded || (quotaLoading && !quota && !quotaError);
+  const isBootstrapping = !isProfileLoaded || (quotaLoading && !quota && !quotaError);
 
   if (isBootstrapping) {
     return <HomeIdentitySkeleton className={className} />;
   }
 
-  const displayName =
-    user?.fullName?.trim() ||
-    user?.primaryEmailAddress?.emailAddress ||
-    "Your account";
-  const email = user?.primaryEmailAddress?.emailAddress;
-  const initials = getInitials(displayName);
   const quotaUsed = quota?.used ?? 0;
   const quotaLimit = quota?.limit ?? 1;
 
