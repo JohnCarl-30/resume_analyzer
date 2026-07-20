@@ -238,7 +238,9 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
 
   function handleBack() {
     if (viewMode === "workspace") {
-      if (initialAnalysisId) {
+      // After a completed check, the free quota is used — going back into the
+      // wizard traps people on the blocked upload step. Send them home instead.
+      if (initialAnalysisId || analysisResult?.id || analysisIdFromUrl) {
         handleExitToDashboard();
         return;
       }
@@ -334,19 +336,26 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
         });
       }
 
+      // Commit workspace in memory first. Do not path-change via history.replaceState
+      // (Next.js syncs those edits and can remount this wizard, dropping step 5).
+      // The saved check remains available at /analysis/:id from Home.
       restoredAnalysisIdRef.current = nextAnalysis.id ?? null;
       setAnalysisResult(nextAnalysis);
       setSelectedTemplateId(
         normalizeTemplateId(nextAnalysis.selectedTemplateId, templateIdToUse),
       );
-      replaceAnalysisParam(nextAnalysis.id ?? null, { soft: true });
+      setAnalysisIdFromUrl(nextAnalysis.id ?? null);
       setOpenSuggestionsReview(true);
+      setStep(5);
       setViewMode("workspace");
       void refetchQuota();
     } catch (error) {
       setAnalysisError(
         error instanceof Error ? error.message : "Unable to generate analysis right now.",
       );
+      // The server may have saved the check (and used the free quota) even when
+      // the client timed out — recover by opening the saved analysis.
+      void refetchQuota();
     } finally {
       setIsGeneratingAnalysis(false);
     }
@@ -367,10 +376,55 @@ export function DeepFocusWizard({ onExit, initialAnalysisId }: DeepFocusWizardPr
       return;
     }
 
-    if (uploadBlocked && analysisQuota) {
+    // Only bounce exhausted accounts to the upload/scratch step on a fresh
+    // wizard visit. Never interrupt an in-flight check or completed workspace.
+    if (
+      uploadBlocked &&
+      analysisQuota &&
+      viewMode === "wizard" &&
+      !isGeneratingAnalysis &&
+      !analysisResult &&
+      !analysisIdFromUrl
+    ) {
       setStep(3);
     }
-  }, [analysisQuota, initialAnalysisId, quotaLoading, scratchMode, uploadBlocked]);
+  }, [
+    analysisIdFromUrl,
+    analysisQuota,
+    analysisResult,
+    initialAnalysisId,
+    isGeneratingAnalysis,
+    quotaLoading,
+    scratchMode,
+    uploadBlocked,
+    viewMode,
+  ]);
+
+  // If the check request failed after the server redeemed quota, open the saved result.
+  useEffect(() => {
+    if (
+      initialAnalysisId ||
+      isGeneratingAnalysis ||
+      viewMode === "workspace" ||
+      analysisResult ||
+      !analysisError ||
+      !analysisQuota?.analysisId ||
+      analysisQuota.canAnalyze !== false
+    ) {
+      return;
+    }
+
+    router.replace(`/analysis/${analysisQuota.analysisId}`);
+  }, [
+    analysisError,
+    analysisQuota?.analysisId,
+    analysisQuota?.canAnalyze,
+    analysisResult,
+    initialAnalysisId,
+    isGeneratingAnalysis,
+    router,
+    viewMode,
+  ]);
 
   useEffect(() => {
     if (!resumeFile) {
