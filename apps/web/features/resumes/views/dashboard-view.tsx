@@ -31,6 +31,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AppShellHeader } from "@/features/auth/components/app-shell-header";
+import { useAnalysisQuota } from "@/features/account/view-models/use-analysis-quota";
+import { getAnalysisQuotaNavigationState } from "@/lib/analysis-quota-navigation";
 import { ResumeStatusBadge } from "../components/resume-status-badge";
 import type { ResumeSummary } from "../model/resume";
 import { useResumeDashboard } from "../view-models/use-resume-dashboard";
@@ -184,6 +186,11 @@ export function DashboardView({
   onOpenAnalysis,
 }: DashboardViewProps) {
   const { resumes, isLoading, error, stats } = useResumeDashboard();
+  const { quota, error: quotaError, isLoading: quotaLoading } = useAnalysisQuota();
+  const quotaNav = getAnalysisQuotaNavigationState(quota, {
+    isLoading: quotaLoading,
+    error: quotaError,
+  });
   const pageTitle = "Your resumes";
   const pageDescription =
     "Review uploaded resumes, match scores, and jump back into any saved check.";
@@ -209,7 +216,7 @@ export function DashboardView({
 
   return (
     <>
-      <AppShellHeader active="home" />
+      <AppShellHeader active="home" quotaNav={quotaNav} />
       <main className="min-h-screen bg-background text-foreground">
       <section className={`mx-auto flex w-full max-w-7xl flex-col ${GAP.major} px-4 py-12 sm:px-6 lg:px-8 lg:py-16`}>
         <header className={`flex flex-col ${GAP.default} border-b border-border pb-8 md:flex-row md:items-end md:justify-between`}>
