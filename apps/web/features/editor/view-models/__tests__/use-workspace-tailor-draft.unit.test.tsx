@@ -1,5 +1,5 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { emptyResumeForm } from "../../model/resume-form";
 import type { ResumeAnalysisResult } from "../../model/resume-analysis";
@@ -29,7 +29,12 @@ const analysisResult: ResumeAnalysisResult = {
 };
 
 describe("useWorkspaceTailorDraft", () => {
-  it("loads proposals and applies approved preview changes", async () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+    vi.mocked(tailorResumeDraft).mockClear();
+  });
+
+  it("does not fetch on mount until ensureDraft is called", async () => {
     const { result } = renderHook(() =>
       useWorkspaceTailorDraft({
         enabled: true,
@@ -46,6 +51,13 @@ describe("useWorkspaceTailorDraft", () => {
       }),
     );
 
+    expect(tailorResumeDraft).not.toHaveBeenCalled();
+    expect(result.current.proposals).toHaveLength(0);
+
+    await act(async () => {
+      await result.current.ensureDraft();
+    });
+
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
@@ -59,5 +71,30 @@ describe("useWorkspaceTailorDraft", () => {
 
     expect(result.current.previewForm.personalInfo.summary).toBe("New summary");
     expect(result.current.applyApprovedToForm().personalInfo.summary).toBe("New summary");
+  });
+
+  it("reuses a sessionStorage cache for the same analysis", async () => {
+    const { result, rerender } = renderHook(() =>
+      useWorkspaceTailorDraft({
+        enabled: true,
+        baseForm: emptyResumeForm,
+        analysisResult,
+        targetRole: "Frontend Engineer",
+      }),
+    );
+
+    await act(async () => {
+      await result.current.ensureDraft();
+    });
+
+    expect(tailorResumeDraft).toHaveBeenCalledTimes(1);
+
+    rerender();
+
+    await act(async () => {
+      await result.current.ensureDraft();
+    });
+
+    expect(tailorResumeDraft).toHaveBeenCalledTimes(1);
   });
 });
