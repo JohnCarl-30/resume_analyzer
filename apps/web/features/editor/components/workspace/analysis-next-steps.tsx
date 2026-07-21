@@ -8,6 +8,7 @@ import type { AnalysisNextStepAction, AnalysisNextStepsState } from "../../view-
 interface AnalysisNextStepsTailor {
   isLoading: boolean;
   pendingCount: number;
+  available?: boolean;
   onReview: () => void;
 }
 
@@ -35,7 +36,9 @@ export function AnalysisNextSteps({
   const visibleKeywords = guide.missingKeywordPreview.slice(0, 4);
   const hiddenKeywordCount = Math.max(guide.missingKeywordPreview.length - visibleKeywords.length, 0);
   const incompleteCount = guide.steps.filter((step) => !step.complete).length;
-  const showTailorBanner = Boolean(tailor && (tailor.isLoading || tailor.pendingCount > 0));
+  const showTailorBanner = Boolean(
+    tailor && (tailor.isLoading || tailor.pendingCount > 0 || tailor.available),
+  );
 
   return (
     <div className="rounded-lg border border-[color:var(--page-line)] bg-white shadow-none">
@@ -43,11 +46,17 @@ export function AnalysisNextSteps({
         <div className="border-b border-[color:var(--brand)]/20 bg-[color:var(--brand-soft)] px-3 py-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-[color:var(--page-text)]">Job-tailored edits ready</p>
+              <p className="text-sm font-semibold text-[color:var(--page-text)]">
+                {tailor?.pendingCount || tailor?.isLoading
+                  ? "Job-tailored edits ready"
+                  : "Job-tailored edits"}
+              </p>
               <p className="mt-1 text-xs leading-5 text-[color:var(--page-muted)]">
                 {tailor?.isLoading
                   ? "Preparing light edits for your summary, skills, and bullets."
-                  : "Approve the edits you want reflected in the layout preview."}
+                  : tailor?.pendingCount
+                    ? "Approve the edits you want reflected in the layout preview."
+                    : "Get light edits for your summary, skills, and bullets."}
               </p>
             </div>
             <Button
@@ -61,7 +70,9 @@ export function AnalysisNextSteps({
                 ? "Preparing…"
                 : tailor?.pendingCount === 1
                   ? "Review edit"
-                  : `Review ${tailor?.pendingCount} edits`}
+                  : tailor?.pendingCount
+                    ? `Review ${tailor.pendingCount} edits`
+                    : "Review job edits"}
             </Button>
           </div>
         </div>
