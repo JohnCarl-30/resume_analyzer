@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { tailorResumeDraft } from "../lib/tailor-api";
 import type { ResumeForm } from "../model/resume-form";
@@ -17,6 +17,8 @@ interface UseWorkspaceTailorDraftOptions {
   analysisResult: ResumeAnalysisResult | null;
   targetRole: string;
 }
+
+const CACHE_PREFIX = "tailor-draft:";
 
 function cloneForm(form: ResumeForm): ResumeForm {
   return structuredClone(form);
@@ -45,6 +47,34 @@ function applyProposalToForm(form: ResumeForm, proposal: TailorProposal): Resume
   return next;
 }
 
+function readCachedDraft(analysisId: string): ResumeTailorDraft | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = sessionStorage.getItem(`${CACHE_PREFIX}${analysisId}`);
+    if (!raw) {
+      return null;
+    }
+    return JSON.parse(raw) as ResumeTailorDraft;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedDraft(analysisId: string, draft: ResumeTailorDraft) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    sessionStorage.setItem(`${CACHE_PREFIX}${analysisId}`, JSON.stringify(draft));
+  } catch {
+    // Ignore quota / private-mode failures.
+  }
+}
+
 export function useWorkspaceTailorDraft({
   enabled,
   baseForm,
@@ -55,23 +85,48 @@ export function useWorkspaceTailorDraft({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [approvedIds, setApprovedIds] = useState<string[]>([]);
+  const loadPromiseRef = useRef<Promise<ResumeTailorDraft | null> | null>(null);
+  const analysisId = analysisResult?.id ?? null;
 
   useEffect(() => {
-    if (!enabled || !analysisResult?.jobDescription?.trim()) {
+    setApprovedIds([]);
+    setError("");
+    loadPromiseRef.current = null;
+
+    if (!enabled || !analysisId) {
       setDraft(null);
-      setError("");
       setIsLoading(false);
-      setApprovedIds([]);
       return;
     }
 
-    let cancelled = false;
+    const cached = readCachedDraft(analysisId);
+    setDraft(cached);
+    setIsLoading(false);
+  }, [analysisId, enabled]);
+
+  const ensureDraft = useCallback(async () => {
+    if (!enabled || !analysisResult?.jobDescription?.trim() || !analysisId) {
+      return null;
+    }
+
+    if (draft) {
+      return draft;
+    }
+
+    const cached = readCachedDraft(analysisId);
+    if (cached) {
+      setDraft(cached);
+      return cached;
+    }
+
+    if (loadPromiseRef.current) {
+      return loadPromiseRef.current;
+    }
+
     setIsLoading(true);
     setError("");
-    setDraft(null);
-    setApprovedIds([]);
 
-    void tailorResumeDraft({
+    const loadPromise = tailorResumeDraft({
       targetRole: targetRole || analysisResult.targetRole,
       jobDescription: analysisResult.jobDescription,
       missingKeywords: analysisResult.missingKeywords ?? [],
@@ -82,30 +137,26 @@ export function useWorkspaceTailorDraft({
       },
     })
       .then((nextDraft) => {
-        if (!cancelled) {
-          setDraft(nextDraft);
-        }
+        writeCachedDraft(analysisId, nextDraft);
+        setDraft(nextDraft);
+        setIsLoading(false);
+        return nextDraft;
       })
       .catch((fetchError) => {
-        if (!cancelled) {
-          setDraft(null);
-          setError(
-            fetchError instanceof Error
-              ? fetchError.message
-              : "Unable to prepare tailored resume suggestions right now.",
-          );
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
+        loadPromiseRef.current = null;
+        setDraft(null);
+        setError(
+          fetchError instanceof Error
+            ? fetchError.message
+            : "Unable to prepare tailored resume suggestions right now.",
+        );
+        setIsLoading(false);
+        return null;
       });
 
-    return () => {
-      cancelled = true;
-    };
-  }, [enabled, analysisResult?.id, targetRole]);
+    loadPromiseRef.current = loadPromise;
+    return loadPromise;
+  }, [analysisId, analysisResult, baseForm.experience, baseForm.personalInfo, draft, enabled, targetRole]);
 
   const proposals = useMemo(
     () => (draft ? buildTailorProposals(draft) : []),
@@ -139,5 +190,6 @@ export function useWorkspaceTailorDraft({
     previewForm,
     approveProposal,
     applyApprovedToForm,
+    ensureDraft,
   };
 }
