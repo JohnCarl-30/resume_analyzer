@@ -1,4 +1,4 @@
-# Deploy Deep Focus (Path C)
+# Deploy Resumae (Path C)
 
 Vercel (web) + Cloudflare Containers (API) + Cloudflare R2 (storage) + Clerk (auth) + Postgres (optional) + OpenAI (AI).
 
