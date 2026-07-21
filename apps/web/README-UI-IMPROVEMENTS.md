@@ -153,7 +153,7 @@ import { GAP, PADDING, MARGIN_TOP } from "@/lib/design-tokens";
 - `app/page.tsx` (Landing)
 - `features/resumes/views/dashboard-view.tsx`
 - `features/templates/components/template-card.tsx`
-- `features/onboarding/views/deep-focus-wizard.tsx`
+- `features/onboarding/views/analysis-wizard.tsx`
 - `features/onboarding/components/step-target-role.tsx`
 - `features/onboarding/components/step-document-upload.tsx`
 
