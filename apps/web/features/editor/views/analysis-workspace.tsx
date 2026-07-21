@@ -7,10 +7,8 @@ import { useResumeEditor } from "../view-models/use-resume-editor";
 import { getCreateResumeGuideState, type BuilderGuideAction } from "../view-models/create-resume-guide";
 import { getAnalysisNextStepsState, type AnalysisNextStepAction } from "../view-models/analysis-next-steps";
 import {
-  buildAnalysisReviewItems,
   hasDismissedAnalysisReview,
   markAnalysisReviewDismissed,
-  type ReviewSuggestionItem,
 } from "../view-models/analysis-review-items";
 import { useWorkspaceEnhance } from "../view-models/use-workspace-enhance";
 import { useWorkspaceExport } from "../view-models/use-workspace-export";
@@ -25,7 +23,6 @@ import { AwardsEditor } from "../components/editors/awards-editor";
 import { ResumeRenderer } from "../components/resume-renderer";
 import { CreateResumeGuide } from "../components/workspace/create-resume-guide";
 import { AnalysisNextSteps } from "../components/workspace/analysis-next-steps";
-import { AnalysisSuggestionsReviewModal } from "../components/workspace/analysis-suggestions-review-modal";
 import { ResumeTailorReviewModal } from "../components/workspace/resume-tailor-review-modal";
 import {
   Dialog,
@@ -480,7 +477,6 @@ export function AnalysisWorkspace({
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileCreateView, setMobileCreateView] = useState<MobileCreateView>("editor");
   const [mounted, setMounted] = useState(false);
-  const [suggestionsReviewOpen, setSuggestionsReviewOpen] = useState(false);
   const [tailorReviewOpen, setTailorReviewOpen] = useState(false);
   const hasStructuredResumeData = Boolean(
     analysisResult?.extractedProfile || initialForm?.personalInfo?.fullName || createMode,
@@ -543,10 +539,6 @@ export function AnalysisWorkspace({
   });
   const analysisNextSteps =
     !createMode && analysisResult ? getAnalysisNextStepsState(form, analysisResult, targetRole) : null;
-  const analysisReviewItems =
-    analysisResult && analysisNextSteps
-      ? buildAnalysisReviewItems(analysisResult, analysisNextSteps)
-      : [];
   const tailorEnabled = !createMode && Boolean(analysisResult?.extractedProfile);
   const tailorBaseForm = initialForm ?? form;
   const {
@@ -564,11 +556,7 @@ export function AnalysisWorkspace({
   });
   const preferTailorFlow = tailorProposals.length > 0;
   const showPrimaryReviewButton =
-    !createMode &&
-    Boolean(analysisResult) &&
-    (preferTailorFlow || tailorDraftLoading || analysisReviewItems.length > 0);
-  const primaryReviewLabel =
-    preferTailorFlow || tailorDraftLoading ? "Review job edits" : "Review suggestions";
+    !createMode && Boolean(analysisResult) && (preferTailorFlow || tailorDraftLoading);
   const showResumePlaceholders =
     createMode ||
     Boolean(
@@ -581,10 +569,6 @@ export function AnalysisWorkspace({
     setPreviewMode("structured");
     if (tailorEnabled && (tailorDraftLoading || preferTailorFlow || tailorDraftError)) {
       setTailorReviewOpen(true);
-      return;
-    }
-    if (analysisReviewItems.length > 0) {
-      setSuggestionsReviewOpen(true);
     }
   }
   const draftStatusLabel =
@@ -650,28 +634,20 @@ export function AnalysisWorkspace({
       return;
     }
 
-    if (!initialSuggestionsReviewOpen) {
+    if (!initialSuggestionsReviewOpen || !tailorEnabled) {
       return;
     }
 
-    if (tailorEnabled) {
-      if (tailorDraftLoading) {
-        return;
-      }
-
-      if (tailorProposals.length > 0) {
-        setTailorReviewOpen(true);
-        setPreviewMode("structured");
-        return;
-      }
+    if (tailorDraftLoading) {
+      return;
     }
 
-    if (analysisReviewItems.length > 0) {
-      setSuggestionsReviewOpen(true);
+    if (tailorProposals.length > 0) {
+      setTailorReviewOpen(true);
+      setPreviewMode("structured");
     }
   }, [
     analysisResult?.id,
-    analysisReviewItems.length,
     createMode,
     initialSuggestionsReviewOpen,
     tailorDraftLoading,
@@ -1073,28 +1049,10 @@ export function AnalysisWorkspace({
     setModalView("tailor");
   }
 
-  function handleReviewSuggestionApprove(item: ReviewSuggestionItem) {
-    if (item.kind === "editable" && item.action) {
-      handleApplyAnalysisStepAction(item.action);
-    }
-  }
-
-  function handleSuggestionsReviewFinish() {
-    if (analysisResult?.id) {
-      markAnalysisReviewDismissed(analysisResult.id);
-    }
-    setSuggestionsReviewOpen(false);
-  }
-
   function handleTailorReviewFinish() {
     resetForm(applyApprovedToForm());
     setPreviewMode("structured");
     setTailorReviewOpen(false);
-
-    if (analysisResult?.id && analysisReviewItems.length > 0) {
-      setSuggestionsReviewOpen(true);
-      return;
-    }
 
     if (analysisResult?.id) {
       markAnalysisReviewDismissed(analysisResult.id);
@@ -1408,45 +1366,6 @@ export function AnalysisWorkspace({
     );
   }
 
-  function renderCompactReviewPreview() {
-    const compactCardClassName =
-      "mx-auto w-full rounded-md border border-[color:var(--page-line)] bg-white shadow-sm";
-
-    if (previewMode === "uploaded" && resumePreviewUrl) {
-      return (
-        <div className={`${compactCardClassName} overflow-hidden`}>
-          <iframe
-            title="Resume preview"
-            src={`${resumePreviewUrl}#toolbar=0&navpanes=0&zoom=page-width`}
-            className="h-56 w-full bg-white"
-          />
-        </div>
-      );
-    }
-
-    if (previewMode === "parsed" && analysisResult?.parsedResumeText) {
-      return (
-        <div className={`print-resume ${compactCardClassName} px-4 py-5 text-sm`}>
-          <ParsedTextPreview text={analysisResult.parsedResumeText} />
-        </div>
-      );
-    }
-
-    if (hasStructuredPreview) {
-      return (
-        <div className={`print-resume ${compactCardClassName} px-4 py-5 text-[0.82rem]`}>
-          <ResumeRenderer form={form} variantId={activeTemplateId} showPlaceholders={showResumePlaceholders} />
-        </div>
-      );
-    }
-
-    return (
-      <div className={`${compactCardClassName} px-4 py-8 text-center text-sm text-[color:var(--page-muted)]`}>
-        Preview unavailable for this file.
-      </div>
-    );
-  }
-
   const openTailorModal = () => setModalView("tailor");
 
   return (
@@ -1489,11 +1408,7 @@ export function AnalysisWorkspace({
           onOpenChange={(open) => {
             setTailorReviewOpen(open);
             if (!open && analysisResult.id && tailorProposals.length === 0) {
-              if (analysisReviewItems.length > 0) {
-                setSuggestionsReviewOpen(true);
-              } else {
-                markAnalysisReviewDismissed(analysisResult.id);
-              }
+              markAnalysisReviewDismissed(analysisResult.id);
             }
           }}
           analysisResult={analysisResult}
@@ -1501,38 +1416,17 @@ export function AnalysisWorkspace({
           proposals={tailorProposals}
           isLoading={tailorDraftLoading}
           error={tailorDraftError}
-          preview={
-            <div className="origin-top-left scale-[0.42]">
-              <ResumeRenderer form={tailorPreviewForm} variantId={activeTemplateId} />
-            </div>
-          }
+          previewForm={tailorPreviewForm}
+          previewVariantId={activeTemplateId}
           onApprove={handleTailorProposalApprove}
           onFinish={handleTailorReviewFinish}
         />
       ) : null}
 
-      {analysisResult && analysisReviewItems.length > 0 ? (
-        <AnalysisSuggestionsReviewModal
-          key={analysisResult.id}
-          open={suggestionsReviewOpen}
-          onOpenChange={(open) => {
-            setSuggestionsReviewOpen(open);
-            if (!open && analysisResult.id) {
-              markAnalysisReviewDismissed(analysisResult.id);
-            }
-          }}
-          analysisResult={analysisResult}
-          resumeTitle={resumeTitle}
-          items={analysisReviewItems}
-          preview={renderCompactReviewPreview()}
-          onApprove={handleReviewSuggestionApprove}
-          onFinish={handleSuggestionsReviewFinish}
-        />
-      ) : null}
-
-      <header className="shrink-0 border-b border-[color:var(--page-line)] bg-white px-3 py-2 sm:px-4">
-        <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex min-w-0 items-center gap-2 text-sm sm:gap-3">
+      <header className="shrink-0 border-b border-[color:var(--page-line)] bg-white px-3 py-2.5 sm:px-4">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          {/* Identity: back + title — can shrink, never overlaps actions */}
+          <div className="flex min-w-0 flex-1 items-center gap-2">
             {!createMode && (
               <button
                 type="button"
@@ -1553,7 +1447,7 @@ export function AnalysisWorkspace({
               Back
             </button>
             {isEditingTitle ? (
-              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
                 <input
                   type="text"
                   value={editedTitle}
@@ -1569,7 +1463,7 @@ export function AnalysisWorkspace({
                     }
                   }}
                   autoFocus
-                  className="min-w-[12rem] flex-1 rounded-[14px] border border-[color:var(--brand)] bg-white px-3 py-2 text-base font-semibold text-[color:var(--page-text)] outline-none sm:px-4 sm:text-xl"
+                  className="min-w-0 flex-1 rounded-[12px] border border-[color:var(--brand)] bg-white px-3 py-2 text-sm font-semibold text-[color:var(--page-text)] outline-none sm:text-base"
                 />
                 <button
                   type="button"
@@ -1577,7 +1471,7 @@ export function AnalysisWorkspace({
                     setIsEditingTitle(false);
                     onRename?.(editedTitle);
                   }}
-                  className="rounded-lg px-3 py-2 text-sm font-semibold text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)]"
+                  className="shrink-0 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)]"
                 >
                   Save
                 </button>
@@ -1587,7 +1481,7 @@ export function AnalysisWorkspace({
                     setIsEditingTitle(false);
                     setEditedTitle(resumeFileName);
                   }}
-                  className="rounded-lg px-3 py-2 text-sm font-semibold text-[color:var(--page-muted)] hover:bg-[color:var(--page-bg)]"
+                  className="shrink-0 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-[color:var(--page-muted)] hover:bg-[color:var(--page-bg)]"
                 >
                   Cancel
                 </button>
@@ -1596,124 +1490,116 @@ export function AnalysisWorkspace({
               <button
                 type="button"
                 onClick={() => setIsEditingTitle(true)}
-                className="group inline-flex min-w-0 flex-1 items-center gap-2 rounded-[12px] border border-transparent bg-slate-50/50 px-2.5 py-1 text-sm font-semibold text-[color:var(--page-text)] transition hover:bg-slate-100/80 active:scale-[0.98] sm:flex-none sm:px-3 sm:text-base xl:max-w-[22rem]"
+                className="group inline-flex min-w-0 max-w-[10rem] items-center gap-1.5 rounded-[12px] px-2 py-1.5 text-sm font-semibold text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg)] sm:max-w-[14rem] md:max-w-[18rem] lg:max-w-[22rem]"
                 aria-label={createMode ? "Edit draft title" : "Edit resume title"}
+                title={resumeTitle}
               >
                 <span className="truncate">{resumeTitle}</span>
-                <span className="text-[color:var(--page-muted)] opacity-0 transition group-hover:opacity-100">
+                <span className="shrink-0 text-[color:var(--page-muted)] opacity-0 transition group-hover:opacity-100">
                   <PencilIcon />
                 </span>
               </button>
             )}
-            {createMode && (
-              <div className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-2.5 py-1 text-[0.68rem] font-medium text-[color:var(--brand)] sm:hidden">
+          </div>
+
+          {/* Match score — reserved slot, never shares space with the filename */}
+          {!createMode && analysisResult ? (
+            <div className="hidden shrink-0 items-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-2.5 py-1.5 sm:inline-flex">
+              <ScoreRing score={analysisResult.score} size={32} />
+              <div className="min-w-0 text-xs leading-tight">
+                <div className="font-bold text-[color:var(--page-text)]">
+                  {Math.round(analysisResult.score)}% match
+                </div>
+                <div className="truncate text-[color:var(--page-muted)]">
+                  {analysisResult.matchedKeywords.length}{" "}
+                  {analysisResult.matchedKeywords.length === 1 ? "job word" : "job words"} found
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {/* Actions — shrink-0 cluster; secondary controls hide before overlapping */}
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            {createMode ? (
+              <div className="mr-1 hidden items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-2.5 py-1 text-[0.68rem] font-medium text-[color:var(--brand)] sm:inline-flex">
                 <span className={draftStatusLabel === "Saving..." ? "text-[color:var(--page-muted)]" : "text-emerald-600"}>
                   {draftStatusLabel === "Saving..." ? <ClockIcon /> : <CheckCircleIcon />}
                 </span>
                 <span>{draftStatusLabel}</span>
               </div>
-            )}
-          </div>
-
-          <div
-            className={`items-center gap-2 ${
-              createMode
-                ? "hidden overflow-x-auto [scrollbar-width:none] sm:flex sm:flex-wrap [&::-webkit-scrollbar]:hidden"
-                : "flex flex-wrap justify-end xl:flex-nowrap"
-            }`}
-          >
-            {!createMode && analysisResult && (
-              <div className="hidden shrink-0 items-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-white px-2.5 py-1.5 sm:inline-flex">
-                <ScoreRing score={analysisResult.score} size={34} />
-                <div className="text-xs leading-tight">
-                  <div className="font-bold text-[color:var(--page-text)]">{Math.round(analysisResult.score)}% match</div>
-                  <div className="text-[color:var(--page-muted)]">
-                    {analysisResult.matchedKeywords.length}{" "}
-                    {analysisResult.matchedKeywords.length === 1 ? "job word" : "job words"} found
-                  </div>
-                </div>
-              </div>
-            )}
+            ) : null}
 
             {!createMode && showPrimaryReviewButton ? (
               <button
                 type="button"
                 onClick={openPrimaryReview}
-                className="hidden shrink-0 rounded-[12px] border border-[color:var(--brand)]/30 bg-[color:var(--brand-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--brand)] transition hover:border-[color:var(--brand)] hover:bg-[color:var(--brand-soft)] sm:inline-flex"
+                className="inline-flex shrink-0 rounded-[12px] border border-[color:var(--brand)]/30 bg-[color:var(--brand-soft)] px-2.5 py-2 text-xs font-semibold text-[color:var(--brand)] transition hover:border-[color:var(--brand)] sm:px-3"
               >
-                {primaryReviewLabel}
+                <span className="sm:hidden">Review</span>
+                <span className="hidden sm:inline">Review job edits</span>
               </button>
             ) : null}
 
-            <div className={`shrink-0 items-center gap-1 ${createMode ? "hidden" : "hidden lg:inline-flex"}`}>
-              <button
-                type="button"
-                onClick={undo}
-                disabled={!canUndo}
-                className="inline-flex items-center justify-center rounded-l-[14px] border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:py-2.5"
-                aria-label="Undo"
-                title="Undo"
-              >
-                <UndoIcon />
-              </button>
-              <button
-                type="button"
-                onClick={redo}
-                disabled={!canRedo}
-                className="inline-flex items-center justify-center rounded-r-[14px] border border-l-0 border-[color:var(--page-line)] bg-white px-2.5 py-2 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:py-2.5"
-                aria-label="Redo"
-                title="Redo"
-              >
-                <RedoIcon />
-              </button>
-            </div>
-            <div className={`min-w-[6.5rem] shrink-0 items-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-2.5 py-2 text-xs text-[color:var(--page-muted)] sm:px-3 sm:text-sm ${
-              createMode ? "hidden sm:inline-flex" : "hidden xl:inline-flex"
-            }`}>
+            {!createMode ? (
+              <div className="hidden items-center md:inline-flex">
+                <button
+                  type="button"
+                  onClick={undo}
+                  disabled={!canUndo}
+                  className="inline-flex items-center justify-center rounded-l-[12px] border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Undo"
+                  title="Undo"
+                >
+                  <UndoIcon />
+                </button>
+                <button
+                  type="button"
+                  onClick={redo}
+                  disabled={!canRedo}
+                  className="inline-flex items-center justify-center rounded-r-[12px] border border-l-0 border-[color:var(--page-line)] bg-white px-2.5 py-2 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Redo"
+                  title="Redo"
+                >
+                  <RedoIcon />
+                </button>
+              </div>
+            ) : null}
+
+            <div
+              className={`hidden max-w-[7.5rem] items-center gap-1.5 truncate rounded-[12px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-2.5 py-2 text-xs text-[color:var(--page-muted)] lg:inline-flex ${
+                draftStatusLabel === "Saved locally" || draftStatusLabel === "Saved" ? "font-medium text-emerald-600" : ""
+              }`}
+              title={draftStatusLabel}
+            >
               <span className={draftStatusLabel === "Saving..." ? "text-[color:var(--page-muted)]" : "text-emerald-500"}>
                 {draftStatusLabel === "Saving..." ? <ClockIcon /> : <CheckCircleIcon />}
               </span>
-              <span className={draftStatusLabel === "Saved locally" || draftStatusLabel === "Saved" ? "font-medium text-emerald-600" : ""}>
-                {draftStatusLabel}
-              </span>
+              <span className="truncate">{draftStatusLabel}</span>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShowShortcuts(true)}
-              className={`shrink-0 items-center justify-center rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] ${
-                createMode ? "hidden" : "hidden 2xl:inline-flex"
-              }`}
-              aria-label="Keyboard shortcuts"
-              title="Keyboard shortcuts"
-            >
-              <KeyboardIcon />
-            </button>
-
-            {!createMode && (
+            {!createMode ? (
               <button
                 type="button"
                 onClick={openTailorModal}
                 aria-label="Check resume again"
-                className="inline-flex shrink-0 items-center gap-2 rounded-[12px] bg-[color:var(--brand)] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(79,107,255,0.22)] transition hover:bg-[color:var(--brand-strong)]"
+                className="inline-flex shrink-0 items-center gap-2 rounded-[12px] bg-[color:var(--brand)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-strong)] sm:px-4"
               >
                 <EyeIcon />
                 <span aria-hidden="true" className="hidden sm:inline">Check again</span>
-                <span aria-hidden="true" className="sm:hidden">Check</span>
               </button>
-            )}
+            ) : null}
 
             <button
               type="button"
               onClick={() => setModalView("templates")}
               aria-label="Choose resume style"
-              className="group hidden max-w-[9rem] shrink-0 items-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-xs font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg-strong)] active:scale-[0.98] lg:inline-flex lg:max-w-none lg:text-sm"
+              className={`hidden shrink-0 items-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-xs font-medium text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] sm:text-sm ${
+                createMode ? "sm:inline-flex" : "xl:inline-flex"
+              }`}
             >
-              <span className={createMode ? "hidden sm:inline-flex" : "inline-flex"}>
-                <GridIcon />
-              </span>
-              <span className="truncate">
-                {createMode ? (selectedTemplate?.name ?? "Choose style") : `Style: ${selectedTemplate?.name ?? "Choose"}`}
+              <GridIcon />
+              <span className="max-w-[8rem] truncate">
+                {createMode ? (selectedTemplate?.name ?? "Choose style") : selectedTemplate?.name ?? "Style"}
               </span>
             </button>
 
@@ -1721,26 +1607,35 @@ export function AnalysisWorkspace({
               type="button"
               onClick={() => window.print()}
               aria-label="Print or save PDF"
-              className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-xs font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] sm:px-4 sm:text-sm"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] sm:px-3"
             >
-              <span className={createMode ? "hidden sm:inline-flex" : "inline-flex"}>
-                <DownloadIcon />
+              <DownloadIcon />
+              <span aria-hidden="true" className="hidden text-xs font-semibold lg:inline">
+                Print
               </span>
-              <span aria-hidden="true" className="hidden sm:inline">Print / Save PDF</span>
-              <span aria-hidden="true" className="sm:hidden">Print</span>
             </button>
 
-            {!createMode && (
+            {!createMode ? (
               <button
                 type="button"
                 onClick={handleDownloadSource}
                 disabled={!resumeSourceUrl}
-                className="hidden shrink-0 items-center gap-2 whitespace-nowrap rounded-[12px] border border-[color:var(--page-line)] bg-white px-4 py-2 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[color:var(--page-line)] disabled:hover:text-[color:var(--page-text)] 2xl:inline-flex"
+                className="hidden shrink-0 items-center gap-2 whitespace-nowrap rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-50 2xl:inline-flex"
               >
                 <DownloadIcon />
                 {resumeSourceUrl ? "Download original" : "Backup copy"}
               </button>
-            )}
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => setShowShortcuts(true)}
+              className="hidden shrink-0 items-center justify-center rounded-[12px] border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] 2xl:inline-flex"
+              aria-label="Keyboard shortcuts"
+              title="Keyboard shortcuts"
+            >
+              <KeyboardIcon />
+            </button>
 
             <AccountMenu />
           </div>
