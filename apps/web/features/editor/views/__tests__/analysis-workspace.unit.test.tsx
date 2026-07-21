@@ -357,7 +357,7 @@ describe("AnalysisWorkspace — tailor review flow", () => {
     renderWorkspace({ initialSuggestionsReviewOpen: true });
 
     await waitFor(() => {
-      expect(screen.getByRole("dialog", { name: /review job-tailored edits/i })).toBeInTheDocument();
+      expect(screen.getByRole("dialog", { name: /review job edits/i })).toBeInTheDocument();
     });
   });
 
@@ -370,7 +370,7 @@ describe("AnalysisWorkspace — tailor review flow", () => {
       expect(mockTailorResumeDraft).toHaveBeenCalled();
     });
 
-    expect(screen.queryByRole("dialog", { name: /review job-tailored edits/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: /review job edits/i })).not.toBeInTheDocument();
   });
 
   it("shows a sidebar banner and header action for job-tailored edits", async () => {
@@ -393,7 +393,7 @@ describe("AnalysisWorkspace — tailor review flow", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /review job edits/i }));
 
-    expect(screen.getByRole("dialog", { name: /review job-tailored edits/i })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: /review job edits/i })).toBeInTheDocument();
   });
 
   it("hides manual Add suggestion buttons while tailor proposals are available", async () => {
@@ -425,7 +425,7 @@ describe("AnalysisWorkspace — tailor review flow", () => {
     });
   });
 
-  it("falls back to Review suggestions when tailor returns no proposals", async () => {
+  it("hides the review header action when tailor returns no proposals", async () => {
     mockTailorResumeDraft.mockResolvedValue({
       summary: { before: "Same", after: "Same" },
       skills: { before: "React", after: "React" },
@@ -439,6 +439,8 @@ describe("AnalysisWorkspace — tailor review flow", () => {
     });
 
     expect(screen.queryByText("Job-tailored edits ready")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /review suggestions/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /review job edits/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /review suggestions/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: /review suggested improvements/i })).not.toBeInTheDocument();
   });
 });
