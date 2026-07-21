@@ -4,7 +4,7 @@ import { AccountPageClient } from "./account-page-client";
 
 export const metadata: Metadata = {
   title: "Account",
-  description: "Manage your Deep Focus profile, resume-check allowance, and sign-in session.",
+  description: "Manage your Resumae profile, resume-check allowance, and sign-in session.",
   alternates: {
     canonical: "/account",
   },
