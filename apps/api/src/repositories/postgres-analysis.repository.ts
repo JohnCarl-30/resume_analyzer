@@ -9,9 +9,33 @@ import type {
   PersistedResumeAnalysis,
 } from "./analysis.repository.js";
 
-function mapRowToAnalysis(
-  row: typeof resumeAnalysesTable.$inferSelect,
-): PersistedResumeAnalysis {
+/** Columns needed for analysis JSON — excludes PDF blob and unused embeddings. */
+const analysisPublicColumns = {
+  id: resumeAnalysesTable.id,
+  targetRole: resumeAnalysesTable.targetRole,
+  selectedTemplateId: resumeAnalysesTable.selectedTemplateId,
+  jobDescription: resumeAnalysesTable.jobDescription,
+  parsedResumeText: resumeAnalysesTable.parsedResumeText,
+  score: resumeAnalysesTable.score,
+  metricsFound: resumeAnalysesTable.metricsFound,
+  matchedKeywords: resumeAnalysesTable.matchedKeywords,
+  missingKeywords: resumeAnalysesTable.missingKeywords,
+  suggestions: resumeAnalysesTable.suggestions,
+  generatedAt: resumeAnalysesTable.generatedAt,
+  sourceFileName: resumeAnalysesTable.sourceFileName,
+  sourceFileContentType: resumeAnalysesTable.sourceFileContentType,
+  extractedCharacterCount: resumeAnalysesTable.extractedCharacterCount,
+  extractedProfile: resumeAnalysesTable.extractedProfile,
+  extractionProvider: resumeAnalysesTable.extractionProvider,
+  userId: resumeAnalysesTable.userId,
+  createdAt: resumeAnalysesTable.createdAt,
+} as const;
+
+type AnalysisPublicRow = {
+  [K in keyof typeof analysisPublicColumns]: (typeof resumeAnalysesTable.$inferSelect)[K];
+};
+
+function mapRowToAnalysis(row: AnalysisPublicRow): PersistedResumeAnalysis {
   return {
     id: row.id,
     targetRole: row.targetRole,
@@ -90,7 +114,7 @@ class PostgresAnalysisRepository implements AnalysisRepository {
     }
 
     const [record] = await db.client
-      .select()
+      .select(analysisPublicColumns)
       .from(resumeAnalysesTable)
       .where(eq(resumeAnalysesTable.id, id))
       .limit(1);
@@ -108,7 +132,7 @@ class PostgresAnalysisRepository implements AnalysisRepository {
     }
 
     const records = await db.client
-      .select()
+      .select(analysisPublicColumns)
       .from(resumeAnalysesTable)
       .where(eq(resumeAnalysesTable.userId, userId))
       .orderBy(desc(resumeAnalysesTable.createdAt));
@@ -182,3 +206,6 @@ class PostgresAnalysisRepository implements AnalysisRepository {
 }
 
 export const postgresAnalysisRepository = new PostgresAnalysisRepository();
+
+/** Exported for tests — public analysis reads must never request the PDF blob column. */
+export const ANALYSIS_PUBLIC_COLUMN_KEYS = Object.keys(analysisPublicColumns);
