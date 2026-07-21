@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
-import { DeepFocusWizard } from "@/features/onboarding/views/deep-focus-wizard";
+import { AnalysisWizard } from "@/features/onboarding/views/analysis-wizard";
 
 export const metadata: Metadata = {
   title: "Check a Resume",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default function NewAnalysisPage() {
   return (
     <Suspense fallback={null}>
-      <DeepFocusWizard />
+      <AnalysisWizard />
     </Suspense>
   );
 }
