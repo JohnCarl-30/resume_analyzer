@@ -53,7 +53,7 @@ export function LandingPageView() {
             className="brand-logo inline-flex items-center gap-2 text-base font-semibold tracking-tight"
           >
             <BrandMark />
-            <span className="font-brand">Deep Focus</span>
+            <span className="font-brand">Resumae</span>
           </Link>
           <HeaderAuthActions />
         </div>
@@ -73,7 +73,7 @@ export function LandingPageView() {
             className="animate-enter-up mt-5 max-w-[58ch] text-base leading-7 text-muted-foreground sm:text-lg"
             style={enterDelay(90)}
           >
-            Deep Focus lines your resume up against the posting and marks exactly where it falls
+            Resumae lines your resume up against the posting and marks exactly where it falls
             short — the words that are missing, the bullets that undersell you, the layout that
             is hard to scan.
           </p>
@@ -124,7 +124,7 @@ export function LandingPageView() {
                 ))}
               </div>
               <figcaption className="mt-3 text-xs text-muted-foreground">
-                Sample check on Deep Focus&rsquo;s own placeholder resume.
+                Sample check on Resumae&rsquo;s own placeholder resume.
               </figcaption>
             </ScrollReveal>
 
@@ -179,7 +179,7 @@ export function LandingPageView() {
               className="brand-logo inline-flex items-center gap-2 text-base font-semibold tracking-tight text-foreground"
             >
               <BrandMark />
-              <span className="font-brand">Deep Focus</span>
+              <span className="font-brand">Resumae</span>
             </Link>
             <p className="max-w-[36ch] text-sm text-muted-foreground sm:text-right">
               Line-by-line notes, tied to the job post you&rsquo;re targeting.
@@ -205,7 +205,7 @@ export function LandingPageView() {
 
           <div className="mt-10 flex flex-col gap-2 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
             <p>Sign in to run one AI check per account. Drafts stay in your browser until you save one.</p>
-            <p className="font-mono tracking-[0.08em] uppercase">Deep Focus</p>
+            <p>Built by John Carl Santos</p>
           </div>
         </div>
       </footer>
