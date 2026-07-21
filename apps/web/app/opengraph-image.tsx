@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Deep Focus resume builder and job match checker";
+export const alt = "Resumae resume builder and job match checker";
 export const size = {
   width: 1200,
   height: 630,
@@ -38,7 +38,7 @@ export default function OpenGraphImage() {
             }}
           >
             <div style={{ color: "#155dfc", display: "flex", fontSize: 28, fontWeight: 700 }}>
-              Deep Focus
+              Resumae
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "20px", maxWidth: "760px" }}>
