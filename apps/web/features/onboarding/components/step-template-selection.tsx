@@ -191,10 +191,10 @@ export function StepTemplateSelection({
       </div>
 
       {/* Footer Actions */}
-      <div className="mx-auto mt-6 flex w-full max-w-6xl flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-end">
+      <div className="mx-auto mt-6 flex w-full max-w-6xl flex-col gap-3 border-t border-[color:var(--page-line)] pt-4 sm:flex-row sm:items-end sm:justify-end">
         {isSubmitting && analysisProgressSteps && analysisProgressSteps.length > 0 ? (
           <AnalysisProgressStatus
-            className="mr-auto w-full sm:max-w-md"
+            className="mr-auto w-full min-w-0 sm:max-w-sm"
             steps={analysisProgressSteps}
             activeStepIndex={analysisProgressActiveStepIndex}
           />
