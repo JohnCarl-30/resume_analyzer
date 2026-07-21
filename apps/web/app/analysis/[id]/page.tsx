@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DeepFocusWizard } from "@/features/onboarding/views/deep-focus-wizard";
+import { AnalysisWizard } from "@/features/onboarding/views/analysis-wizard";
 
 interface AnalysisDetailPageProps {
   params: Promise<{ id: string }>;
@@ -25,5 +25,5 @@ export async function generateMetadata({ params }: AnalysisDetailPageProps): Pro
 export default async function AnalysisDetailPage({ params }: AnalysisDetailPageProps) {
   const { id } = await params;
 
-  return <DeepFocusWizard initialAnalysisId={id} />;
+  return <AnalysisWizard initialAnalysisId={id} />;
 }
