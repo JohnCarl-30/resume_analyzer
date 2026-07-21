@@ -1,6 +1,7 @@
 "use client";
 
 import React, {
+  useCallback,
   useEffect,
   useId,
   useMemo,
@@ -82,6 +83,10 @@ export function AnalysisWizard({ onExit, initialAnalysisId }: AnalysisWizardProp
   const resumeInputRef = useRef<HTMLInputElement>(null);
   const restoredAnalysisIdRef = useRef<string | null>(null);
   const resumeObjectUrlRef = useRef<string | null>(null);
+  const sourceLoadPromiseRef = useRef<Promise<{
+    sourceUrl: string;
+    previewUrl: string | null;
+  } | null> | null>(null);
 
   function revokeStoredResumeObjectUrl() {
     if (resumeObjectUrlRef.current) {
@@ -107,6 +112,8 @@ export function AnalysisWizard({ onExit, initialAnalysisId }: AnalysisWizardProp
   const [analysisIdFromUrl, setAnalysisIdFromUrl] = useState<string | null>(initialAnalysisId ?? null);
   const [resumeSourceUrl, setResumeSourceUrl] = useState<string | null>(null);
   const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
+  const [sourcePreviewLoading, setSourcePreviewLoading] = useState(false);
+  const [sourcePreviewError, setSourcePreviewError] = useState("");
   const [useTemplateContent, setUseTemplateContent] = useState(false);
   const [createFromScratch, setCreateFromScratch] = useState(false);
   const [openSuggestionsReview, setOpenSuggestionsReview] = useState(false);
@@ -434,51 +441,68 @@ export function AnalysisWizard({ onExit, initialAnalysisId }: AnalysisWizardProp
     const nextSourceUrl = URL.createObjectURL(resumeFile);
     setResumeSourceUrl(nextSourceUrl);
     setResumePreviewUrl(resumeFile.type === "application/pdf" ? nextSourceUrl : null);
+    setSourcePreviewError("");
 
     return () => {
       URL.revokeObjectURL(nextSourceUrl);
     };
   }, [resumeFile]);
 
+  // Clear stored source URLs when the analysis changes (do not auto-fetch PDF).
   useEffect(() => {
     if (resumeFile) {
       return;
     }
 
-    if (!analysisResult?.id || !analysisResult.sourceFileContentType) {
-      revokeStoredResumeObjectUrl();
-      setResumeSourceUrl(null);
-      setResumePreviewUrl(null);
-      return;
+    revokeStoredResumeObjectUrl();
+    setResumeSourceUrl(null);
+    setResumePreviewUrl(null);
+    setSourcePreviewError("");
+    sourceLoadPromiseRef.current = null;
+  }, [analysisResult?.id, resumeFile]);
+
+  const ensureSourcePreview = useCallback(async () => {
+    if (resumeSourceUrl) {
+      return { sourceUrl: resumeSourceUrl, previewUrl: resumePreviewUrl };
     }
 
-    let isCancelled = false;
+    if (!analysisResult?.id || !analysisResult.sourceFileContentType) {
+      return null;
+    }
 
-    void loadResumeAnalysisSourcePreview(analysisResult.id)
+    if (sourceLoadPromiseRef.current) {
+      return sourceLoadPromiseRef.current;
+    }
+
+    setSourcePreviewLoading(true);
+    setSourcePreviewError("");
+
+    const loadPromise = loadResumeAnalysisSourcePreview(analysisResult.id)
       .then((result) => {
-        if (isCancelled) {
-          URL.revokeObjectURL(result.sourceUrl);
-          return;
-        }
-
         revokeStoredResumeObjectUrl();
         resumeObjectUrlRef.current = result.sourceUrl;
         setResumeSourceUrl(result.sourceUrl);
         setResumePreviewUrl(result.previewUrl);
+        setSourcePreviewLoading(false);
+        return { sourceUrl: result.sourceUrl, previewUrl: result.previewUrl };
       })
-      .catch(() => {
-        if (!isCancelled) {
-          revokeStoredResumeObjectUrl();
-          setResumeSourceUrl(null);
-          setResumePreviewUrl(null);
-        }
+      .catch((error) => {
+        sourceLoadPromiseRef.current = null;
+        setSourcePreviewLoading(false);
+        setSourcePreviewError(
+          error instanceof Error ? error.message : "Unable to load the original file.",
+        );
+        return null;
       });
 
-    return () => {
-      isCancelled = true;
-      revokeStoredResumeObjectUrl();
-    };
-  }, [analysisResult?.id, analysisResult?.sourceFileContentType, resumeFile]);
+    sourceLoadPromiseRef.current = loadPromise;
+    return loadPromise;
+  }, [
+    analysisResult?.id,
+    analysisResult?.sourceFileContentType,
+    resumePreviewUrl,
+    resumeSourceUrl,
+  ]);
 
   useEffect(() => {
     setAnalysisIdFromUrl(initialAnalysisId ?? null);
@@ -506,7 +530,6 @@ export function AnalysisWizard({ onExit, initialAnalysisId }: AnalysisWizardProp
         setJobDescription(savedAnalysis.jobDescription ?? "");
         setSelectedTemplateId(normalizeTemplateId(savedAnalysis.selectedTemplateId, defaultTemplateId));
         setCreateFromScratch(false);
-        setOpenSuggestionsReview(true);
         setViewMode("workspace");
         setStep(5);
       })
@@ -557,6 +580,12 @@ export function AnalysisWizard({ onExit, initialAnalysisId }: AnalysisWizardProp
               }
               resumeSourceUrl={resumeSourceUrl}
               resumePreviewUrl={resumePreviewUrl}
+              sourcePreviewLoading={sourcePreviewLoading}
+              sourcePreviewError={sourcePreviewError}
+              canLoadSourcePreview={Boolean(
+                !resumeFile && analysisResult?.id && analysisResult.sourceFileContentType,
+              )}
+              onEnsureSourcePreview={ensureSourcePreview}
               analysisResult={analysisResult}
               initialForm={initialWorkspaceForm}
               createMode={createFromScratch}
