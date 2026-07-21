@@ -31,13 +31,13 @@ const siteUrl =
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  applicationName: "Deep Focus",
+  applicationName: "Resumae",
   alternates: {
     canonical: "/",
   },
   title: {
-    default: "Deep Focus | Resume Builder",
-    template: "%s | Deep Focus",
+    default: "Resumae | Resume Builder",
+    template: "%s | Resumae",
   },
   description:
     "Create a scanner-friendly resume, compare it to job posts, and get plain-language improvement tips.",
@@ -48,15 +48,15 @@ export const metadata: Metadata = {
     "job match",
     "career tools",
   ],
-  authors: [{ name: "Deep Focus" }],
-  creator: "Deep Focus",
-  publisher: "Deep Focus",
+  authors: [{ name: "Resumae" }],
+  creator: "Resumae",
+  publisher: "Resumae",
   category: "career",
   openGraph: {
     type: "website",
-    siteName: "Deep Focus",
+    siteName: "Resumae",
     url: "/",
-    title: "Deep Focus | Resume Builder",
+    title: "Resumae | Resume Builder",
     description:
       "Create a scanner-friendly resume, compare it to job posts, and get plain-language improvement tips.",
     images: [
@@ -64,13 +64,13 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Deep Focus resume builder and job match checker",
+        alt: "Resumae resume builder and job match checker",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Deep Focus | Resume Builder",
+    title: "Resumae | Resume Builder",
     description:
       "Create a scanner-friendly resume, compare it to job posts, and get plain-language improvement tips.",
     images: ["/opengraph-image"],
