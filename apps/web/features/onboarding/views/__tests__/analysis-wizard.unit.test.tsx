@@ -270,8 +270,9 @@ describe("AnalysisWizard unit tests", () => {
 
       expect(screen.getByTestId("analysis-workspace")).toHaveAttribute(
         "data-initial-suggestions-review-open",
-        "true",
+        "false",
       );
+      expect(mockLoadResumeAnalysisSourcePreview).not.toHaveBeenCalled();
     });
 
     it("resets to step 1 when getResumeAnalysis fails", async () => {
