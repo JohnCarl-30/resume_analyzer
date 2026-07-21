@@ -23,7 +23,7 @@ The following components have been updated to use the new design token system:
 - ✅ `app/page.tsx` (Landing page)
 - ✅ `features/resumes/views/dashboard-view.tsx`
 - ✅ `features/templates/components/template-card.tsx`
-- ✅ `features/onboarding/views/deep-focus-wizard.tsx`
+- ✅ `features/onboarding/views/analysis-wizard.tsx`
 - ✅ `features/onboarding/components/step-target-role.tsx`
 - ✅ `features/onboarding/components/step-document-upload.tsx`
 
