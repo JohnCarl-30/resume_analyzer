@@ -366,41 +366,42 @@ describe("AnalysisWorkspace — tailor review flow", () => {
 
     renderWorkspace({ initialSuggestionsReviewOpen: true });
 
-    await waitFor(() => {
-      expect(mockTailorResumeDraft).toHaveBeenCalled();
-    });
-
     expect(screen.queryByRole("dialog", { name: /review job edits/i })).not.toBeInTheDocument();
+    expect(mockTailorResumeDraft).not.toHaveBeenCalled();
   });
 
   it("shows a sidebar banner and header action for job-tailored edits", async () => {
     renderWorkspace({ initialForm: emptyResumeForm });
 
     await waitFor(() => {
-      expect(screen.getByText("Job-tailored edits ready")).toBeInTheDocument();
+      expect(screen.getByText("Job-tailored edits")).toBeInTheDocument();
     });
 
-    expect(screen.getByRole("button", { name: /review 2 edits/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /review job edits/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^review job edits$/i })).toBeInTheDocument();
+    expect(mockTailorResumeDraft).not.toHaveBeenCalled();
   });
 
   it("opens the tailor review modal from the header action", async () => {
     renderWorkspace({ initialSuggestionsReviewOpen: false });
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /review job edits/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^review job edits$/i })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /review job edits/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^review job edits$/i }));
 
     expect(screen.getByRole("dialog", { name: /review job edits/i })).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(mockTailorResumeDraft).toHaveBeenCalled();
+    });
   });
 
-  it("hides manual Add suggestion buttons while tailor proposals are available", async () => {
+  it("hides manual Add suggestion buttons while tailor is available", async () => {
     renderWorkspace({ initialForm: emptyResumeForm });
 
     await waitFor(() => {
-      expect(screen.getByText("Job-tailored edits ready")).toBeInTheDocument();
+      expect(screen.getByText("Job-tailored edits")).toBeInTheDocument();
     });
 
     expect(screen.queryByRole("button", { name: /add suggestion for add job words to skills/i })).not.toBeInTheDocument();
@@ -425,7 +426,7 @@ describe("AnalysisWorkspace — tailor review flow", () => {
     });
   });
 
-  it("hides the review header action when tailor returns no proposals", async () => {
+  it("keeps the review header action when tailor returns no proposals", async () => {
     mockTailorResumeDraft.mockResolvedValue({
       summary: { before: "Same", after: "Same" },
       skills: { before: "React", after: "React" },
@@ -435,12 +436,15 @@ describe("AnalysisWorkspace — tailor review flow", () => {
     renderWorkspace({ initialForm: emptyResumeForm, initialSuggestionsReviewOpen: false });
 
     await waitFor(() => {
+      expect(screen.getByRole("button", { name: /^review job edits$/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /^review job edits$/i }));
+
+    await waitFor(() => {
       expect(mockTailorResumeDraft).toHaveBeenCalled();
     });
 
-    expect(screen.queryByText("Job-tailored edits ready")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /review job edits/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /review suggestions/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("dialog", { name: /review suggested improvements/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: /review job edits/i })).toBeInTheDocument();
   });
 });
