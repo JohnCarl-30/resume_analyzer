@@ -23,7 +23,7 @@ const MAX_FILE_SIZE = 10_485_760; // 10 MB
 
 /**
  * Derives the upload error message and canContinue flag from a file's
- * type and size — mirroring the validation logic in DeepFocusWizard.
+ * type and size — mirroring the validation logic in AnalysisWizard.
  */
 function deriveUploadState(type: string, size: number): { uploadError: string; canContinue: boolean } {
   // Build a minimal File-like object for isSupportedFile
