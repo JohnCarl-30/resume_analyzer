@@ -69,10 +69,12 @@ function HarvardClassicLayout({ form }: { form: ResumeForm }) {
           className="flex flex-wrap justify-center gap-3 text-[0.95rem] text-gray-600"
         />
         {form.personalInfo.summary && (
-          <p className="mt-4 text-[0.95rem] text-gray-700 leading-relaxed max-w-2xl mx-auto">{form.personalInfo.summary}</p>
+          <div data-resume-section="summary">
+            <p className="mt-4 text-[0.95rem] text-gray-700 leading-relaxed max-w-2xl mx-auto">{form.personalInfo.summary}</p>
+          </div>
         )}
         {form.personalInfo.skills && (
-          <div className="mt-3 text-sm text-gray-600">
+          <div className="mt-3 text-sm text-gray-600" data-resume-section="skills">
             <span className="font-semibold">Skills: </span>{form.personalInfo.skills}
           </div>
         )}
@@ -100,7 +102,7 @@ function HarvardClassicLayout({ form }: { form: ResumeForm }) {
         )}
 
         {form.experience.length > 0 && (
-          <section>
+          <section data-resume-section="experience">
             <h2 className="text-lg font-bold uppercase border-b border-gray-900 mb-4 pb-0.5">Experience</h2>
             <div className="space-y-6">
               {form.experience.map((exp) => (
@@ -206,10 +208,12 @@ function ModernSansLayout({ form }: { form: ResumeForm }) {
       {(form.personalInfo.summary || form.personalInfo.skills) && (
         <section className="mb-8">
           {form.personalInfo.summary && (
-            <p className="text-[0.95rem] text-slate-700 leading-relaxed">{form.personalInfo.summary}</p>
+            <div data-resume-section="summary">
+              <p className="text-[0.95rem] text-slate-700 leading-relaxed">{form.personalInfo.summary}</p>
+            </div>
           )}
           {form.personalInfo.skills && (
-            <div className="mt-2 text-sm text-slate-600">
+            <div className="mt-2 text-sm text-slate-600" data-resume-section="skills">
               <span className="font-semibold">Skills: </span>{form.personalInfo.skills}
             </div>
           )}
@@ -240,7 +244,7 @@ function ModernSansLayout({ form }: { form: ResumeForm }) {
         )}
 
         {form.experience.length > 0 && (
-          <section>
+          <section data-resume-section="experience">
             <div className="flex items-center gap-4 mb-5">
               <h2 className="text-sm font-black uppercase tracking-[0.2em] whitespace-nowrap">Experience</h2>
               <div className="h-[2px] w-full bg-slate-100" />
@@ -354,10 +358,12 @@ function RubyAccentLayout({ form }: { form: ResumeForm }) {
           className="flex flex-wrap justify-center gap-3 text-sm font-medium text-gray-500"
         />
         {form.personalInfo.summary && (
-          <p className="mt-4 text-[0.95rem] text-gray-700 leading-relaxed max-w-2xl mx-auto">{form.personalInfo.summary}</p>
+          <div data-resume-section="summary">
+            <p className="mt-4 text-[0.95rem] text-gray-700 leading-relaxed max-w-2xl mx-auto">{form.personalInfo.summary}</p>
+          </div>
         )}
         {form.personalInfo.skills && (
-          <div className="mt-3 text-sm text-gray-600">
+          <div className="mt-3 text-sm text-gray-600" data-resume-section="skills">
             <span className="font-semibold">Skills: </span>{form.personalInfo.skills}
           </div>
         )}
@@ -387,7 +393,7 @@ function RubyAccentLayout({ form }: { form: ResumeForm }) {
         )}
 
         {form.experience.length > 0 && (
-          <section>
+          <section data-resume-section="experience">
             <div className="flex items-baseline gap-3 mb-4">
               <h2 className="text-sm font-bold uppercase tracking-[0.15em]" style={{ color: accentColor }}>Experience</h2>
               <div className="h-[1px] flex-1" style={{ backgroundColor: `${accentColor}20` }} />
@@ -514,13 +520,15 @@ function MinimalistGridLayout({
           className="flex flex-wrap justify-center gap-3 text-sm text-[color:var(--page-muted)]"
         />
         {form.personalInfo.summary && (
-          <p className="text-center text-[0.95rem] text-[color:var(--page-muted)] leading-relaxed max-w-2xl mx-auto">{form.personalInfo.summary}</p>
+          <div data-resume-section="summary">
+            <p className="text-center text-[0.95rem] text-[color:var(--page-muted)] leading-relaxed max-w-2xl mx-auto">{form.personalInfo.summary}</p>
+          </div>
         )}
       </header>
 
       <div className="grid gap-10">
         {shouldShowSummaryPlaceholder ? (
-          <section className="space-y-4">
+          <section className="space-y-4" data-resume-section="summary">
             <h2 className="border-b border-[color:var(--page-line)] pb-2 text-xl font-bold uppercase tracking-widest text-[color:var(--brand)]">
               Summary
             </h2>
@@ -531,7 +539,7 @@ function MinimalistGridLayout({
         ) : null}
 
         {form.personalInfo.skills ? (
-          <section className="space-y-4">
+          <section className="space-y-4" data-resume-section="skills">
             <h2 className="border-b border-[color:var(--page-line)] pb-2 text-xl font-bold uppercase tracking-widest text-[color:var(--brand)]">
               Skills
             </h2>
@@ -572,7 +580,7 @@ function MinimalistGridLayout({
         ) : null}
 
         {form.experience.length > 0 && (
-          <section className="space-y-5">
+          <section className="space-y-5" data-resume-section="experience">
             <h2 className="text-xl font-bold text-[color:var(--brand)] uppercase tracking-widest border-b border-[color:var(--page-line)] pb-2">
               Experience
             </h2>
@@ -599,7 +607,7 @@ function MinimalistGridLayout({
           </section>
         )}
         {shouldShowExperiencePlaceholder ? (
-          <section className="space-y-4">
+          <section className="space-y-4" data-resume-section="experience">
             <h2 className="border-b border-[color:var(--page-line)] pb-2 text-xl font-bold uppercase tracking-widest text-[color:var(--brand)]">
               Work Experience
             </h2>
@@ -610,7 +618,7 @@ function MinimalistGridLayout({
         ) : null}
 
         {shouldShowSkillsPlaceholder ? (
-          <section className="space-y-4">
+          <section className="space-y-4" data-resume-section="skills">
             <h2 className="border-b border-[color:var(--page-line)] pb-2 text-xl font-bold uppercase tracking-widest text-[color:var(--brand)]">
               Skills
             </h2>
