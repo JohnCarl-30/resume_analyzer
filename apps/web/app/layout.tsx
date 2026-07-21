@@ -66,6 +66,7 @@ export const metadata: Metadata = {
         height: 630,
         alt: "Resumae resume builder and job match checker",
       },
+    
     ],
   },
   twitter: {
