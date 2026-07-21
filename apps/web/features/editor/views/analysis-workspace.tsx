@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { ResumeAnalysisResult } from "../model/resume-analysis";
 import { emptyResumeForm, type ResumeForm } from "../model/resume-form";
 import { sampleTemplates, type ResumeTemplateVariant } from "../../templates/model/template";
@@ -73,6 +73,13 @@ interface AnalysisWorkspaceProps {
   resumeFileName: string;
   resumeSourceUrl?: string | null;
   resumePreviewUrl?: string | null;
+  sourcePreviewLoading?: boolean;
+  sourcePreviewError?: string;
+  canLoadSourcePreview?: boolean;
+  onEnsureSourcePreview?: () => Promise<{
+    sourceUrl: string;
+    previewUrl: string | null;
+  } | null>;
   analysisResult: ResumeAnalysisResult | null;
   initialForm?: ResumeForm;
   createMode?: boolean;
@@ -419,6 +426,10 @@ export function AnalysisWorkspace({
   resumeFileName,
   resumeSourceUrl,
   resumePreviewUrl,
+  sourcePreviewLoading = false,
+  sourcePreviewError = "",
+  canLoadSourcePreview = false,
+  onEnsureSourcePreview,
   analysisResult,
   initialForm,
   createMode = false,
@@ -478,6 +489,7 @@ export function AnalysisWorkspace({
   const [mobileCreateView, setMobileCreateView] = useState<MobileCreateView>("editor");
   const [mounted, setMounted] = useState(false);
   const [tailorReviewOpen, setTailorReviewOpen] = useState(false);
+  const autoOpenedTailorAnalysisIdRef = useRef<string | null>(null);
   const hasStructuredResumeData = Boolean(
     analysisResult?.extractedProfile || initialForm?.personalInfo?.fullName || createMode,
   );
@@ -532,7 +544,10 @@ export function AnalysisWorkspace({
   });
   const hasStructuredPreview = previewMode === "structured";
   const canZoomDocument = previewMode !== "uploaded";
-  const hasSourcePreviewChoice = Boolean(resumePreviewUrl || analysisResult?.parsedResumeText);
+  const canShowOriginalPreview = Boolean(resumePreviewUrl || canLoadSourcePreview);
+  const hasSourcePreviewChoice = Boolean(
+    canShowOriginalPreview || analysisResult?.parsedResumeText || hasStructuredResumeData,
+  );
   const lastSavedLabel = relativeTimeLabel(analysisResult?.generatedAt);
   const createResumeGuide = getCreateResumeGuideState(form, {
     hasSelectedTemplate: Boolean(selectedTemplate),
@@ -548,15 +563,14 @@ export function AnalysisWorkspace({
     previewForm: tailorPreviewForm,
     approveProposal,
     applyApprovedToForm,
+    ensureDraft: ensureTailorDraft,
   } = useWorkspaceTailorDraft({
     enabled: tailorEnabled,
     baseForm: tailorBaseForm,
     analysisResult,
     targetRole,
   });
-  const preferTailorFlow = tailorProposals.length > 0;
-  const showPrimaryReviewButton =
-    !createMode && Boolean(analysisResult) && (preferTailorFlow || tailorDraftLoading);
+  const showPrimaryReviewButton = !createMode && tailorEnabled;
   const showResumePlaceholders =
     createMode ||
     Boolean(
@@ -567,9 +581,11 @@ export function AnalysisWorkspace({
 
   function openPrimaryReview() {
     setPreviewMode("structured");
-    if (tailorEnabled && (tailorDraftLoading || preferTailorFlow || tailorDraftError)) {
-      setTailorReviewOpen(true);
+    if (!tailorEnabled) {
+      return;
     }
+    setTailorReviewOpen(true);
+    void ensureTailorDraft();
   }
   const draftStatusLabel =
     createMode && autosaveKey
@@ -634,25 +650,25 @@ export function AnalysisWorkspace({
       return;
     }
 
+    // Only auto-open after a fresh check (wizard sets this). Saved reopens stay in the editor.
     if (!initialSuggestionsReviewOpen || !tailorEnabled) {
       return;
     }
 
-    if (tailorDraftLoading) {
+    if (autoOpenedTailorAnalysisIdRef.current === analysisResult.id) {
       return;
     }
 
-    if (tailorProposals.length > 0) {
-      setTailorReviewOpen(true);
-      setPreviewMode("structured");
-    }
+    autoOpenedTailorAnalysisIdRef.current = analysisResult.id;
+    setTailorReviewOpen(true);
+    setPreviewMode("structured");
+    void ensureTailorDraft();
   }, [
     analysisResult?.id,
     createMode,
+    ensureTailorDraft,
     initialSuggestionsReviewOpen,
-    tailorDraftLoading,
     tailorEnabled,
-    tailorProposals.length,
   ]);
 
   useEffect(() => {
@@ -674,7 +690,12 @@ export function AnalysisWorkspace({
   }, [autosaveKey, createMode, form]);
 
   useEffect(() => {
-    if (!resumePreviewUrl && previewMode === "uploaded") {
+    if (
+      !resumePreviewUrl &&
+      !sourcePreviewLoading &&
+      !canLoadSourcePreview &&
+      previewMode === "uploaded"
+    ) {
       setPreviewMode(
         analysisResult?.extractedProfile || initialForm?.personalInfo?.fullName
           ? "structured"
@@ -695,11 +716,45 @@ export function AnalysisWorkspace({
   }, [
     analysisResult?.extractedProfile,
     analysisResult?.parsedResumeText,
+    canLoadSourcePreview,
     hasStructuredResumeData,
     initialForm?.personalInfo?.fullName,
     previewMode,
     resumePreviewUrl,
+    sourcePreviewLoading,
   ]);
+
+  async function handleShowOriginalPreview() {
+    setPreviewMode("uploaded");
+    if (!resumePreviewUrl && onEnsureSourcePreview) {
+      await onEnsureSourcePreview();
+    }
+  }
+
+  async function handleDownloadOriginal() {
+    if (resumeSourceUrl) {
+      handleDownloadSource();
+      return;
+    }
+
+    if (!onEnsureSourcePreview) {
+      handleExportJson();
+      return;
+    }
+
+    const loaded = await onEnsureSourcePreview();
+    if (loaded?.sourceUrl) {
+      const fileName = resumeFileName.trim() || "resume.pdf";
+      const anchor = document.createElement("a");
+      anchor.href = loaded.sourceUrl;
+      anchor.download = fileName;
+      anchor.rel = "noopener";
+      anchor.click();
+      return;
+    }
+
+    handleExportJson();
+  }
 
   function sectionIcon(icon: (typeof editorSections)[number]["icon"]) {
     if (icon === "personal") return <UserCircleIcon />;
@@ -1180,12 +1235,13 @@ export function AnalysisWorkspace({
                 guide={analysisNextSteps}
                 onAction={handleAnalysisStepAction}
                 onApply={handleApplyAnalysisStepAction}
-                preferTailorFlow={preferTailorFlow}
+                preferTailorFlow={tailorEnabled}
                 tailor={
                   tailorEnabled
                     ? {
                         isLoading: tailorDraftLoading,
                         pendingCount: tailorProposals.length,
+                        available: true,
                         onReview: openPrimaryReview,
                       }
                     : undefined
@@ -1322,6 +1378,18 @@ export function AnalysisWorkspace({
             src={`${resumePreviewUrl}#toolbar=0&navpanes=0&zoom=${previewZoom}`}
             className="min-h-[calc(100dvh-10rem)] w-full bg-white"
           />
+        </div>
+      );
+    }
+
+    if (previewMode === "uploaded" && (sourcePreviewLoading || canLoadSourcePreview)) {
+      return (
+        <div className={`${previewCardClassName} px-6 py-16 text-center`}>
+          <p className="text-sm text-[color:var(--page-muted)]">
+            {sourcePreviewLoading
+              ? "Loading original…"
+              : sourcePreviewError || "Original file unavailable."}
+          </p>
         </div>
       );
     }
@@ -1618,12 +1686,14 @@ export function AnalysisWorkspace({
             {!createMode ? (
               <button
                 type="button"
-                onClick={handleDownloadSource}
-                disabled={!resumeSourceUrl}
+                onClick={() => {
+                  void handleDownloadOriginal();
+                }}
+                disabled={sourcePreviewLoading || (!resumeSourceUrl && !canLoadSourcePreview)}
                 className="hidden shrink-0 items-center gap-2 whitespace-nowrap rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-50 2xl:inline-flex"
               >
                 <DownloadIcon />
-                {resumeSourceUrl ? "Download original" : "Backup copy"}
+                {resumeSourceUrl || canLoadSourcePreview ? "Download original" : "Backup copy"}
               </button>
             ) : null}
 
@@ -1708,10 +1778,12 @@ export function AnalysisWorkspace({
                 <div className="pointer-events-auto flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-[color:var(--page-line)] bg-white/95 px-2 py-1.5 shadow-sm [scrollbar-width:none] sm:gap-2 sm:px-2.5 [&::-webkit-scrollbar]:hidden">
                   {hasSourcePreviewChoice ? (
                     <div className="flex shrink-0 items-center gap-1 rounded-full bg-slate-50 p-0.5">
-                      {resumePreviewUrl ? (
+                      {canShowOriginalPreview ? (
                         <button
                           type="button"
-                          onClick={() => setPreviewMode("uploaded")}
+                          onClick={() => {
+                            void handleShowOriginalPreview();
+                          }}
                           className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-xs font-medium transition ${
                             previewMode === "uploaded"
                               ? "bg-white text-[color:var(--brand)] shadow-sm"
@@ -1767,8 +1839,10 @@ export function AnalysisWorkspace({
                       <div className="mx-1 h-7 w-px bg-[color:var(--page-line)]" />
                       <button
                         type="button"
-                        onClick={handleDownloadSource}
-                        disabled={!resumeSourceUrl}
+                        onClick={() => {
+                          void handleDownloadOriginal();
+                        }}
+                        disabled={sourcePreviewLoading || (!resumeSourceUrl && !canLoadSourcePreview)}
                         className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[color:var(--page-muted)] transition hover:bg-[color:var(--brand-soft)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-40"
                         aria-label="Download source file"
                       >
