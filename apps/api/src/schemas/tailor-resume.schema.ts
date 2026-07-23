@@ -18,6 +18,8 @@ export const tailorResumeSchema = z.object({
       fullName: z.string().optional().default(""),
       phone: z.string().optional().default(""),
       email: z.string().optional().default(""),
+      linkedin: z.string().optional().default(""),
+      github: z.string().optional().default(""),
       summary: z.string().optional().default(""),
       skills: z.string().optional().default(""),
     }),
