@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import express from "express";
 import cors from "cors";
 
@@ -29,4 +30,5 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api", privateApiCacheHeaders, apiRouter);
+Sentry.setupExpressErrorHandler(app);
 app.use(errorHandler);
