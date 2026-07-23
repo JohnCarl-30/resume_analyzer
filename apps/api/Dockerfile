@@ -24,4 +24,4 @@ COPY --from=build /app/apps/api/package.json /app/apps/api/package.json
 # Cloud Run requires PORT to be set via env, default to 8080
 ENV PORT=8080
 EXPOSE 8080
-CMD ["node", "dist/server.js"]
+CMD ["node", "--import", "./dist/instrument.js", "dist/server.js"]
