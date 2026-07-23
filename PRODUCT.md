@@ -20,9 +20,11 @@ Resumae helps someone compare a resume to a real job description, see the match 
 
 AI lightly rewrites the resume for the job, with reviewable edits the user approves — not a black-box full rewrite.
 
+This is a seeker-facing resume check (job-word match plus scanner-friendly structure: contact, headings, readable extract) — not an employer applicant-tracking system.
+
 ## Brand Personality
 
-Calm, clear, coach-like. The interface should feel like a patient review partner: steady guidance, short sentences, no hype. Confidence comes from clarity and control, not from loud marketing energy.
+Calm, clear, coach-like. The interface should fxeel like a patient review partner: steady guidance, short sentences, no hype. Confidence comes from clarity and control, not from loud marketing energy.
 
 ## Anti-references
 
