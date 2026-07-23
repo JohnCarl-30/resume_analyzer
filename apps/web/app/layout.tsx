@@ -6,6 +6,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { AuthSessionProvider } from "@/components/auth-session-provider";
 import { PageTransition } from "@/components/page-transition";
+import { QueryProvider } from "@/components/query-provider";
 import { cn } from "@/lib/utils";
 
 const geistSans = Geist({
@@ -102,8 +103,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <html lang="en" className={cn(geistSans.variable, geistMono.variable, lora.variable)}>
         <body className="antialiased">
           <AuthSessionProvider>
-            <PageTransition />
-            {children}
+            <QueryProvider>
+              <PageTransition />
+              {children}
+            </QueryProvider>
           </AuthSessionProvider>
         </body>
       </html>
