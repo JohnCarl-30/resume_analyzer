@@ -32,6 +32,8 @@ const envSchema = z.object({
   R2_ACCOUNT_ID: optionalString,
   R2_ACCESS_KEY_ID: optionalString,
   R2_SECRET_ACCESS_KEY: optionalString,
+  SENTRY_DSN: optionalString,
+  SENTRY_ENVIRONMENT: optionalString,
 });
 
 export const env = envSchema.parse(process.env);
