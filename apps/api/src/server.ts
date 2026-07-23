@@ -1,3 +1,5 @@
+import * as Sentry from "@sentry/node";
+
 import { app } from "./app.js";
 import { env } from "./config/env.js";
 import { ensureDatabaseSchema } from "./db/client.js";
@@ -10,8 +12,9 @@ const server = app.listen(env.PORT, () => {
 
 function gracefulShutdown(signal: string) {
   console.log(`Received ${signal}. Shutting down gracefully...`);
-  server.close(() => {
+  server.close(async () => {
     console.log("HTTP server closed.");
+    await Sentry.close(2000);
     process.exit(0);
   });
 
