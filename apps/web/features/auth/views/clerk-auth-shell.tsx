@@ -12,12 +12,12 @@ import { SessionExpiredRecovery } from "../components/session-expired-recovery";
 import { AuthShellLayout } from "./auth-shell-layout";
 
 const authSwitchLinkClass =
-  "font-semibold text-primary underline underline-offset-[3px] hover:text-primary/85 focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/20";
+  "font-medium text-[color:var(--brand)] underline-offset-[3px] hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/20";
 
 /** Own the card chrome — hide Clerk branding; keep email + Google form only. */
 const clerkAppearance = {
   variables: {
-    colorPrimary: "var(--foreground)",
+    colorPrimary: "var(--brand)",
     colorText: "var(--foreground)",
     colorTextSecondary: "var(--muted-foreground)",
     colorBackground: "transparent",
@@ -59,26 +59,8 @@ const clerkAppearance = {
     formFieldErrorText: "!text-sm !text-destructive",
     footer: "hidden",
     badge: "hidden",
-    identityPreviewEditButton: "!text-primary",
+    identityPreviewEditButton: "!text-[color:var(--brand)]",
     alternativeMethodsBlockButton: "!border-border !bg-background !text-foreground !shadow-none",
-  },
-} as const;
-
-const clerkAppearanceSignUp = {
-  ...clerkAppearance,
-  elements: {
-    ...clerkAppearance.elements,
-    card: "!bg-transparent !shadow-none !border-0 !p-0 !gap-2 !rounded-none",
-    main: "!gap-2",
-    form: "!gap-2",
-    formFieldRow: "!gap-1",
-    formField: "!gap-1",
-    socialButtonsBlockButton:
-      "h-10 !border !border-[color:var(--page-line-strong)] !bg-white !text-sm !font-medium !text-foreground hover:!bg-muted !shadow-none focus-visible:!ring-2 focus-visible:!ring-ring/20",
-    formButtonPrimary:
-      "mt-0 !flex !h-10 !w-full !items-center !justify-center !text-center !bg-foreground !text-background !text-sm !font-medium hover:!bg-foreground/90 !shadow-none focus-visible:!ring-2 focus-visible:!ring-ring/20",
-    formFieldInput:
-      "h-10 !border !border-[color:var(--page-line-strong)] !bg-white !px-3 !text-sm !text-foreground !shadow-none focus-visible:!border-foreground focus-visible:!ring-2 focus-visible:!ring-ring/20",
   },
 } as const;
 
@@ -103,18 +85,16 @@ export function AuthFormPanel({ mode }: AuthFormPanelProps) {
 
       <SignedOut>
         <header
-          className={`animate-enter-up-safe space-y-1 ${isSignUp ? "mb-4" : "mb-5"}`}
+          className="animate-enter-up-safe mb-5 space-y-1.5"
           style={{ "--enter-delay": "40ms" } as CSSProperties}
         >
-          <h1
-            className={`tracking-tight text-foreground ${isSignUp ? "text-xl font-semibold sm:text-2xl" : "display-serif text-2xl sm:text-[1.75rem]"}`}
-          >
+          <h1 className="display-serif text-2xl tracking-tight text-foreground text-balance sm:text-[1.75rem]">
             {isSignUp ? "Create your account" : "Welcome back"}
           </h1>
-          <p className="text-sm leading-6 text-muted-foreground text-pretty">
+          <p className="max-w-[36ch] text-sm leading-6 text-muted-foreground text-pretty">
             {isSignUp
-              ? "One AI resume check per account, free to start."
-              : "Sign in to run your resume check against a job post."}
+              ? "Free to start — one AI resume check per account."
+              : "Sign in to check your resume against a job post."}
           </p>
         </header>
 
@@ -123,7 +103,7 @@ export function AuthFormPanel({ mode }: AuthFormPanelProps) {
           style={{ "--enter-delay": "110ms" } as CSSProperties}
         >
           <div
-            className={`app-auth-clerk px-5 sm:px-6 ${isSignUp ? "app-auth-clerk--sign-up py-3 sm:py-4" : "app-auth-clerk--sign-in py-5 sm:py-6"}`}
+            className={`app-auth-clerk px-5 py-5 sm:px-6 sm:py-6 ${isSignUp ? "app-auth-clerk--sign-up" : "app-auth-clerk--sign-in"}`}
           >
             <AuthComponent
               routing="path"
@@ -131,13 +111,11 @@ export function AuthFormPanel({ mode }: AuthFormPanelProps) {
               signInUrl="/auth/sign-in"
               signUpUrl="/auth/sign-up"
               forceRedirectUrl={redirectPath}
-              appearance={isSignUp ? clerkAppearanceSignUp : clerkAppearance}
+              appearance={clerkAppearance}
             />
           </div>
 
-          <div
-            className={`app-auth-card-footer rounded-b-[calc(var(--radius)+0.125rem)] border-t border-border text-sm leading-6 text-foreground/80 ${isSignUp ? "px-5 py-2.5 sm:px-6" : "px-6 py-3.5 sm:px-7"}`}
-          >
+          <div className="app-auth-card-footer rounded-b-[calc(var(--radius)+0.125rem)] border-t border-border px-5 py-3.5 text-sm leading-6 text-muted-foreground sm:px-6">
             {isSignUp ? (
               <>
                 <span>Already have an account?</span>
@@ -163,19 +141,23 @@ export function AuthFormPanel({ mode }: AuthFormPanelProps) {
         </div>
 
         <div
-          className={`animate-enter-up-safe text-sm leading-6 text-muted-foreground ${isSignUp ? "mt-5" : "mt-6 space-y-3"}`}
+          className="animate-enter-up-safe mt-6 space-y-3 text-sm leading-6 text-muted-foreground"
           style={{ "--enter-delay": "170ms" } as CSSProperties}
         >
           {!isSignUp ? (
-            <p className="text-pretty">
+            <p className="max-w-[40ch] text-pretty">
               After your one analysis, you can still update that saved check against a new job post.
             </p>
-          ) : null}
+          ) : (
+            <p className="max-w-[40ch] text-pretty">
+              After your check, keep editing and re-check the same resume against new posts.
+            </p>
+          )}
           <Link
             href="/"
-            className="motion-link inline-flex min-h-11 items-center hover:text-foreground focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/20"
+            className="motion-link inline-flex min-h-11 items-center text-muted-foreground hover:text-foreground focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/20"
           >
-            ← Back to marketing home
+            ← Back to home
           </Link>
         </div>
       </SignedOut>
