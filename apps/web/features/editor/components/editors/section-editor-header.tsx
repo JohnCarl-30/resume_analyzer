@@ -8,7 +8,7 @@ interface SectionEditorHeaderProps {
 
 export function SectionEditorHeader({ title, onBack }: SectionEditorHeaderProps) {
   return (
-    <div className="flex items-center gap-3 border-b border-[color:var(--page-line)] px-4 py-3 sm:px-6 sm:py-4">
+    <div className="flex items-center gap-3 border-b border-[color:var(--page-line)] px-4 py-3 sm:px-5">
       <Button
         type="button"
         onClick={onBack}
@@ -20,7 +20,7 @@ export function SectionEditorHeader({ title, onBack }: SectionEditorHeaderProps)
         <ArrowLeftIcon data-icon="inline-start" aria-hidden="true" />
         Sections
       </Button>
-      <h3 className="min-w-0 truncate text-lg font-semibold tracking-tight text-[color:var(--page-text)] sm:text-xl">
+      <h3 className="min-w-0 truncate text-base font-semibold tracking-tight text-[color:var(--page-text)]">
         {title}
       </h3>
     </div>
