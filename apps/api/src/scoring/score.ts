@@ -8,6 +8,8 @@ export interface ScoringInput {
   writingPenalty: number;
   /** Impact metrics penalty (0–10) */
   impactPenalty: number;
+  /** Scanner / structure readiness penalty (0–15) */
+  structurePenalty?: number;
   /** Number of high-severity suggestions */
   highSeverityCount: number;
 }
@@ -19,6 +21,7 @@ export interface ScoringResult {
     requiredSkillsComponent: number;
     writingDeduction: number;
     impactDeduction: number;
+    structureDeduction: number;
     severityDeduction: number;
   };
 }
@@ -43,6 +46,7 @@ export function computeScore(input: ScoringInput): ScoringResult {
     requiredSkillsTotal,
     writingPenalty,
     impactPenalty,
+    structurePenalty = 0,
     highSeverityCount,
   } = input;
 
@@ -60,6 +64,7 @@ export function computeScore(input: ScoringInput): ScoringResult {
   // Deductions
   const writingDeduction = Math.min(writingPenalty, 15);
   const impactDeduction = Math.min(impactPenalty, 10);
+  const structureDeduction = Math.min(structurePenalty, 12);
   const severityDeduction = Math.min(highSeverityCount * 3, 12);
 
   const raw =
@@ -68,6 +73,7 @@ export function computeScore(input: ScoringInput): ScoringResult {
     baseComponent -
     writingDeduction -
     impactDeduction -
+    structureDeduction -
     severityDeduction;
 
   const score = Math.round(Math.max(20, Math.min(98, raw)));
@@ -79,6 +85,7 @@ export function computeScore(input: ScoringInput): ScoringResult {
       requiredSkillsComponent: Math.round(requiredSkillsComponent),
       writingDeduction,
       impactDeduction,
+      structureDeduction,
       severityDeduction,
     },
   };
