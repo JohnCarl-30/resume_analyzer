@@ -5,7 +5,10 @@
 /* Hallmark · genre: editorial · macrostructure: Workbench · theme: custom-tuned
  * (vibe: "reference-book restraint, resume as document" · paper oklch(98.6% 0.004 258)
  * · accent oklch(56% 0.21 259), reused from the project's existing --brand)
- * · display: Lora (var(--font-display)) · UI/body: Geist (var(--font-ui))
+ * · display/marketing: Lora (var(--font-display))
+ * · UI chrome: Geist (var(--font-ui))
+ * · resume serif templates: Lora (var(--font-resume-serif))
+ * · resume sans templates: Geist (var(--font-resume-sans)) — document scale, not chrome
  * · enrichment: none · nav: N9 · footer: Ft1 · designed-as: single-page (app/page.tsx)
  * · pre-emit critique: P5 H4 E5 S4 R4 V5
  */
@@ -43,21 +46,26 @@
   --auth-stage-keyword: oklch(100% 0 0);
   --shadow-lg: 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 1px 4px rgba(0, 0, 0, 0.03);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --motion-fast: 140ms;
   --motion-base: 220ms;
   --motion-page: 280ms;
   --motion-enter: 520ms;
   --z-dropdown: 40;
   --z-sticky: 30;
-  /* Typography roles: UI sans · marketing/resume serif · data mono */
+  /* Typography roles: UI sans · marketing/resume serif · resume sans · data mono */
   --font-ui: var(--font-geist-sans), "Geist", "Helvetica Neue", ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-ui);
   --font-heading: var(--font-ui);
   --font-display: var(--font-lora), "Lora", "Georgia", "Times New Roman", serif;
   --font-serif: var(--font-display);
+  --font-resume-serif: var(--font-display);
+  --font-resume-sans: var(--font-ui);
   --font-mono: var(--font-geist-mono), "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
   --text-display: clamp(2rem, 4vw, 3.25rem);
   --text-title: 1.75rem;
@@ -149,6 +157,7 @@ textarea {
 /*
  * Marketing display voice (Lora): landing heroes and section headings only.
  * App UI headings use .app-page-title / .font-heading instead.
+ * Analysis chrome stays Geist — never put Lora on sidebar labels, match %, or buttons.
  */
 .display-serif {
   font-family: var(--font-display);
@@ -198,11 +207,22 @@ textarea {
   color: var(--foreground);
 }
 
-/* Resume preview: typeset document voice (Lora). Sans templates opt out. */
+/* Resume preview: quiet chrome / loud document */
 .resume-document {
-  font-family: var(--font-serif);
+  font-family: var(--font-resume-serif);
   font-size: var(--text-body);
-  line-height: 1.75;
+  line-height: 1.55;
+}
+
+.resume-document-sans {
+  font-family: var(--font-resume-sans);
+  font-size: var(--text-body);
+  line-height: 1.5;
+}
+
+.resume-document h1,
+.resume-document-sans h1 {
+  letter-spacing: -0.03em;
 }
 
 .font-mono {
@@ -556,15 +576,15 @@ textarea {
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
+  gap: 0.35rem 0.5rem;
   background: color-mix(in srgb, var(--muted) 55%, var(--card));
   text-align: center;
 }
 
 .app-auth-card-footer a {
-  color: var(--brand) !important;
   display: inline-flex;
   align-items: center;
+  min-height: 1.5rem;
 }
 
 .app-auth-clerk .cl-card,
@@ -875,7 +895,7 @@ textarea {
 }
 
 .app-auth-clerk--sign-up input[type="password"] {
-  padding-inline-end: 2.5rem !important;
+  padding-inline-end: 2.75rem !important;
 }
 
 .app-auth-clerk--sign-up input,
@@ -883,7 +903,7 @@ textarea {
 .app-auth-clerk--sign-up .cl-input,
 .app-auth-clerk--sign-up .cl-formButtonPrimary,
 .app-auth-clerk--sign-up .cl-socialButtonsBlockButton {
-  min-height: 2.5rem !important;
+  min-height: 2.75rem !important;
 }
 
 .brand-logo {
@@ -1021,7 +1041,7 @@ button:disabled {
 @theme inline {
   --font-heading: var(--font-ui);
   --font-sans: var(--font-ui);
-  --font-serif: var(--font-lora), "Lora", "Georgia", "Times New Roman", serif;
+  --font-serif: var(--font-resume-serif);
   --font-mono: var(--font-geist-mono), "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -1676,11 +1696,16 @@ button:disabled {
 
 .app-dropdown-content {
   transform-origin: var(--radix-dropdown-menu-content-transform-origin);
-  animation: app-dropdown-in var(--motion-fast) var(--ease-out-expo) both;
+  animation: app-dropdown-in var(--motion-fast) var(--ease-out) both;
 }
 
 .app-dropdown-content[data-state="closed"] {
   animation: app-dropdown-out 120ms var(--ease-out-quart) both;
+}
+
+.app-dropdown-content[role="menu"] {
+  transition: transform 140ms var(--ease-out), opacity 140ms var(--ease-out);
+  will-change: transform, opacity;
 }
 
 @keyframes app-surface-enter {
@@ -1726,6 +1751,29 @@ button:disabled {
   to {
     opacity: 0;
     transform: scale(0.98) translateY(-2px);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.95);
+    filter: blur(2px);
   }
 }
 
