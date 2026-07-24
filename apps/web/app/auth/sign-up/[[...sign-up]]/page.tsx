@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
+import { AuthFormFallback } from "@/features/auth/components/auth-form-fallback";
 import { AuthFormPanel } from "@/features/auth/views/clerk-auth-shell";
 
 export const metadata: Metadata = {
@@ -14,13 +15,7 @@ export const metadata: Metadata = {
 
 export default function SignUpPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="py-8 text-center text-sm text-muted-foreground" aria-busy="true">
-          Loading sign up…
-        </div>
-      }
-    >
+    <Suspense fallback={<AuthFormFallback label="Loading sign up…" />}>
       <AuthFormPanel mode="sign-up" />
     </Suspense>
   );
