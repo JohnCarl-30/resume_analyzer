@@ -22,6 +22,8 @@ const sampleInput = {
       fullName: "Jordan Lee",
       email: "jordan@example.com",
       phone: "555-0100",
+      linkedin: "linkedin.com/in/jordanlee",
+      github: "github.com/jordanlee",
       summary: "Frontend developer with React experience.",
       skills: "React, TypeScript, CSS",
     },
