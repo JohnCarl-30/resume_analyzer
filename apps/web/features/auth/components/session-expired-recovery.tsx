@@ -35,7 +35,7 @@ export function SessionExpiredRecovery() {
 
   return (
     <p
-      className="mb-6 rounded-md border border-border bg-muted px-3 py-2.5 text-sm leading-6 text-foreground"
+      className="mb-5 rounded-md border border-[color:var(--page-line)] bg-[color:var(--brand-soft)] px-3.5 py-2.5 text-sm leading-6 text-[color:var(--brand-strong)]"
       role="status"
       aria-live="polite"
     >
