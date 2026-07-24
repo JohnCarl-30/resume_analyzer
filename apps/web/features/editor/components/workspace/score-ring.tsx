@@ -11,12 +11,14 @@ export const ScoreRing = React.memo(function ScoreRing({ score, size = 44 }: Sco
   const progress = Math.min(Math.max(score, 0), 100) / 100;
   const offset = circumference - progress * circumference;
 
-  const color = score >= 75 ? "#10b981" : score >= 50 ? "#f59e0b" : "#ef4444";
+  // Calm brand scale — avoid traffic-light red that reads as a failing grade.
+  const color =
+    score >= 75 ? "var(--brand)" : score >= 50 ? "var(--brand-strong)" : "var(--page-muted)";
 
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#e2e8f0" strokeWidth="4" />
+      <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--page-line)" strokeWidth="4" />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -27,7 +29,7 @@ export const ScoreRing = React.memo(function ScoreRing({ score, size = 44 }: Sco
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className="transition-all duration-700"
+          className="motion-safe:transition-[stroke-dashoffset] motion-safe:duration-700 motion-safe:ease-out"
         />
       </svg>
       <span className="absolute text-[0.65rem] font-bold" style={{ color }}>
