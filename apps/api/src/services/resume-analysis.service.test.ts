@@ -54,15 +54,17 @@ describe("resumeAnalysisService.analyze", () => {
     );
   });
 
-  it("returns a bounded fit score and measurable impact count in parser-only mode", async () => {
+  it("returns a bounded fit score, breakdown, and measurable impact count in parser-only mode", async () => {
     const result = await resumeAnalysisService.analyze(sampleAnalysisInput);
 
     expect(result.score).toBeGreaterThanOrEqual(20);
     expect(result.score).toBeLessThanOrEqual(98);
     expect(result.metricsFound).toBeGreaterThanOrEqual(1);
+    expect(result.scoreBreakdown?.jobWords).toBeGreaterThanOrEqual(0);
+    expect(result.suggestions.some((suggestion) => suggestion.id.startsWith("parse-"))).toBe(true);
   });
 
-  it("uses AI output when AI is enabled", async () => {
+  it("uses AI output when AI is enabled and still merges scanner checks", async () => {
     vi.spyOn(aiProvider, "isEnabled").mockReturnValue(true);
 
     generateObjectMock.mockResolvedValue({
@@ -89,7 +91,19 @@ describe("resumeAnalysisService.analyze", () => {
     expect(result.matchedKeywords).toEqual(["React", "GraphQL"]);
     expect(result.missingKeywords).toEqual(["Kubernetes"]);
     expect(result.score).toBe(84);
-    expect(result.suggestions[0]?.title).toBe("Add Kubernetes experience");
+    expect(result.suggestions.some((suggestion) => suggestion.id === "missing-required-skills")).toBe(
+      true,
+    );
+    expect(result.suggestions.some((suggestion) => suggestion.id === "ats-target-role-alignment")).toBe(
+      true,
+    );
+    expect(result.scoreBreakdown).toEqual(
+      expect.objectContaining({
+        jobWords: expect.any(Number),
+        mustHaves: expect.any(Number),
+        clarity: expect.any(Number),
+      }),
+    );
   });
 
   it("falls back to parser-only analysis when AI fails", async () => {
