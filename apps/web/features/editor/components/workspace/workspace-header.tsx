@@ -47,6 +47,9 @@ interface WorkspaceHeaderProps {
   onMobileSidebarOpen: () => void;
 }
 
+  const controlClass =
+    "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-sm text-[color:var(--page-text)] transition-all duration-140 ease-out hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg)] hover:shadow-[0_1px_4px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)]/25 disabled:cursor-not-allowed disabled:opacity-40 active:scale-95";
+
 export function WorkspaceHeader({
   createMode,
   resumeTitle,
@@ -84,7 +87,7 @@ export function WorkspaceHeader({
             <button
               type="button"
               onClick={onMobileSidebarOpen}
-              className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[12px] border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-sm font-medium text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] xl:hidden"
+              className={`${controlClass} xl:hidden`}
               aria-label="Open resume editor"
             >
               <MenuIcon />
@@ -94,7 +97,7 @@ export function WorkspaceHeader({
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-[12px] border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-xs font-medium text-[color:var(--page-muted)] transition hover:border-[color:var(--page-line-strong)] hover:text-[color:var(--page-text)] sm:px-3 sm:text-sm"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-xs font-medium text-[color:var(--page-muted)] transition-all duration-140 ease-out hover:border-[color:var(--page-line-strong)] hover:text-[color:var(--page-text)] hover:shadow-[0_1px_4px_rgba(0,0,0,0.08)] active:scale-95 sm:px-3 sm:text-sm"
           >
             <ArrowLeftIcon />
             Back
@@ -115,7 +118,7 @@ export function WorkspaceHeader({
                   }
                 }}
                 autoFocus
-                className="min-w-0 flex-1 rounded-[12px] border border-[color:var(--brand)] bg-white px-3 py-2 text-sm font-semibold text-[color:var(--page-text)] outline-none sm:text-base"
+                className="min-w-0 flex-1 rounded-lg border border-[color:var(--brand)] bg-white px-3 py-2 text-sm font-semibold text-[color:var(--page-text)] outline-none sm:text-base"
               />
               <button
                 type="button"
@@ -139,7 +142,7 @@ export function WorkspaceHeader({
             <button
               type="button"
               onClick={onStartEditTitle}
-              className="group inline-flex min-w-0 max-w-[10rem] items-center gap-1.5 rounded-[12px] px-2 py-1.5 text-sm font-semibold text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg)] sm:max-w-[14rem] md:max-w-[18rem] lg:max-w-[22rem]"
+              className="group inline-flex min-w-0 max-w-[10rem] items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg)] sm:max-w-[14rem] md:max-w-[18rem] lg:max-w-[22rem]"
               aria-label={createMode ? "Edit draft title" : "Edit resume title"}
               title={resumeTitle}
             >
@@ -152,10 +155,10 @@ export function WorkspaceHeader({
         </div>
 
         {!createMode && analysisResult ? (
-          <div className="hidden shrink-0 items-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-2.5 py-1.5 sm:inline-flex">
+          <div className="hidden shrink-0 items-center gap-2 sm:inline-flex">
             <ScoreRing score={analysisResult.score} size={32} />
             <div className="min-w-0 text-xs leading-tight">
-              <div className="font-bold text-[color:var(--page-text)]">
+              <div className="font-semibold text-[color:var(--page-text)]">
                 {Math.round(analysisResult.score)}% match
               </div>
               <div className="truncate text-[color:var(--page-muted)]">
@@ -169,22 +172,11 @@ export function WorkspaceHeader({
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           {createMode ? (
             <div className="mr-1 hidden items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-2.5 py-1 text-[0.68rem] font-medium text-[color:var(--brand)] sm:inline-flex">
-              <span className={draftStatusLabel === "Saving..." ? "text-[color:var(--page-muted)]" : "text-emerald-600"}>
+              <span className={draftStatusLabel === "Saving..." ? "text-[color:var(--page-muted)]" : "text-emerald-700"}>
                 {draftStatusLabel === "Saving..." ? <ClockIcon /> : <CheckCircleIcon />}
               </span>
               <span>{draftStatusLabel}</span>
             </div>
-          ) : null}
-
-          {!createMode && showPrimaryReviewButton ? (
-            <button
-              type="button"
-              onClick={onOpenPrimaryReview}
-              className="inline-flex shrink-0 rounded-[12px] border border-[color:var(--brand)]/30 bg-[color:var(--brand-soft)] px-2.5 py-2 text-xs font-semibold text-[color:var(--brand)] transition hover:border-[color:var(--brand)] sm:px-3"
-            >
-              <span className="sm:hidden">Review</span>
-              <span className="hidden sm:inline">Review job edits</span>
-            </button>
           ) : null}
 
           {!createMode ? (
@@ -193,7 +185,7 @@ export function WorkspaceHeader({
                 type="button"
                 onClick={onUndo}
                 disabled={!canUndo}
-                className="inline-flex items-center justify-center rounded-l-[12px] border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] disabled:cursor-not-allowed disabled:opacity-40"
+                className={`${controlClass} rounded-r-none border-r-0`}
                 aria-label="Undo"
                 title="Undo"
               >
@@ -203,7 +195,7 @@ export function WorkspaceHeader({
                 type="button"
                 onClick={onRedo}
                 disabled={!canRedo}
-                className="inline-flex items-center justify-center rounded-r-[12px] border border-l-0 border-[color:var(--page-line)] bg-white px-2.5 py-2 text-sm text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] disabled:cursor-not-allowed disabled:opacity-40"
+                className={`${controlClass} rounded-l-none`}
                 aria-label="Redo"
                 title="Redo"
               >
@@ -213,26 +205,39 @@ export function WorkspaceHeader({
           ) : null}
 
           <div
-            className={`hidden max-w-[7.5rem] items-center gap-1.5 truncate rounded-[12px] border border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-2.5 py-2 text-xs text-[color:var(--page-muted)] lg:inline-flex ${
-              draftStatusLabel === "Saved locally" || draftStatusLabel === "Saved" ? "font-medium text-emerald-600" : ""
+            className={`hidden max-w-[7.5rem] items-center gap-1.5 truncate text-xs text-[color:var(--page-muted)] lg:inline-flex ${
+              draftStatusLabel === "Saved locally" || draftStatusLabel === "Saved"
+                ? "font-medium text-emerald-700"
+                : ""
             }`}
             title={draftStatusLabel}
           >
-            <span className={draftStatusLabel === "Saving..." ? "text-[color:var(--page-muted)]" : "text-emerald-500"}>
+            <span className={draftStatusLabel === "Saving..." ? "text-[color:var(--page-muted)]" : "text-emerald-600"}>
               {draftStatusLabel === "Saving..." ? <ClockIcon /> : <CheckCircleIcon />}
             </span>
             <span className="truncate">{draftStatusLabel}</span>
           </div>
+
+          {!createMode && showPrimaryReviewButton ? (
+            <button
+              type="button"
+              onClick={onOpenPrimaryReview}
+              className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-[color:var(--brand)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)]/30 sm:px-4"
+            >
+              <span className="sm:hidden">Review</span>
+              <span className="hidden sm:inline">Review job edits</span>
+            </button>
+          ) : null}
 
           {!createMode ? (
             <button
               type="button"
               onClick={onOpenTailorModal}
               aria-label="Check resume again"
-              className="inline-flex shrink-0 items-center gap-2 rounded-[12px] bg-[color:var(--brand)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-strong)] sm:px-4"
+              className={controlClass}
             >
               <EyeIcon />
-              <span aria-hidden="true" className="hidden sm:inline">Check again</span>
+              <span className="hidden sm:inline">Check again</span>
             </button>
           ) : null}
 
@@ -240,13 +245,11 @@ export function WorkspaceHeader({
             type="button"
             onClick={onOpenTemplatesModal}
             aria-label="Choose resume style"
-            className={`hidden shrink-0 items-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-xs font-medium text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] sm:text-sm ${
-              createMode ? "sm:inline-flex" : "xl:inline-flex"
-            }`}
+            className={`${controlClass} ${createMode ? "sm:inline-flex" : "hidden xl:inline-flex"}`}
           >
             <GridIcon />
-            <span className="max-w-[8rem] truncate">
-              {createMode ? (selectedTemplateName || "Choose style") : selectedTemplateName || "Style"}
+            <span className="max-w-[8rem] truncate text-xs font-medium sm:text-sm">
+              {createMode ? selectedTemplateName || "Choose style" : selectedTemplateName || "Style"}
             </span>
           </button>
 
@@ -254,7 +257,7 @@ export function WorkspaceHeader({
             type="button"
             onClick={onPrint}
             aria-label="Print or save PDF"
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] sm:px-3"
+            className={controlClass}
           >
             <DownloadIcon />
             <span aria-hidden="true" className="hidden text-xs font-semibold lg:inline">
@@ -267,7 +270,7 @@ export function WorkspaceHeader({
               type="button"
               onClick={onDownloadOriginal}
               disabled={sourcePreviewLoading || (!resumeSourceUrl && !canLoadSourcePreview)}
-              className="hidden shrink-0 items-center gap-2 whitespace-nowrap rounded-[12px] border border-[color:var(--page-line)] bg-white px-3 py-2 text-sm font-semibold text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-50 2xl:inline-flex"
+              className={`${controlClass} hidden whitespace-nowrap 2xl:inline-flex`}
             >
               <DownloadIcon />
               {resumeSourceUrl || canLoadSourcePreview ? "Download original" : "Backup copy"}
@@ -277,7 +280,7 @@ export function WorkspaceHeader({
           <button
             type="button"
             onClick={onOpenShortcutsModal}
-            className="hidden shrink-0 items-center justify-center rounded-[12px] border border-[color:var(--page-line)] bg-white px-2.5 py-2 text-[color:var(--page-text)] transition hover:bg-[color:var(--page-bg-strong)] 2xl:inline-flex"
+            className={`${controlClass} hidden 2xl:inline-flex`}
             aria-label="Keyboard shortcuts"
             title="Keyboard shortcuts"
           >
