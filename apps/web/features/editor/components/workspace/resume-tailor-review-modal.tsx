@@ -10,7 +10,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { skillDiff } from "../../lib/skill-diff";
+import { skillDiff, splitSkills } from "../../lib/skill-diff";
 import type { ResumeAnalysisResult } from "../../model/resume-analysis";
 import type { ResumeForm } from "../../model/resume-form";
 import type { TailorProposal } from "../../model/resume-tailor-draft";
@@ -38,6 +38,14 @@ function previewFormWithProposal(form: ResumeForm, proposal: TailorProposal | nu
   return next;
 }
 
+function normalizeSkillKey(value: string) {
+  return value.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function joinSkills(skills: string[]) {
+  return skills.join(", ");
+}
+
 interface ResumeTailorReviewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -52,8 +60,20 @@ interface ResumeTailorReviewModalProps {
   onFinish: () => void;
 }
 
-function SkillsProposalDiff({ before, after }: { before: string; after: string }) {
-  const { added, removed, kept } = skillDiff(before, after);
+function SkillsProposalDiff({
+  before,
+  proposedAfter,
+  selectedSkills,
+  onToggleSkill,
+}: {
+  before: string;
+  proposedAfter: string;
+  selectedSkills: string[];
+  onToggleSkill: (skill: string) => void;
+}) {
+  const { added, removed, kept } = skillDiff(before, proposedAfter);
+  const selectedKeys = new Set(selectedSkills.map(normalizeSkillKey));
+  const suggestedSkills = [...kept, ...added];
 
   return (
     <div className="space-y-8 border-t border-[color:var(--page-line)] pt-8">
@@ -63,14 +83,25 @@ function SkillsProposalDiff({ before, after }: { before: string; after: string }
             Words to add
           </p>
           <ul className="mt-3 flex flex-wrap gap-2">
-            {added.map((skill) => (
-              <li
-                key={`add-${skill}`}
-                className="rounded-md bg-[#EDF3EC] px-2.5 py-1 text-sm text-[#346538]"
-              >
-                {skill}
-              </li>
-            ))}
+            {added.map((skill) => {
+              const isSelected = selectedKeys.has(normalizeSkillKey(skill));
+              return (
+                <li key={`add-${skill}`}>
+                  <button
+                    type="button"
+                    onClick={() => onToggleSkill(skill)}
+                    aria-pressed={isSelected}
+                    className={
+                      isSelected
+                        ? "rounded-md bg-[#EDF3EC] px-2.5 py-1 text-sm text-[#346538] transition-opacity hover:opacity-80"
+                        : "rounded-md bg-[color:var(--page-bg)] px-2.5 py-1 text-sm text-[color:var(--page-muted)] line-through opacity-70 transition-opacity hover:opacity-90"
+                    }
+                  >
+                    {skill}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </div>
       ) : null}
@@ -97,23 +128,35 @@ function SkillsProposalDiff({ before, after }: { before: string; after: string }
         <p className="text-[0.7rem] font-medium tracking-[0.04em] text-[color:var(--page-muted)]">
           Updated skills list
         </p>
+        <p className="mt-1 text-xs leading-5 text-[color:var(--page-muted)]">
+          Tap a skill to keep or drop it before you approve.
+        </p>
         <ul className="mt-3 flex flex-wrap gap-2">
-          {kept.map((skill) => (
-            <li
-              key={`keep-${skill}`}
-              className="rounded-md border border-[color:var(--page-line)] bg-white px-2.5 py-1 text-sm text-[color:var(--page-muted)]"
-            >
-              {skill}
-            </li>
-          ))}
-          {added.map((skill) => (
-            <li
-              key={`after-add-${skill}`}
-              className="rounded-md border border-[#cfe0cd] bg-[#EDF3EC] px-2.5 py-1 text-sm font-medium text-[#346538]"
-            >
-              {skill}
-            </li>
-          ))}
+          {suggestedSkills.map((skill) => {
+            const isSelected = selectedKeys.has(normalizeSkillKey(skill));
+            const isAdded = added.some(
+              (item) => normalizeSkillKey(item) === normalizeSkillKey(skill),
+            );
+
+            return (
+              <li key={`skill-${skill}`}>
+                <button
+                  type="button"
+                  onClick={() => onToggleSkill(skill)}
+                  aria-pressed={isSelected}
+                  className={
+                    isSelected
+                      ? isAdded
+                        ? "rounded-md border border-[#cfe0cd] bg-[#EDF3EC] px-2.5 py-1 text-sm font-medium text-[#346538]"
+                        : "rounded-md border border-[color:var(--page-line)] bg-white px-2.5 py-1 text-sm text-[color:var(--page-text)]"
+                      : "rounded-md border border-dashed border-[color:var(--page-line)] bg-[color:var(--page-bg)] px-2.5 py-1 text-sm text-[color:var(--page-muted)] line-through opacity-70"
+                  }
+                >
+                  {skill}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>
@@ -157,6 +200,7 @@ export function ResumeTailorReviewModal({
   onFinish,
 }: ResumeTailorReviewModalProps) {
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -175,13 +219,48 @@ export function ResumeTailorReviewModal({
   const progressPercent =
     totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
   const currentOrdinal = Math.min(completedCount + 1, Math.max(totalCount, 1));
+
+  useEffect(() => {
+    if (current?.type === "skills") {
+      setSelectedSkills(splitSkills(current.after));
+      return;
+    }
+    setSelectedSkills([]);
+  }, [current]);
+
+  const activeProposal = useMemo(() => {
+    if (!current) {
+      return null;
+    }
+    if (current.type !== "skills") {
+      return current;
+    }
+    return {
+      ...current,
+      after: joinSkills(selectedSkills),
+    };
+  }, [current, selectedSkills]);
+
   const skillsAddedCount =
-    current?.type === "skills" ? skillDiff(current.before, current.after).added.length : 0;
-  const focusSection = current?.type ?? null;
+    activeProposal?.type === "skills"
+      ? skillDiff(activeProposal.before, activeProposal.after).added.length
+      : 0;
+  const focusSection = activeProposal?.type ?? null;
   const livePreviewForm = useMemo(
-    () => previewFormWithProposal(previewForm, current),
-    [previewForm, current],
+    () => previewFormWithProposal(previewForm, activeProposal),
+    [previewForm, activeProposal],
   );
+
+  function toggleSkill(skill: string) {
+    const key = normalizeSkillKey(skill);
+    setSelectedSkills((currentSkills) => {
+      const exists = currentSkills.some((item) => normalizeSkillKey(item) === key);
+      if (exists) {
+        return currentSkills.filter((item) => normalizeSkillKey(item) !== key);
+      }
+      return [...currentSkills, skill];
+    });
+  }
 
   function resolveItem(proposal: TailorProposal, approved: boolean) {
     if (approved) {
@@ -282,21 +361,28 @@ export function ResumeTailorReviewModal({
                     </p>
                   </div>
                 </div>
-              ) : current ? (
+              ) : current && activeProposal ? (
                 <article>
                   <div className="min-w-0">
                     <h3 className="font-heading text-lg font-semibold tracking-[-0.02em] text-[color:var(--page-text)]">
                       {current.title}
                     </h3>
                     <p className="mt-1.5 max-w-prose text-sm leading-6 text-[color:var(--page-muted)]">
-                      {current.type === "skills" && skillsAddedCount > 0
-                        ? `Add ${skillsAddedCount} job ${skillsAddedCount === 1 ? "word" : "words"} to your skills list.`
+                      {current.type === "skills"
+                        ? skillsAddedCount > 0
+                          ? `Add ${skillsAddedCount} job ${skillsAddedCount === 1 ? "word" : "words"} you actually use. Tap to drop any you don’t.`
+                          : "Tap skills to keep or drop them, then approve."
                         : current.description}
                     </p>
                   </div>
 
                   {current.type === "skills" ? (
-                    <SkillsProposalDiff before={current.before} after={current.after} />
+                    <SkillsProposalDiff
+                      before={current.before}
+                      proposedAfter={current.after}
+                      selectedSkills={selectedSkills}
+                      onToggleSkill={toggleSkill}
+                    />
                   ) : (
                     <ProseProposalDiff before={current.before} after={current.after} />
                   )}
@@ -318,7 +404,7 @@ export function ResumeTailorReviewModal({
               ) : null}
             </div>
 
-            {current && !isLoading && !error ? (
+            {current && activeProposal && !isLoading && !error ? (
               <div className="shrink-0 border-t border-[color:var(--page-line)] bg-white px-5 py-3 sm:px-8">
                 <div className="flex flex-wrap items-center gap-2">
                   <Button
@@ -331,13 +417,15 @@ export function ResumeTailorReviewModal({
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => resolveItem(current, true)}
+                    onClick={() => resolveItem(activeProposal, true)}
                     className="rounded-md bg-[#111111] text-white hover:bg-[#333333]"
                   >
                     Approve
                   </Button>
                   <p className="text-xs text-[color:var(--page-muted)] sm:ml-2">
-                    Approve adds this to your layout. Skip keeps your current text.
+                    {current.type === "skills"
+                      ? "Approve saves your selected skills. Skip keeps your current list."
+                      : "Approve adds this to your layout. Skip keeps your current text."}
                   </p>
                 </div>
               </div>
