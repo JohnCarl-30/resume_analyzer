@@ -4,6 +4,8 @@ export interface PersonalInfo {
   fullName: string;
   phone: string;
   email: string;
+  linkedin: string;
+  github: string;
   summary: string;
   skills: string;
 }
@@ -57,6 +59,8 @@ export const emptyResumeForm: ResumeForm = {
     fullName: "",
     phone: "",
     email: "",
+    linkedin: "",
+    github: "",
     summary: "",
     skills: "",
   },
@@ -66,6 +70,16 @@ export const emptyResumeForm: ResumeForm = {
   awards: [],
   projects: [],
 };
+
+export function normalizeResumeForm(form: ResumeForm): ResumeForm {
+  return {
+    ...form,
+    personalInfo: {
+      ...emptyResumeForm.personalInfo,
+      ...form.personalInfo,
+    },
+  };
+}
 
 export function resumeFormFromExtractedProfile(
   extractedProfile: ExtractedResumeProfile | null | undefined,
@@ -79,6 +93,8 @@ export function resumeFormFromExtractedProfile(
       fullName: extractedProfile.fullName,
       phone: extractedProfile.phone,
       email: extractedProfile.email,
+      linkedin: "",
+      github: "",
       summary: extractedProfile.summary ?? "",
       skills: extractedProfile.skills?.join(", ") ?? "",
     },
@@ -123,6 +139,8 @@ export const defaultResumeForm: ResumeForm = {
     fullName: "Alex Chen",
     phone: "+1 (415) 555-0192",
     email: "alex.chen@email.com",
+    linkedin: "linkedin.com/in/alexchen",
+    github: "github.com/alexchen",
     summary:
       "Software engineer with 3+ years building scalable web applications. Experienced in React, Node.js, and cloud infrastructure. Passionate about clean code, system design, and mentoring junior developers.",
     skills:
@@ -194,6 +212,12 @@ export function resumeFormToText(form: ResumeForm): string {
   parts.push(form.personalInfo.fullName);
   parts.push(form.personalInfo.phone);
   parts.push(form.personalInfo.email);
+  if (form.personalInfo.linkedin) {
+    parts.push(form.personalInfo.linkedin);
+  }
+  if (form.personalInfo.github) {
+    parts.push(form.personalInfo.github);
+  }
 
   if (form.personalInfo.summary) {
     parts.push(`\nSummary\n${form.personalInfo.summary}`);
