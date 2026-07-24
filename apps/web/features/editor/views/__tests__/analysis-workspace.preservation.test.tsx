@@ -138,7 +138,7 @@ function openTemplateModal() {
 
 // Helper: close the template modal via the "Close modal" icon button (aria-label)
 function closeTemplateModal() {
-  const closeButton = screen.getByRole("button", { name: "Close modal" });
+  const closeButton = screen.getByRole("button", { name: /^close$/i });
   fireEvent.click(closeButton);
 }
 
