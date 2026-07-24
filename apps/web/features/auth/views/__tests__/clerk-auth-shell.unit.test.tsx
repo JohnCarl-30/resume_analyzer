@@ -69,7 +69,7 @@ describe("ClerkAuthShell sign-in", () => {
 
     expect(screen.getByRole("heading", { name: /welcome back/i })).toBeInTheDocument();
     expect(
-      screen.getByText(/sign in to run your resume check against a job post/i),
+      screen.getByText(/sign in to check your resume against a job post/i),
     ).toBeInTheDocument();
 
     const signIn = screen.getByTestId("clerk-sign-in");
@@ -80,7 +80,7 @@ describe("ClerkAuthShell sign-in", () => {
       "href",
       "/auth/sign-up?next=%2Fhome",
     );
-    expect(screen.getByRole("link", { name: /back to marketing home/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /back to home/i })).toHaveAttribute(
       "href",
       "/",
     );
