@@ -10,8 +10,9 @@ const guide: AnalysisNextStepsState = {
   statusTone: "close",
   summary: "Start with these fixes before printing.",
   completedCount: 2,
-  totalCount: 5,
+  totalCount: 6,
   progress: 40,
+  matchedKeywordPreview: ["React"],
   missingKeywordPreview: ["GraphQL", "TypeScript"],
   steps: [
     {
