@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
 
 import { resolveSafeRedirectPath } from "@/lib/auth-redirect";
-import { setAccessTokenGetter, setUnauthorizedHandler } from "@/lib/auth-token";
+import { clearStoredToken, setAccessTokenGetter, setUnauthorizedHandler } from "@/lib/auth-token";
 
 export function AuthSessionProvider({ children }: { children: React.ReactNode }) {
   const { getToken, isLoaded, isSignedIn, signOut } = useAuth();
@@ -34,6 +34,7 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
   useEffect(
     () => () => {
       setAccessTokenGetter(async () => null);
+      clearStoredToken();
     },
     [],
   );
@@ -45,13 +46,15 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
       }
 
       isHandlingUnauthorizedRef.current = true;
+      clearStoredToken();
 
       const nextPath = resolveSafeRedirectPath(pathname);
       const signInUrl = `/auth/sign-in?reason=session-expired&next=${encodeURIComponent(nextPath)}`;
 
-      void signOut({ redirectUrl: signInUrl }).finally(() => {
-        isHandlingUnauthorizedRef.current = false;
-      });
+void signOut({ redirectUrl: signInUrl }).finally(() => {
+            isHandlingUnauthorizedRef.current = false;
+            clearStoredToken();
+          });
     });
 
     return () => {
