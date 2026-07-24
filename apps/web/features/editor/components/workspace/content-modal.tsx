@@ -105,10 +105,10 @@ export function ContentModal({ open, onOpenChange, onSelectOption, onOpenProject
           <DialogDescription className="sr-only">
             Choose optional resume sections or content blocks to add to your resume.
           </DialogDescription>
-          <button
+            <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="inline-flex size-9 items-center justify-center rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-surface)] text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+            className="inline-flex size-9 items-center justify-center rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-surface)] text-[color:var(--page-muted)] transition-all duration-140 ease-out hover:text-[color:var(--page-text)] hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] active:scale-95"
             aria-label="Close add content"
           >
             <CloseIcon />
@@ -123,7 +123,7 @@ export function ContentModal({ open, onOpenChange, onSelectOption, onOpenProject
                   key={option.id}
                   type="button"
                   onClick={onOpenProjectModal}
-                  className="rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-surface)] p-4 text-left transition hover:border-[color:var(--brand)]"
+                  className="rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-surface)] p-4 text-left transition-all duration-140 ease-out hover:border-[color:var(--brand)] hover:bg-[color:var(--brand-soft)] hover:shadow-[0_2px_8px_rgba(21,93,252,0.12)] active:scale-95"
                 >
                   <div className="flex items-start gap-4">
                     <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[color:var(--page-line)] bg-white text-[color:var(--page-muted)]">
