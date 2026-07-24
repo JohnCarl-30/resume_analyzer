@@ -27,6 +27,7 @@ const analysisPublicColumns = {
   extractedCharacterCount: resumeAnalysesTable.extractedCharacterCount,
   extractedProfile: resumeAnalysesTable.extractedProfile,
   extractionProvider: resumeAnalysesTable.extractionProvider,
+  processingTimeMs: resumeAnalysesTable.processingTimeMs,
   userId: resumeAnalysesTable.userId,
   createdAt: resumeAnalysesTable.createdAt,
 } as const;
@@ -53,6 +54,7 @@ function mapRowToAnalysis(row: AnalysisPublicRow): PersistedResumeAnalysis {
     extractedCharacterCount: row.extractedCharacterCount ?? undefined,
     extractedProfile: row.extractedProfile ?? null,
     extractionProvider: row.extractionProvider ?? undefined,
+    processingTimeMs: row.processingTimeMs ?? undefined,
     userId: row.userId ?? undefined,
     createdAt: row.createdAt,
   };
@@ -84,6 +86,7 @@ class PostgresAnalysisRepository implements AnalysisRepository {
       extractedCharacterCount: input.extractedCharacterCount ?? null,
       extractedProfile: input.extractedProfile ?? null,
       extractionProvider: input.extractionProvider ?? null,
+      processingTimeMs: input.processingTimeMs ?? null,
       userId: input.userId,
     });
 
@@ -104,6 +107,7 @@ class PostgresAnalysisRepository implements AnalysisRepository {
       extractedCharacterCount: input.extractedCharacterCount,
       extractedProfile: input.extractedProfile,
       extractionProvider: input.extractionProvider,
+      processingTimeMs: input.processingTimeMs,
       userId: input.userId,
     };
   }
@@ -163,6 +167,7 @@ class PostgresAnalysisRepository implements AnalysisRepository {
         extractedCharacterCount: record.extractedCharacterCount ?? null,
         extractedProfile: record.extractedProfile ?? null,
         extractionProvider: record.extractionProvider ?? null,
+        processingTimeMs: record.processingTimeMs ?? null,
       })
       .where(eq(resumeAnalysesTable.id, id));
 
