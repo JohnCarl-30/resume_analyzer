@@ -9,6 +9,7 @@ export const databaseTables = {
   resumeAnalyses: "resume_analyses",
   analysisJobs: "analysis_jobs",
   accountAnalysisUsage: "account_analysis_usage",
+  productEvents: "product_events",
 } as const;
 
 export const resumeAnalysesTable = pgTable(databaseTables.resumeAnalyses, {
@@ -54,4 +55,18 @@ export const accountAnalysisUsageTable = pgTable(databaseTables.accountAnalysisU
     withTimezone: true,
     mode: "string",
   }).notNull(),
+});
+
+export const productEventsTable = pgTable(databaseTables.productEvents, {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  analysisId: text("analysis_id"),
+  name: text("name").notNull(),
+  metadata: jsonb("metadata").$type<Record<string, unknown> | null>(),
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+    mode: "string",
+  })
+    .defaultNow()
+    .notNull(),
 });
