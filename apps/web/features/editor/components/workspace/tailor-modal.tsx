@@ -41,7 +41,7 @@ export function TailorModal({
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="inline-flex size-9 items-center justify-center rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-surface)] text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+            className="inline-flex size-9 items-center justify-center rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-surface)] text-[color:var(--page-muted)] transition-all duration-140 ease-out hover:text-[color:var(--page-text)] hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] active:scale-95"
             aria-label="Close tailor modal"
           >
             <CloseIcon />
@@ -83,7 +83,7 @@ export function TailorModal({
                   type="button"
                   onClick={onRetry}
                   disabled={isUpdating}
-                  className="ml-2 whitespace-nowrap rounded-md bg-rose-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50"
+                  className="ml-2 whitespace-nowrap rounded-md bg-rose-600 px-3 py-1 text-xs font-semibold text-white transition-all duration-140 ease-out hover:bg-rose-700 hover:shadow-[0_2px_4px_rgba(220,38,38,0.2)] active:scale-95 disabled:opacity-50"
                   aria-label="Retry resume check"
                 >
                   Retry
