@@ -1,8 +1,10 @@
 import { useAuth } from "@clerk/nextjs";
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+
 import { listResumeAnalyses } from "../../onboarding/utils/analysis-api";
 import type { ResumeSummary } from "../model/resume";
 import type { ResumeAnalysisResult } from "../../editor/model/resume-analysis";
+import { queryKeys } from "@/lib/query/keys";
 
 export interface DashboardStats {
   totalResumes: number;
@@ -47,80 +49,37 @@ function mapAnalyses(fetchedAnalyses: ResumeAnalysisResult[]) {
   return { orderedAnalyses, mapped, stats };
 }
 
+const emptyStats: DashboardStats = {
+  totalResumes: 0,
+  averageMatchRate: 0,
+  optimizedCount: 0,
+};
+
 export function useResumeDashboard() {
   const { isLoaded, isSignedIn } = useAuth();
-  const [resumes, setResumes] = useState<ResumeSummary[]>([]);
-  const [analyses, setAnalyses] = useState<ResumeAnalysisResult[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [stats, setStats] = useState<DashboardStats>({
-    totalResumes: 0,
-    averageMatchRate: 0,
-    optimizedCount: 0,
+
+  const query = useQuery({
+    queryKey: queryKeys.analyses,
+    queryFn: listResumeAnalyses,
+    enabled: isLoaded && Boolean(isSignedIn),
   });
-  const [reloadToken, setReloadToken] = useState(0);
 
-  const refetch = useCallback(() => {
-    setReloadToken((token) => token + 1);
-  }, []);
-
-  useEffect(() => {
-    if (!isLoaded) {
-      return;
-    }
-
-    if (!isSignedIn) {
-      setResumes([]);
-      setAnalyses([]);
-      setStats({ totalResumes: 0, averageMatchRate: 0, optimizedCount: 0 });
-      setError("");
-      setIsLoading(false);
-      return;
-    }
-
-    let isCancelled = false;
-    setIsLoading(true);
-    setError("");
-
-    void listResumeAnalyses()
-      .then((fetchedAnalyses) => {
-        if (isCancelled) {
-          return;
-        }
-
-        const next = mapAnalyses(fetchedAnalyses);
-        setAnalyses(next.orderedAnalyses);
-        setResumes(next.mapped);
-        setStats(next.stats);
-      })
-      .catch((nextError) => {
-        if (isCancelled) {
-          return;
-        }
-        setResumes([]);
-        setAnalyses([]);
-        setStats({ totalResumes: 0, averageMatchRate: 0, optimizedCount: 0 });
-        setError(nextError instanceof Error ? nextError.message : "Unable to load analyses.");
-      })
-      .finally(() => {
-        if (!isCancelled) {
-          setIsLoading(false);
-        }
-      });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [isLoaded, isSignedIn, reloadToken]);
+  const mapped = query.data ? mapAnalyses(query.data) : null;
 
   return {
     title: "Review incoming resumes as they move through intake",
     description: "Track recent analyses and jump back into editing any resume.",
-    resumes,
-    analyses,
-    isLoading,
-    error,
-    stats,
-    refetch,
+    resumes: mapped?.mapped ?? [],
+    analyses: mapped?.orderedAnalyses ?? [],
+    isLoading: !isLoaded || (Boolean(isSignedIn) && query.isPending),
+    error: query.error
+      ? query.error instanceof Error
+        ? query.error.message
+        : "Unable to load analyses."
+      : "",
+    stats: mapped?.stats ?? emptyStats,
+    refetch: () => {
+      void query.refetch();
+    },
   };
 }

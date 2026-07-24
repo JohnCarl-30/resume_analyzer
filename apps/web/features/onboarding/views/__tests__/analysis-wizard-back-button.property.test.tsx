@@ -24,6 +24,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, within, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import * as fc from "fast-check";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AnalysisWizard } from "../analysis-wizard";
 
 vi.mock("next/navigation", () => ({
@@ -42,6 +43,21 @@ vi.mock("@/features/account/view-models/use-analysis-quota", () => ({
     refetch: vi.fn(),
   }),
 }));
+
+function renderWizard(ui: React.ReactElement, options?: Parameters<typeof render>[1]) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+    options,
+  );
+}
 
 async function navigateToStep2(container: HTMLElement, user: ReturnType<typeof userEvent.setup>) {
   const targetRoleInput = within(container).getByPlaceholderText(/senior frontend engineer/i);
@@ -84,7 +100,7 @@ describe("Feature: resume-editor-flow, Property 15: Back button presence", () =>
       const step2Container = document.createElement("div");
       document.body.appendChild(step2Container);
       const user2 = userEvent.setup();
-      const { unmount: unmount2 } = render(<AnalysisWizard />, { container: step2Container });
+      const { unmount: unmount2 } = renderWizard(<AnalysisWizard />, { container: step2Container });
       await navigateToStep2(step2Container, user2);
       const step2BackButton = within(step2Container).getByRole("button", { name: /^back$/i });
 
@@ -92,7 +108,7 @@ describe("Feature: resume-editor-flow, Property 15: Back button presence", () =>
       const step3Container = document.createElement("div");
       document.body.appendChild(step3Container);
       const user3 = userEvent.setup();
-      const { unmount: unmount3 } = render(<AnalysisWizard />, { container: step3Container });
+      const { unmount: unmount3 } = renderWizard(<AnalysisWizard />, { container: step3Container });
       await navigateToStep3(step3Container, user3);
       const step3BackButton = within(step3Container).getByRole("button", {
         name: /back to job post/i,
@@ -102,7 +118,7 @@ describe("Feature: resume-editor-flow, Property 15: Back button presence", () =>
       const step4Container = document.createElement("div");
       document.body.appendChild(step4Container);
       const user4 = userEvent.setup();
-      const { unmount: unmount4 } = render(<AnalysisWizard />, { container: step4Container });
+      const { unmount: unmount4 } = renderWizard(<AnalysisWizard />, { container: step4Container });
       await navigateToStep4(step4Container, user4);
       const step4BackButton = within(step4Container).getByRole("button", {
         name: /back to resume/i,

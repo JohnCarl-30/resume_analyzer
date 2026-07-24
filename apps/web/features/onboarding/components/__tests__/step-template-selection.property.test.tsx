@@ -72,7 +72,7 @@ describe(
               expect(card).toHaveTextContent(template.name);
 
               // Card shows the scanner-friendly label.
-              const atsLabel = template.atsLabel ?? "Scanner friendly";
+              const atsLabel = template.atsLabel ?? "Good for scanners";
               expect(card).toHaveTextContent(atsLabel);
             }
 

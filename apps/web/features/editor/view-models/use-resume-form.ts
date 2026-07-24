@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ResumeForm, defaultResumeForm, normalizeResumeForm } from "../model/resume-form";
+import { useForm } from "@tanstack/react-form";
+import type { ResumeForm, EducationEntry, ExperienceEntry, LeadershipEntry, ProjectEntry } from "../model/resume-form";
+import { defaultResumeForm, normalizeResumeForm } from "../model/resume-form";
 
-interface ResumeEditorOptions {
+interface ResumeFormOptions {
   storageKey?: string | null;
   autosave?: boolean;
 }
@@ -42,45 +44,25 @@ function clearSavedForm(storageKey?: string | null) {
   }
 }
 
-export function useResumeEditor(
+export function useResumeForm(
   initialForm: ResumeForm = defaultResumeForm,
-  options: ResumeEditorOptions = {},
+  options: ResumeFormOptions = {},
 ) {
   const storageKey = options.storageKey ?? null;
   const autosave = options.autosave ?? storageKey !== null;
-  const [form, setForm] = useState<ResumeForm>(() => normalizeResumeForm(initialForm));
-  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
-  const [history, setHistory] = useState<HistoryState>({ past: [], future: [] });
   const isUndoRedo = useRef(false);
   const skipNextAutosave = useRef(false);
   const hasLoadedSavedForm = useRef(storageKey === null);
 
-  useEffect(() => {
-    if (!storageKey) {
-      hasLoadedSavedForm.current = true;
-      return;
-    }
+  const savedForm = loadSavedForm(storageKey);
+  hasLoadedSavedForm.current = true;
 
-    hasLoadedSavedForm.current = false;
-    const savedForm = loadSavedForm(storageKey);
-    hasLoadedSavedForm.current = true;
-    if (savedForm) {
-      setForm(savedForm);
-    }
-  }, [storageKey]);
+  const form = useForm({
+    defaultValues: savedForm ?? normalizeResumeForm(initialForm),
+  });
 
-  // Auto-save to localStorage
-  useEffect(() => {
-    if (!autosave || !storageKey) return;
-    if (!hasLoadedSavedForm.current) return;
-    if (skipNextAutosave.current) {
-      skipNextAutosave.current = false;
-      return;
-    }
-
-    const timeout = setTimeout(() => saveForm(storageKey, form), 800);
-    return () => clearTimeout(timeout);
-  }, [autosave, form, storageKey]);
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
+  const [history, setHistory] = useState<HistoryState>({ past: [], future: [] });
 
   const pushHistory = useCallback((prevForm: ResumeForm) => {
     setHistory((h) => ({
@@ -90,20 +72,20 @@ export function useResumeEditor(
   }, []);
 
   const setFormWithHistory = useCallback(
-    (updater: React.SetStateAction<ResumeForm>) => {
+    (updater: (prev: ResumeForm) => ResumeForm) => {
       if (isUndoRedo.current) {
-        setForm(updater);
+        const next = updater(form.state.values);
+        form.reset(next);
         return;
       }
-      setForm((prev) => {
-        const next = typeof updater === "function" ? (updater as (prev: ResumeForm) => ResumeForm)(prev) : updater;
-        if (next !== prev) {
-          pushHistory(prev);
-        }
-        return next;
-      });
+      const current = form.state.values;
+      const next = updater(current);
+      if (next !== current) {
+        pushHistory(current);
+      }
+      form.reset(next);
     },
-    [pushHistory],
+    [form, pushHistory],
   );
 
   const undo = useCallback(() => {
@@ -111,13 +93,13 @@ export function useResumeEditor(
       if (h.past.length === 0) return h;
       const previous = h.past[h.past.length - 1];
       isUndoRedo.current = true;
-      setForm(previous);
+      form.reset(previous);
       requestAnimationFrame(() => {
         isUndoRedo.current = false;
       });
       return {
         past: h.past.slice(0, -1),
-        future: [form, ...h.future],
+        future: [form.state.values, ...h.future],
       };
     });
   }, [form]);
@@ -127,12 +109,12 @@ export function useResumeEditor(
       if (h.future.length === 0) return h;
       const next = h.future[0];
       isUndoRedo.current = true;
-      setForm(next);
+      form.reset(next);
       requestAnimationFrame(() => {
         isUndoRedo.current = false;
       });
       return {
-        past: [...h.past, form],
+        past: [...h.past, form.state.values],
         future: h.future.slice(1),
       };
     });
@@ -146,29 +128,29 @@ export function useResumeEditor(
       isUndoRedo.current = false;
       skipNextAutosave.current = true;
       clearSavedForm(storageKey);
-      setForm(normalizeResumeForm(nextForm));
+      form.reset(normalizeResumeForm(nextForm));
       setActiveSectionId(null);
       setHistory({ past: [], future: [] });
     },
-    [initialForm, storageKey],
+    [form, initialForm, storageKey],
   );
 
-  const updatePersonalInfo = (data: Partial<ResumeForm["personalInfo"]>) => {
+  const updatePersonalInfo = useCallback((data: Partial<ResumeForm["personalInfo"]>) => {
     setFormWithHistory((prev) => ({
       ...prev,
       personalInfo: { ...prev.personalInfo, ...data },
     }));
-  };
+  }, [setFormWithHistory]);
 
-  const updateEducation = (id: string, data: Partial<ResumeForm["education"][number]>) => {
+  const updateEducation = useCallback((id: string, data: Partial<EducationEntry>) => {
     setFormWithHistory((prev) => ({
       ...prev,
       education: prev.education.map((item) => (item.id === id ? { ...item, ...data } : item)),
     }));
-  };
+  }, [setFormWithHistory]);
 
-  const addEducation = (draft: Partial<ResumeForm["education"][number]> = {}) => {
-    const newEntry = {
+  const addEducation = useCallback((draft: Partial<EducationEntry> = {}) => {
+    const newEntry: EducationEntry = {
       id: `edu_${Date.now()}`,
       institution: "",
       degree: "",
@@ -178,42 +160,52 @@ export function useResumeEditor(
     };
     setFormWithHistory((prev) => ({ ...prev, education: [...prev.education, newEntry] }));
     return newEntry.id;
-  };
+  }, [setFormWithHistory]);
 
-  const removeEducation = (id: string) => {
-    setFormWithHistory((prev) => ({ ...prev, education: prev.education.filter((item) => item.id !== id) }));
-  };
+  const removeEducation = useCallback((id: string) => {
+    setFormWithHistory((prev) => ({
+      ...prev,
+      education: prev.education.filter((item) => item.id !== id),
+    }));
+  }, [setFormWithHistory]);
 
-  const updateExperience = (id: string, data: Partial<ResumeForm["experience"][number]>) => {
+  const updateExperience = useCallback((id: string, data: Partial<ExperienceEntry>) => {
     setFormWithHistory((prev) => ({
       ...prev,
       experience: prev.experience.map((item) => (item.id === id ? { ...item, ...data } : item)),
     }));
-  };
+  }, [setFormWithHistory]);
 
-  const addExperience = (draft: Partial<ResumeForm["experience"][number]> = {}) => {
-    const newEntry = {
+  const addExperience = useCallback((draft: Partial<ExperienceEntry> = {}) => {
+    const newEntry: ExperienceEntry = {
       id: `exp_${Date.now()}`,
       role: "",
       location: "",
       dateRange: "",
-      bullets: [] as string[],
+      bullets: [],
       ...draft,
     };
     setFormWithHistory((prev) => ({ ...prev, experience: [...prev.experience, newEntry] }));
     return newEntry.id;
-  };
+  }, [setFormWithHistory]);
 
-  const addExperienceBullet = (id: string, bullet: string) => {
+  const removeExperience = useCallback((id: string) => {
+    setFormWithHistory((prev) => ({
+      ...prev,
+      experience: prev.experience.filter((item) => item.id !== id),
+    }));
+  }, [setFormWithHistory]);
+
+  const addExperienceBullet = useCallback((id: string, bullet: string) => {
     setFormWithHistory((prev) => ({
       ...prev,
       experience: prev.experience.map((item) =>
         item.id === id ? { ...item, bullets: [...item.bullets, bullet] } : item,
       ),
     }));
-  };
+  }, [setFormWithHistory]);
 
-  const updateExperienceBullet = (id: string, index: number, bullet: string) => {
+  const updateExperienceBullet = useCallback((id: string, index: number, bullet: string) => {
     setFormWithHistory((prev) => ({
       ...prev,
       experience: prev.experience.map((item) =>
@@ -222,30 +214,26 @@ export function useResumeEditor(
           : item,
       ),
     }));
-  };
+  }, [setFormWithHistory]);
 
-  const removeExperienceBullet = (id: string, index: number) => {
+  const removeExperienceBullet = useCallback((id: string, index: number) => {
     setFormWithHistory((prev) => ({
       ...prev,
       experience: prev.experience.map((item) =>
         item.id === id ? { ...item, bullets: item.bullets.filter((_, i) => i !== index) } : item,
       ),
     }));
-  };
+  }, [setFormWithHistory]);
 
-  const removeExperience = (id: string) => {
-    setFormWithHistory((prev) => ({ ...prev, experience: prev.experience.filter((item) => item.id !== id) }));
-  };
-
-  const updateLeadership = (id: string, data: Partial<ResumeForm["leadership"][number]>) => {
+  const updateLeadership = useCallback((id: string, data: Partial<LeadershipEntry>) => {
     setFormWithHistory((prev) => ({
       ...prev,
       leadership: prev.leadership.map((item) => (item.id === id ? { ...item, ...data } : item)),
     }));
-  };
+  }, [setFormWithHistory]);
 
-  const addLeadership = () => {
-    const newEntry = {
+  const addLeadership = useCallback(() => {
+    const newEntry: LeadershipEntry = {
       id: `lead_${Date.now()}`,
       role: "",
       organization: "",
@@ -253,41 +241,60 @@ export function useResumeEditor(
       dateRange: "",
     };
     setFormWithHistory((prev) => ({ ...prev, leadership: [...prev.leadership, newEntry] }));
-  };
+  }, [setFormWithHistory]);
 
-  const removeLeadership = (id: string) => {
-    setFormWithHistory((prev) => ({ ...prev, leadership: prev.leadership.filter((item) => item.id !== id) }));
-  };
+  const removeLeadership = useCallback((id: string) => {
+    setFormWithHistory((prev) => ({
+      ...prev,
+      leadership: prev.leadership.filter((item) => item.id !== id),
+    }));
+  }, [setFormWithHistory]);
 
-  const updateAwards = (index: number, value: string) => {
+  const updateAwards = useCallback((index: number, value: string) => {
     setFormWithHistory((prev) => {
       const newAwards = [...prev.awards];
       newAwards[index] = value;
       return { ...prev, awards: newAwards };
     });
-  };
+  }, [setFormWithHistory]);
 
-  const addAward = () => {
+  const addAward = useCallback(() => {
     setFormWithHistory((prev) => ({ ...prev, awards: [...prev.awards, ""] }));
-  };
+  }, [setFormWithHistory]);
 
-  const removeAward = (index: number) => {
-    setFormWithHistory((prev) => ({ ...prev, awards: prev.awards.filter((_, i) => i !== index) }));
-  };
+  const removeAward = useCallback((index: number) => {
+    setFormWithHistory((prev) => ({
+      ...prev,
+      awards: prev.awards.filter((_, i) => i !== index),
+    }));
+  }, [setFormWithHistory]);
 
-  const addProject = (project: ResumeForm["projects"][number]) => {
+  const addProject = useCallback((project: ProjectEntry) => {
     setFormWithHistory((prev) => ({
       ...prev,
       projects: [...prev.projects, project],
     }));
-  };
+  }, [setFormWithHistory]);
 
-  const removeProject = (id: string) => {
+  const removeProject = useCallback((id: string) => {
     setFormWithHistory((prev) => ({
       ...prev,
       projects: prev.projects.filter((item) => item.id !== id),
     }));
-  };
+  }, [setFormWithHistory]);
+
+  // Autosave to localStorage
+  useEffect(() => {
+    if (!autosave || !storageKey) return;
+    if (!hasLoadedSavedForm.current) return;
+    if (skipNextAutosave.current) {
+      skipNextAutosave.current = false;
+      return;
+    }
+
+    const timeout = setTimeout(() => saveForm(storageKey, form.state.values), 800);
+    return () => clearTimeout(timeout);
+  }, [autosave, storageKey, form.state.values]);
 
   return {
     form,

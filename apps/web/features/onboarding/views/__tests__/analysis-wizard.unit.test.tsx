@@ -14,6 +14,7 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ResumeAnalysisResult } from "../../../editor/model/resume-analysis";
 
 // ---------------------------------------------------------------------------
@@ -119,6 +120,18 @@ vi.mock("../../../templates/components/template-preview", () => ({
 
 // Import AFTER mocks are set up
 import { AnalysisWizard } from "../analysis-wizard";
+
+function renderWizard(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 // ---------------------------------------------------------------------------
 // Shared fixture
@@ -230,7 +243,7 @@ describe("AnalysisWizard unit tests", () => {
     it("returns home instead of the blocked upload step", async () => {
       mockCreateResumeAnalysis.mockResolvedValue(minimalAnalysisResult);
 
-      render(<AnalysisWizard />);
+      renderWizard(<AnalysisWizard />);
 
       // Navigate to step 3
       await advanceToStep3();
@@ -257,7 +270,7 @@ describe("AnalysisWizard unit tests", () => {
   describe("initialAnalysisId triggers analysis restoration", () => {
     it("shows workspace when initialAnalysisId is present and getResumeAnalysis succeeds", async () => {
       mockGetResumeAnalysis.mockResolvedValue(minimalAnalysisResult);
-      render(<AnalysisWizard initialAnalysisId="test-analysis-123" />);
+      renderWizard(<AnalysisWizard initialAnalysisId="test-analysis-123" />);
 
       // The wizard should call getResumeAnalysis and transition to workspace
       await waitFor(() => {
@@ -277,7 +290,7 @@ describe("AnalysisWizard unit tests", () => {
 
     it("resets to step 1 when getResumeAnalysis fails", async () => {
       mockGetResumeAnalysis.mockRejectedValue(new Error("Not found"));
-      render(<AnalysisWizard initialAnalysisId="bad-id" />);
+      renderWizard(<AnalysisWizard initialAnalysisId="bad-id" />);
 
       await waitFor(() => {
         expect(mockGetResumeAnalysis).toHaveBeenCalledWith("bad-id");
@@ -291,7 +304,7 @@ describe("AnalysisWizard unit tests", () => {
 
     it("returns to home when Back is clicked from a restored saved check", async () => {
       mockGetResumeAnalysis.mockResolvedValue(minimalAnalysisResult);
-      render(<AnalysisWizard initialAnalysisId="test-analysis-123" />);
+      renderWizard(<AnalysisWizard initialAnalysisId="test-analysis-123" />);
 
       await waitFor(() => {
         expect(screen.getByTestId("analysis-workspace")).toBeTruthy();
@@ -311,7 +324,7 @@ describe("AnalysisWizard unit tests", () => {
     it("opens the workspace after Check my resume succeeds", async () => {
       mockCreateResumeAnalysis.mockResolvedValue(minimalAnalysisResult);
 
-      render(<AnalysisWizard />);
+      renderWizard(<AnalysisWizard />);
 
       // Navigate to step 3
       await advanceToStep3();
@@ -339,7 +352,7 @@ describe("AnalysisWizard unit tests", () => {
     it("stays on template step and shows error when Check my resume fails", async () => {
       mockCreateResumeAnalysis.mockRejectedValue(new Error("Server error"));
 
-      render(<AnalysisWizard />);
+      renderWizard(<AnalysisWizard />);
 
       await advanceToStep3();
 
@@ -359,7 +372,7 @@ describe("AnalysisWizard unit tests", () => {
         selectedTemplateId: "unknown-template-id",
       });
 
-      render(<AnalysisWizard />);
+      renderWizard(<AnalysisWizard />);
 
       await advanceToStep3();
 
@@ -392,7 +405,7 @@ describe("AnalysisWizard unit tests", () => {
         refetch: vi.fn(),
       });
 
-      render(<AnalysisWizard />);
+      renderWizard(<AnalysisWizard />);
 
       await waitFor(() => {
         expect(screen.getByText(/free check already used/i)).toBeInTheDocument();
@@ -414,7 +427,7 @@ describe("AnalysisWizard unit tests", () => {
         refetch: vi.fn(),
       });
 
-      render(<AnalysisWizard />);
+      renderWizard(<AnalysisWizard />);
 
       await waitFor(() => {
         expect(screen.getByRole("button", { name: /start with a blank resume/i })).toBeInTheDocument();
@@ -432,7 +445,7 @@ describe("AnalysisWizard unit tests", () => {
     it("opens scratch mode directly from query param", async () => {
       mockUseSearchParams.mockReturnValue(new URLSearchParams("mode=scratch"));
 
-      render(<AnalysisWizard />);
+      renderWizard(<AnalysisWizard />);
 
       await waitFor(() => {
         expect(screen.getByRole("button", { name: /open builder/i })).toBeInTheDocument();
@@ -440,7 +453,7 @@ describe("AnalysisWizard unit tests", () => {
     });
 
     it("clears an uploaded file when starting from scratch is chosen", async () => {
-      render(<AnalysisWizard />);
+      renderWizard(<AnalysisWizard />);
 
       await advanceToStep2();
 
@@ -486,7 +499,7 @@ describe("AnalysisWizard unit tests", () => {
 
       mockCreateResumeAnalysis.mockResolvedValue(minimalAnalysisResult);
 
-      render(<WizardWithQuotaFlip />);
+      renderWizard(<WizardWithQuotaFlip />);
 
       await advanceToStep3();
       fireEvent.click(screen.getByRole("button", { name: /check my resume/i }));
@@ -531,7 +544,7 @@ describe("AnalysisWizard unit tests", () => {
 
       mockCreateResumeAnalysis.mockRejectedValue(new Error("Request timeout after 120000ms"));
 
-      render(<WizardWithQuotaRecovery />);
+      renderWizard(<WizardWithQuotaRecovery />);
 
       await advanceToStep3();
       fireEvent.click(screen.getByRole("button", { name: /check my resume/i }));

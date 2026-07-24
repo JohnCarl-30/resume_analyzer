@@ -41,8 +41,7 @@ export function HomeIdentityBar({
   onQuotaRetry,
   className,
 }: HomeIdentityBarProps) {
-  const quotaLoading = quotaNav.isLoading;
-  const isBootstrapping = !isProfileLoaded || (quotaLoading && !quota && !quotaError);
+  const isBootstrapping = !isProfileLoaded;
 
   if (isBootstrapping) {
     return <HomeIdentitySkeleton className={className} />;

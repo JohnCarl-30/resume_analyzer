@@ -69,7 +69,7 @@ describe(
 
               // Assert the selected card shows the scanner-friendly label.
               const selectionLabel = within(selectedCard as HTMLElement).getByText(
-                expectedTemplate!.atsLabel ?? "Scanner friendly",
+                expectedTemplate!.atsLabel ?? "Good for scanners",
                 { exact: false },
               );
               expect(selectionLabel).toBeTruthy();

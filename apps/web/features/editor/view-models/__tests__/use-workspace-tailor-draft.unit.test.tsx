@@ -66,7 +66,9 @@ describe("useWorkspaceTailorDraft", () => {
     expect(result.current.proposals).toHaveLength(2);
 
     act(() => {
-      result.current.approveProposal("tailor-summary");
+      const summary = result.current.proposals.find((item) => item.id === "tailor-summary");
+      expect(summary).toBeTruthy();
+      result.current.approveProposal(summary!);
     });
 
     expect(result.current.previewForm.personalInfo.summary).toBe("New summary");

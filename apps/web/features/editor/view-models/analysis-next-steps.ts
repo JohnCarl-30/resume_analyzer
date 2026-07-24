@@ -21,7 +21,13 @@ export interface AnalysisNextStepsState {
   completedCount: number;
   totalCount: number;
   progress: number;
+  matchedKeywordPreview: string[];
   missingKeywordPreview: string[];
+  scoreBreakdown?: {
+    jobWords: number;
+    mustHaves: number;
+    clarity: number;
+  };
   steps: AnalysisNextStep[];
 }
 
@@ -97,6 +103,37 @@ function hasSkills(form: ResumeForm) {
   return hasText(form.personalInfo.skills) || hasText(form.personalInfo.summary);
 }
 
+function hasContactDetails(form: ResumeForm, analysisResult: ResumeAnalysisResult | null) {
+  if (hasText(form.personalInfo.email) && hasText(form.personalInfo.phone)) {
+    return true;
+  }
+  const searchText = formSearchText(form, analysisResult);
+  return /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(searchText) && /\d{3}/.test(searchText);
+}
+
+function hasUnresolvedScannerIssues(
+  form: ResumeForm,
+  analysisResult: ResumeAnalysisResult | null,
+  skillsComplete: boolean,
+  experienceComplete: boolean,
+  educationComplete: boolean,
+) {
+  if (!analysisResult) return true;
+  if ((analysisResult.extractedCharacterCount ?? Number.POSITIVE_INFINITY) < 400) {
+    return true;
+  }
+  if (analysisResult.suggestions.some((suggestion) => suggestion.id === "parse-thin-extract")) {
+    return true;
+  }
+  if (!hasContactDetails(form, analysisResult)) {
+    return true;
+  }
+  const headingIssue = analysisResult.suggestions.some(
+    (suggestion) => suggestion.id === "ats-standard-headings",
+  );
+  return headingIssue && !(skillsComplete && experienceComplete && educationComplete);
+}
+
 export function getAnalysisNextStepsState(
   form: ResumeForm,
   analysisResult: ResumeAnalysisResult | null,
@@ -104,6 +141,7 @@ export function getAnalysisNextStepsState(
 ): AnalysisNextStepsState {
   const score = analysisResult?.score ?? 0;
   const missingKeywordCount = analysisResult?.missingKeywords.length ?? 0;
+  const matchedKeywordPreview = analysisResult?.matchedKeywords.slice(0, 6) ?? [];
   const missingKeywordPreview = analysisResult?.missingKeywords.slice(0, 6) ?? [];
   const firstMissingKeywords = missingKeywordPreview.slice(0, 5);
   const missingKeywordText = firstMissingKeywords.join(", ");
@@ -113,6 +151,13 @@ export function getAnalysisNextStepsState(
   const educationComplete = hasEducation(form);
   const experienceComplete = hasExperience(form);
   const impactComplete = hasExperienceDetails(form, analysisResult);
+  const scannerComplete = !hasUnresolvedScannerIssues(
+    form,
+    analysisResult,
+    skillsComplete,
+    experienceComplete,
+    educationComplete,
+  );
   const jobComplete = Boolean(analysisResult && score >= 75 && missingKeywordCount <= 3);
 
   const steps: AnalysisNextStep[] = [
@@ -127,6 +172,20 @@ export function getAnalysisNextStepsState(
       applyDescription: targetRole
         ? `Add "${targetRole}" to the summary near the top.`
         : "Add the job title to the summary near the top.",
+    },
+    {
+      id: "scanner-ready",
+      title: "Make sections easy to scan",
+      description: scannerComplete
+        ? "Contact details and clear section labels look ready for a text-based resume check."
+        : "Add email and phone near the top, use plain Skills / Experience / Education headings, and prefer a simple PDF or DOCX with selectable text.",
+      complete: scannerComplete,
+      action: "personal",
+      buttonLabel: scannerComplete ? "Review" : "Edit section",
+      applyLabel: scannerComplete ? undefined : "Add suggestion",
+      applyDescription: scannerComplete
+        ? undefined
+        : "Add your email and phone on the first lines of the header if they are missing.",
     },
     {
       id: "skills",
@@ -198,7 +257,9 @@ export function getAnalysisNextStepsState(
     completedCount,
     totalCount,
     progress,
+    matchedKeywordPreview,
     missingKeywordPreview,
+    scoreBreakdown: analysisResult?.scoreBreakdown,
     steps,
   };
 }

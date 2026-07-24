@@ -33,7 +33,6 @@ import {
 import {
   createResumeAnalysis,
   createAnalysisFromTemplate,
-  getResumeAnalysis,
   loadResumeAnalysisSourcePreview,
 } from "../utils/analysis-api";
 import { useAnalysisQuota } from "@/features/account/view-models/use-analysis-quota";
@@ -41,7 +40,10 @@ import { getAnalysisQuotaNavigationState } from "@/lib/analysis-quota-navigation
 import { Button } from "@/components/ui/button";
 import { formatFileSize, isSupportedFile, maxFileSize } from "../utils/wizard-utils";
 import { useAnalysisProgress } from "../view-models/use-analysis-progress";
+import { useResumeAnalysis } from "../view-models/use-resume-analysis";
 import type { AnalysisProgressMode } from "../model/analysis-progress";
+import { queryKeys } from "@/lib/query/keys";
+import { useQueryClient } from "@tanstack/react-query";
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
 type ViewMode = "wizard" | "workspace";
@@ -64,6 +66,7 @@ function normalizeTemplateId(
 export function AnalysisWizard({ onExit, initialAnalysisId }: AnalysisWizardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const scratchMode = searchParams.get("mode") === "scratch";
   const {
     quota: analysisQuota,
@@ -87,6 +90,14 @@ export function AnalysisWizard({ onExit, initialAnalysisId }: AnalysisWizardProp
     sourceUrl: string;
     previewUrl: string | null;
   } | null> | null>(null);
+  const [analysisIdFromUrl, setAnalysisIdFromUrl] = useState<string | null>(
+    initialAnalysisId ?? null,
+  );
+  const {
+    analysis: restoredAnalysis,
+    error: restoreError,
+    isLoading: isRestoringAnalysis,
+  } = useResumeAnalysis(analysisIdFromUrl);
 
   function revokeStoredResumeObjectUrl() {
     if (resumeObjectUrlRef.current) {
@@ -108,8 +119,6 @@ export function AnalysisWizard({ onExit, initialAnalysisId }: AnalysisWizardProp
   const [analysisResult, setAnalysisResult] = useState<ResumeAnalysisResult | null>(null);
   const [analysisError, setAnalysisError] = useState("");
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
-  const [isRestoringAnalysis, setIsRestoringAnalysis] = useState(false);
-  const [analysisIdFromUrl, setAnalysisIdFromUrl] = useState<string | null>(initialAnalysisId ?? null);
   const [resumeSourceUrl, setResumeSourceUrl] = useState<string | null>(null);
   const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
   const [sourcePreviewLoading, setSourcePreviewLoading] = useState(false);
@@ -347,6 +356,10 @@ export function AnalysisWizard({ onExit, initialAnalysisId }: AnalysisWizardProp
       // (Next.js syncs those edits and can remount this wizard, dropping step 5).
       // The saved check remains available at /analysis/:id from Home.
       restoredAnalysisIdRef.current = nextAnalysis.id ?? null;
+      if (nextAnalysis.id) {
+        queryClient.setQueryData(queryKeys.analysis(nextAnalysis.id), nextAnalysis);
+      }
+      void queryClient.invalidateQueries({ queryKey: queryKeys.analyses });
       setAnalysisResult(nextAnalysis);
       setSelectedTemplateId(
         normalizeTemplateId(nextAnalysis.selectedTemplateId, templateIdToUse),
@@ -508,55 +521,45 @@ export function AnalysisWizard({ onExit, initialAnalysisId }: AnalysisWizardProp
     setAnalysisIdFromUrl(initialAnalysisId ?? null);
   }, [initialAnalysisId]);
 
+  // Apply TanStack Query restore results into wizard/workspace local state.
   useEffect(() => {
-    if (!analysisIdFromUrl || restoredAnalysisIdRef.current === analysisIdFromUrl) {
+    if (!analysisIdFromUrl || !restoredAnalysis) {
       return;
     }
 
-    let isCancelled = false;
+    if (
+      restoredAnalysisIdRef.current === analysisIdFromUrl &&
+      analysisResult === restoredAnalysis
+    ) {
+      return;
+    }
 
-    setIsRestoringAnalysis(true);
+    restoredAnalysisIdRef.current = analysisIdFromUrl;
+    setAnalysisResult(restoredAnalysis);
+    setTargetRole(restoredAnalysis.targetRole ?? "");
+    setJobDescription(restoredAnalysis.jobDescription ?? "");
+    setSelectedTemplateId(
+      normalizeTemplateId(restoredAnalysis.selectedTemplateId, defaultTemplateId),
+    );
+    setCreateFromScratch(false);
+    setViewMode("workspace");
+    setStep(5);
     setAnalysisError("");
+  }, [analysisIdFromUrl, analysisResult, defaultTemplateId, restoredAnalysis]);
 
-    void getResumeAnalysis(analysisIdFromUrl)
-      .then((savedAnalysis) => {
-        if (isCancelled) {
-          return;
-        }
+  useEffect(() => {
+    if (!analysisIdFromUrl || isRestoringAnalysis || !restoreError) {
+      return;
+    }
 
-        restoredAnalysisIdRef.current = analysisIdFromUrl;
-        setAnalysisResult(savedAnalysis);
-        setTargetRole(savedAnalysis.targetRole ?? "");
-        setJobDescription(savedAnalysis.jobDescription ?? "");
-        setSelectedTemplateId(normalizeTemplateId(savedAnalysis.selectedTemplateId, defaultTemplateId));
-        setCreateFromScratch(false);
-        setViewMode("workspace");
-        setStep(5);
-      })
-      .catch((error) => {
-        if (isCancelled) {
-          return;
-        }
-
-        replaceAnalysisParam(null);
-        setAnalysisResult(null);
-        setCreateFromScratch(false);
-        setViewMode("wizard");
-        setStep(1);
-        setAnalysisError(
-          error instanceof Error ? error.message : "Unable to load the saved resume check right now.",
-        );
-      })
-      .finally(() => {
-        if (!isCancelled) {
-          setIsRestoringAnalysis(false);
-        }
-      });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [analysisIdFromUrl, defaultTemplateId]);
+    replaceAnalysisParam(null);
+    restoredAnalysisIdRef.current = null;
+    setAnalysisResult(null);
+    setCreateFromScratch(false);
+    setViewMode("wizard");
+    setStep(1);
+    setAnalysisError(restoreError);
+  }, [analysisIdFromUrl, isRestoringAnalysis, restoreError]);
 
   const backLabel =
     step === 4

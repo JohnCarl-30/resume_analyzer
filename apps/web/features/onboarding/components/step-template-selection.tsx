@@ -122,32 +122,32 @@ export function StepTemplateSelection({
                   aria-pressed={isSelected}
                   onClick={() => setSelectedTemplateId(template.id)}
                   className={cn(
-                    "group flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-lg border bg-card text-left transition-[border-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:ring-offset-2",
+                    "group flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-lg border bg-card text-left transition-[border-color,background-color] duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:ring-offset-2",
                     isSelected
-                      ? "border-foreground/50"
-                      : "border-border hover:border-foreground/20 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
+                      ? "border-primary bg-secondary"
+                      : "border-border hover:border-foreground/20 hover:bg-muted/40",
                   )}
                 >
-                  <div className={cn("h-56 overflow-hidden border-b p-4", template.thumbnailClass)}>
+                  <div className="h-56 overflow-hidden border-b bg-muted/40 p-4">
                     <TemplateRealPreview variantId={template.id} />
                   </div>
-                  <div className="flex flex-col gap-2 p-4">
+                  <div className="flex flex-1 flex-col gap-2 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <p className="text-base font-semibold text-foreground">{template.name}</p>
                       <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
                         {template.atsRecommended ? (
                           <Badge variant="secondary">Recommended</Badge>
                         ) : null}
-                        {template.isPremium ? <Badge>PRO</Badge> : null}
+                        {template.isPremium ? <Badge variant="outline">Pro</Badge> : null}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <div className="mt-auto flex items-center gap-2 text-xs font-medium text-muted-foreground">
                       {isSelected ? (
                         <CheckCircledIcon aria-hidden="true" className="text-primary" />
                       ) : (
                         <span className="size-2 rounded-full bg-border" />
                       )}
-                      {template.atsLabel ?? "Scanner friendly"}
+                      {template.atsLabel ?? "Good for scanners"}
                     </div>
                   </div>
                 </button>
@@ -160,7 +160,7 @@ export function StepTemplateSelection({
             <Card className="flex flex-col gap-4 p-5">
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">Selected</Badge>
-                {selectedTemplate?.isPremium ? <Badge variant="outline">Premium</Badge> : null}
+                {selectedTemplate?.isPremium ? <Badge variant="outline">Pro</Badge> : null}
               </div>
 
               {selectedTemplate ? (

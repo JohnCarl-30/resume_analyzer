@@ -28,6 +28,12 @@ function SeverityBadge({ severity }: { severity: AnalysisSuggestion["severity"] 
 }
 
 function SuggestionCard({ suggestion }: { suggestion: AnalysisSuggestion }) {
+  const categoryLabel: Record<AnalysisSuggestion["category"], string> = {
+    keywords: "Job words",
+    writing: "Clarity",
+    impact: "Impact",
+  };
+
   return (
     <article role="article" className="rounded-lg border bg-background p-4">
       <div className="flex items-start justify-between gap-3">
@@ -35,7 +41,7 @@ function SuggestionCard({ suggestion }: { suggestion: AnalysisSuggestion }) {
           <h3 data-testid="suggestion-title" className="text-base font-semibold tracking-tight text-foreground">
             {suggestion.title}
           </h3>
-          <p className="mt-1 text-sm text-muted-foreground">{suggestion.category}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{categoryLabel[suggestion.category]}</p>
         </div>
         <SeverityBadge severity={suggestion.severity} />
       </div>
@@ -50,6 +56,11 @@ export function StepSuggestions({ analysisResult, onEnterEditor, onBack }: StepS
   const { suggestions, matchedKeywords, missingKeywords } = analysisResult;
   const totalCount = suggestions.length;
   const criticalCount = suggestions.filter((s) => s.severity === "high").length;
+  const scannerReady = !suggestions.some((suggestion) =>
+    ["parse-thin-extract", "parse-missing-email", "parse-missing-phone", "ats-standard-headings"].includes(
+      suggestion.id,
+    ),
+  ) && (analysisResult.extractedCharacterCount ?? 500) >= 400;
   const topSuggestions = [...suggestions].sort((a, b) => {
     const severityRank: Record<AnalysisSuggestion["severity"], number> = {
       high: 0,
@@ -72,6 +83,12 @@ export function StepSuggestions({ analysisResult, onEnterEditor, onBack }: StepS
     {
       label: criticalCount === 0 ? "No urgent fixes" : `${criticalCount} important improvement${criticalCount === 1 ? "" : "s"} to fix`,
       complete: criticalCount === 0,
+    },
+    {
+      label: scannerReady
+        ? "Looks readable for text scanners"
+        : "Improve contact details or file readability",
+      complete: scannerReady,
     },
   ];
 

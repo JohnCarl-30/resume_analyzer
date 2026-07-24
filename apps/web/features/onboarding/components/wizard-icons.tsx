@@ -205,6 +205,14 @@ export function PlusIcon() {
   );
 }
 
+export function MinusIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-4 w-4">
+      <path d="M4.25 10h11.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function ChevronDownIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" aria-hidden className="h-4 w-4">

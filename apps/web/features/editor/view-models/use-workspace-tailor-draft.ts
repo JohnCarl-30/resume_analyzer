@@ -84,12 +84,12 @@ export function useWorkspaceTailorDraft({
   const [draft, setDraft] = useState<ResumeTailorDraft | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [approvedIds, setApprovedIds] = useState<string[]>([]);
+  const [approvedById, setApprovedById] = useState<Record<string, TailorProposal>>({});
   const loadPromiseRef = useRef<Promise<ResumeTailorDraft | null> | null>(null);
   const analysisId = analysisResult?.id ?? null;
 
   useEffect(() => {
-    setApprovedIds([]);
+    setApprovedById({});
     setError("");
     loadPromiseRef.current = null;
 
@@ -165,18 +165,17 @@ export function useWorkspaceTailorDraft({
 
   const previewForm = useMemo(() => {
     let next = cloneForm(baseForm);
-    for (const proposal of proposals) {
-      if (approvedIds.includes(proposal.id)) {
-        next = applyProposalToForm(next, proposal);
-      }
+    for (const proposal of Object.values(approvedById)) {
+      next = applyProposalToForm(next, proposal);
     }
     return next;
-  }, [approvedIds, baseForm, proposals]);
+  }, [approvedById, baseForm]);
 
-  const approveProposal = useCallback((proposalId: string) => {
-    setApprovedIds((current) =>
-      current.includes(proposalId) ? current : [...current, proposalId],
-    );
+  const approveProposal = useCallback((proposal: TailorProposal) => {
+    setApprovedById((current) => ({
+      ...current,
+      [proposal.id]: proposal,
+    }));
   }, []);
 
   const applyApprovedToForm = useCallback(() => previewForm, [previewForm]);
@@ -186,7 +185,7 @@ export function useWorkspaceTailorDraft({
     proposals,
     isLoading,
     error,
-    approvedIds,
+    approvedIds: Object.keys(approvedById),
     previewForm,
     approveProposal,
     applyApprovedToForm,

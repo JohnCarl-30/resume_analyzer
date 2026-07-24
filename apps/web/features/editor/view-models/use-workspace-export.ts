@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 
+import { trackProductEvent } from "@/lib/product-events";
 import type { ResumeForm } from "../model/resume-form";
 
 interface UseWorkspaceExportOptions {
@@ -11,6 +12,7 @@ interface UseWorkspaceExportOptions {
   form: ResumeForm;
   resumeSourceUrl?: string | null;
   resumeFileName: string;
+  analysisId?: string;
 }
 
 function slugify(value: string) {
@@ -37,6 +39,7 @@ export function useWorkspaceExport({
   form,
   resumeSourceUrl,
   resumeFileName,
+  analysisId,
 }: UseWorkspaceExportOptions) {
   const exportJson = useCallback(() => {
     const payload = {
@@ -53,7 +56,12 @@ export function useWorkspaceExport({
     const url = URL.createObjectURL(blob);
     triggerDownload(url, `${slugify(resumeTitle)}-backup.json`);
     URL.revokeObjectURL(url);
-  }, [activeTemplateId, form, resumeTitle, selectedTemplateName]);
+    trackProductEvent({
+      name: "resume_export_json",
+      analysisId,
+      metadata: { templateId: activeTemplateId },
+    });
+  }, [activeTemplateId, analysisId, form, resumeTitle, selectedTemplateName]);
 
   const downloadSource = useCallback(() => {
     if (!resumeSourceUrl) {
@@ -62,7 +70,11 @@ export function useWorkspaceExport({
 
     const fileName = resumeFileName.trim() || `${slugify(resumeTitle)}.pdf`;
     triggerDownload(resumeSourceUrl, fileName);
-  }, [resumeFileName, resumeSourceUrl, resumeTitle]);
+    trackProductEvent({
+      name: "resume_download_original",
+      analysisId,
+    });
+  }, [analysisId, resumeFileName, resumeSourceUrl, resumeTitle]);
 
   return { exportJson, downloadSource };
 }

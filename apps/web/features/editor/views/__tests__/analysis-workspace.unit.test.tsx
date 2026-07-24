@@ -222,14 +222,13 @@ describe("AnalysisWorkspace — unit tests (task 7.7)", () => {
   it("checklist experience and job-post actions open the right flows", async () => {
     const { unmount } = renderWorkspace({ initialForm: emptyResumeForm });
 
-    fireEvent.click(within(checklistStep("Make work bullets clearer")).getByRole("button", { name: /edit section/i }));
-    expect(screen.getByRole("heading", { name: /work experience/i })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Senior Product Designer")).toBeInTheDocument();
+    fireEvent.click(within(checklistStep("Show Software Engineer near the top")).getByRole("button", { name: /edit section/i }));
+    expect(screen.getByRole("heading", { name: /personal info/i })).toBeInTheDocument();
 
     unmount();
     renderWorkspace({ initialForm: emptyResumeForm });
 
-    fireEvent.click(within(checklistStep("Check again with the job post")).getByRole("button", { name: /check job post/i }));
+    fireEvent.click(screen.getByRole("button", { name: /check resume again/i }));
     expect(screen.getByRole("dialog", { name: /check a different job post/i })).toBeInTheDocument();
 
     fireEvent.keyDown(screen.getByRole("dialog", { name: /check a different job post/i }), {
@@ -353,21 +352,22 @@ describe("AnalysisWorkspace — tailor review flow", () => {
     sessionStorage.clear();
   });
 
-  it("auto-opens the tailor review modal when initialSuggestionsReviewOpen is true", async () => {
+  it("does not auto-open the tailor review modal on arrival", async () => {
     renderWorkspace({ initialSuggestionsReviewOpen: true });
 
+    expect(screen.queryByRole("dialog", { name: /review job edits/i })).not.toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.getByRole("dialog", { name: /review job edits/i })).toBeInTheDocument();
+      expect(screen.getByText(/job-tailored edits/i)).toBeInTheDocument();
     });
+    expect(mockTailorResumeDraft).not.toHaveBeenCalled();
   });
 
-  it("does not auto-open the tailor review modal when the review was dismissed", async () => {
+  it("keeps the tailor review closed when a prior review was dismissed", async () => {
     sessionStorage.setItem("analysis-review-dismissed:test-analysis-unit", "1");
 
     renderWorkspace({ initialSuggestionsReviewOpen: true });
 
     expect(screen.queryByRole("dialog", { name: /review job edits/i })).not.toBeInTheDocument();
-    expect(mockTailorResumeDraft).not.toHaveBeenCalled();
   });
 
   it("shows a sidebar banner and header action for job-tailored edits", async () => {
@@ -377,7 +377,7 @@ describe("AnalysisWorkspace — tailor review flow", () => {
       expect(screen.getByText("Job-tailored edits")).toBeInTheDocument();
     });
 
-    expect(screen.getByRole("button", { name: /^review job edits$/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /review job edits/i }).length).toBeGreaterThan(0);
     expect(mockTailorResumeDraft).not.toHaveBeenCalled();
   });
 
@@ -385,10 +385,10 @@ describe("AnalysisWorkspace — tailor review flow", () => {
     renderWorkspace({ initialSuggestionsReviewOpen: false });
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /^review job edits$/i })).toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: /review job edits/i }).length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /^review job edits$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /review job edits/i })[0]!);
 
     expect(screen.getByRole("dialog", { name: /review job edits/i })).toBeInTheDocument();
 

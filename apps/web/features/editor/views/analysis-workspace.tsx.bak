@@ -6,15 +6,27 @@ import { useResumeForm } from "../view-models/use-resume-form";
 import { useWorkspaceModals } from "../view-models/use-workspace-modals";
 import { getCreateResumeGuideState, type BuilderGuideAction } from "../view-models/create-resume-guide";
 import { getAnalysisNextStepsState, type AnalysisNextStepAction } from "../view-models/analysis-next-steps";
-import { markAnalysisReviewDismissed } from "../view-models/analysis-review-items";
+import {
+  hasDismissedAnalysisReview,
+  markAnalysisReviewDismissed,
+} from "../view-models/analysis-review-items";
 import { useWorkspaceEnhance } from "../view-models/use-workspace-enhance";
 import { useWorkspaceExport } from "../view-models/use-workspace-export";
 import { useWorkspaceReanalyze } from "../view-models/use-workspace-reanalyze";
 import { useWorkspaceTailorDraft } from "../view-models/use-workspace-tailor-draft";
 import type { TailorProposal } from "../model/resume-tailor-draft";
+import { PersonalInfoEditor } from "../components/editors/personal-info-editor";
+import { ExperienceEditor } from "../components/editors/experience-editor";
+import { EducationEditor } from "../components/editors/education-editor";
+import { LeadershipEditor } from "../components/editors/leadership-editor";
+import { AwardsEditor } from "../components/editors/awards-editor";
+import { CreateResumeGuide } from "../components/workspace/create-resume-guide";
+import { AnalysisNextSteps } from "../components/workspace/analysis-next-steps";
 import { ResumeTailorReviewModal } from "../components/workspace/resume-tailor-review-modal";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { AnalysisProgressStatus } from "../../onboarding/components/analysis-progress-status";
+import { CloseIcon } from "../../onboarding/components/wizard-icons";
+
 import { WorkspaceHeader } from "../components/workspace/workspace-header";
 import { DocumentPreview } from "../components/workspace/document-preview";
 import { ContentModal } from "../components/workspace/content-modal";
@@ -22,9 +34,6 @@ import { ProjectModal, emptyProjectDraft, type ProjectDraft } from "../component
 import { TailorModal } from "../components/workspace/tailor-modal";
 import { TemplatesModal } from "../components/workspace/templates-modal";
 import { KeyboardShortcutsModal } from "../components/workspace/keyboard-shortcuts-modal";
-import { WorkspaceSidebar } from "../components/workspace/workspace-sidebar";
-import type { AwardsEditorMode, LeadershipEditorMode } from "../components/workspace/workspace-sidebar";
-import { trackProductEvent } from "@/lib/product-events";
 
 interface AnalysisWorkspaceProps {
   targetRole: string;
@@ -52,8 +61,18 @@ interface AnalysisWorkspaceProps {
   initialSuggestionsReviewOpen?: boolean;
 }
 
+const workspaceSections = [
+  { id: "personal", label: "Personal Info", icon: "personal", expanded: true },
+  { id: "education", label: "Education", icon: "education", expanded: false },
+  { id: "experience", label: "Work Experience", icon: "experience", expanded: false },
+  { id: "leadership", label: "Leadership", icon: "leadership", expanded: false },
+  { id: "awards", label: "Awards & Honors", icon: "awards", expanded: false },
+] as const;
+
 type ContentModalView = "content" | "project" | "templates" | "tailor" | null;
 type MobileCreateView = "editor" | "preview";
+type AwardsEditorMode = "awards" | "credentials" | "publications";
+type LeadershipEditorMode = "leadership" | "research";
 
 type ContentOptionId =
   | "summary"
@@ -63,6 +82,68 @@ type ContentOptionId =
   | "certifications"
   | "publications"
   | "skills";
+
+const awardsEditorCopy: Record<
+  AwardsEditorMode,
+  { title: string; addLabel: string; placeholder: string }
+> = {
+  awards: {
+    title: "Awards & Honors",
+    addLabel: "Add Award",
+    placeholder: "e.g. Dean's Lister - 2023",
+  },
+  credentials: {
+    title: "Credentials & Certifications",
+    addLabel: "Add Credential",
+    placeholder: "e.g. AWS Certified Cloud Practitioner - Amazon, 2025",
+  },
+  publications: {
+    title: "Publications",
+    addLabel: "Add Publication",
+    placeholder: "e.g. Article Title - Publication, 2025",
+  },
+};
+
+const leadershipEditorCopy: Record<
+  LeadershipEditorMode,
+  {
+    title: string;
+    addLabel: string;
+    roleLabel: string;
+    rolePlaceholder: string;
+    organizationLabel: string;
+    organizationPlaceholder: string;
+    locationLabel: string;
+    locationPlaceholder: string;
+    dateLabel: string;
+    datePlaceholder: string;
+  }
+> = {
+  leadership: {
+    title: "Leadership",
+    addLabel: "Add another Entry",
+    roleLabel: "Leadership Role",
+    rolePlaceholder: "President",
+    organizationLabel: "Organization",
+    organizationPlaceholder: "Student Council",
+    locationLabel: "Location",
+    locationPlaceholder: "City, Province",
+    dateLabel: "Date Range",
+    datePlaceholder: "Jan 2023 — Present",
+  },
+  research: {
+    title: "Research",
+    addLabel: "Add Research Entry",
+    roleLabel: "Research Title",
+    rolePlaceholder: "Undergraduate Researcher",
+    organizationLabel: "Institution / Lab",
+    organizationPlaceholder: "Human-Computer Interaction Lab",
+    locationLabel: "Location",
+    locationPlaceholder: "City, Country",
+    dateLabel: "Date Range",
+    datePlaceholder: "2024 — Present",
+  },
+};
 
 function humanizeFileName(fileName: string) {
   return fileName
@@ -117,6 +198,18 @@ function relativeTimeLabel(timestamp?: string) {
   }
   const days = Math.floor(hours / 24);
   return `Saved ${days}d ago`;
+}
+
+function sectionIcon(icon: string) {
+  const iconMap: Record<string, React.ReactNode> = {
+    personal: <span>👤</span>,
+    education: <span>🎓</span>,
+    experience: <span>💼</span>,
+    leadership: <span>👥</span>,
+    awards: <span>🏆</span>,
+    projects: <span>🔧</span>,
+  };
+  return iconMap[icon] ?? <span>✨</span>;
 }
 
 export function AnalysisWorkspace({
@@ -225,16 +318,7 @@ export function AnalysisWorkspace({
     form: formValues,
     resumeSourceUrl,
     resumeFileName,
-    analysisId: analysisResult?.id,
   });
-
-  const handlePrint = () => {
-    trackProductEvent({
-      name: "resume_print",
-      analysisId: analysisResult?.id,
-    });
-    window.print();
-  };
 
   const {
     newJobDescription,
@@ -249,7 +333,7 @@ export function AnalysisWorkspace({
     initialJobDescription: analysisResult?.jobDescription ?? "",
     onAnalysisUpdate,
     onJobDescriptionChange,
-    onComplete: () => modals.setModalView(null),
+    onComplete: () => modals.modals.setModalView(null),
   });
 
   const hasStructuredPreview = previewMode === "structured";
@@ -308,6 +392,13 @@ export function AnalysisWorkspace({
       : saveFlash
         ? "Saved"
         : lastSavedLabel;
+
+  const editorSections = [
+    ...workspaceSections,
+    ...(formValues.projects.length > 0
+      ? [{ id: "projects", label: "Projects", icon: "projects" as const, expanded: false }]
+      : []),
+  ];
 
   useEffect(() => {
     setActiveTemplateId(selectedTemplateId);
@@ -470,7 +561,7 @@ export function AnalysisWorkspace({
 
   function handleSectionAdd(sectionId: string) {
     if (sectionId === "projects") {
-      modals.openProjectModal();
+      openProjectModal();
       return;
     }
     if (sectionId === "personal") {
@@ -502,33 +593,33 @@ export function AnalysisWorkspace({
 
   function handleAddContentOption(optionId: ContentOptionId) {
     if (optionId === "projects") {
-      modals.openProjectModal();
+      openProjectModal();
       return;
     }
     if (optionId === "summary" || optionId === "objective" || optionId === "skills") {
       setActiveSectionId("personal");
-      modals.closeModal();
+      closeModal();
       return;
     }
     if (optionId === "research") {
       setLeadershipEditorMode("research");
       addLeadership();
       setActiveSectionId("leadership");
-      modals.closeModal();
+      closeModal();
       return;
     }
     if (optionId === "certifications") {
       setAwardsEditorMode("credentials");
       addAward();
       setActiveSectionId("awards");
-      modals.closeModal();
+      closeModal();
       return;
     }
     if (optionId === "publications") {
       setAwardsEditorMode("publications");
       addAward();
       setActiveSectionId("awards");
-      modals.closeModal();
+      closeModal();
     }
   }
 
@@ -710,6 +801,235 @@ export function AnalysisWorkspace({
     setPreviewZoom((currentZoom) => Math.max(70, Math.min(160, currentZoom + delta)));
   }
 
+  function renderEditor() {
+    if (activeSectionId === "personal") {
+      return (
+        <PersonalInfoEditor
+          data={formValues.personalInfo}
+          onChange={updatePersonalInfo}
+          onBack={() => setActiveSectionId(null)}
+        />
+      );
+    }
+    if (activeSectionId === "experience") {
+      return (
+        <ExperienceEditor
+          entries={formValues.experience}
+          onAdd={addExperience}
+          onUpdate={updateExperience}
+          onRemove={removeExperience}
+          onAddBullet={addExperienceBullet}
+          onUpdateBullet={updateExperienceBullet}
+          onRemoveBullet={removeExperienceBullet}
+          onEnhanceBullets={async (_id, role, bullets) => enhanceBullets(role, bullets)}
+          onBack={() => setActiveSectionId(null)}
+        />
+      );
+    }
+    if (activeSectionId === "education") {
+      return (
+        <EducationEditor
+          entries={formValues.education}
+          onAdd={addEducation}
+          onUpdate={updateEducation}
+          onRemove={removeEducation}
+          onBack={() => setActiveSectionId(null)}
+        />
+      );
+    }
+    if (activeSectionId === "leadership") {
+      const copy = leadershipEditorCopy[leadershipEditorMode];
+      return (
+        <LeadershipEditor
+          entries={formValues.leadership}
+          onAdd={addLeadership}
+          onUpdate={updateLeadership}
+          onRemove={removeLeadership}
+          onBack={() => setActiveSectionId(null)}
+          title={copy.title}
+          addLabel={copy.addLabel}
+          roleLabel={copy.roleLabel}
+          rolePlaceholder={copy.rolePlaceholder}
+          organizationLabel={copy.organizationLabel}
+          organizationPlaceholder={copy.organizationPlaceholder}
+          locationLabel={copy.locationLabel}
+          locationPlaceholder={copy.locationPlaceholder}
+          dateLabel={copy.dateLabel}
+          datePlaceholder={copy.datePlaceholder}
+        />
+      );
+    }
+    if (activeSectionId === "awards") {
+      const copy = awardsEditorCopy[awardsEditorMode];
+      return (
+        <AwardsEditor
+          entries={formValues.awards}
+          onAdd={addAward}
+          onUpdate={updateAwards}
+          onRemove={removeAward}
+          onBack={() => setActiveSectionId(null)}
+          title={copy.title}
+          addLabel={copy.addLabel}
+          placeholder={copy.placeholder}
+        />
+      );
+    }
+
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        <div className="border-b border-[color:var(--page-line)] px-5 py-4">
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-[color:var(--page-text)]">
+              {createMode ? "Resume Builder" : "Resume Sections"}
+            </h2>
+            <p className="mt-1 truncate text-xs text-[color:var(--page-muted)]">
+              {createMode ? "Local draft" : resumeTitle}
+            </p>
+          </div>
+        </div>
+
+        <div className={`min-h-0 flex-1 overflow-y-auto px-3 py-2 ${createMode ? "pb-6 xl:pb-3" : "pb-5"}`}>
+          {createMode && (
+            <div className="mb-4">
+              <CreateResumeGuide
+                guide={createResumeGuide}
+                onAction={handleGuideAction}
+                onPrint={() => window.print()}
+                onBackupDraft={handleExportJson}
+                onResetDraft={handleResetCreateDraft}
+              />
+            </div>
+          )}
+          {analysisNextSteps && (
+            <div className="mb-3">
+              <AnalysisNextSteps
+                guide={analysisNextSteps}
+                onAction={handleAnalysisStepAction}
+                onApply={handleApplyAnalysisStepAction}
+                preferTailorFlow={tailorEnabled}
+                tailor={
+                  tailorEnabled
+                    ? {
+                        isLoading: tailorDraftLoading,
+                        pendingCount: tailorProposals.length,
+                        available: true,
+                        onReview: openPrimaryReview,
+                      }
+                    : undefined
+                }
+              />
+            </div>
+          )}
+          {editorSections.map((section, index) => {
+            const isEmpty =
+              section.id === "education" ? formValues.education.length === 0 :
+              section.id === "experience" ? formValues.experience.length === 0 :
+              section.id === "leadership" ? formValues.leadership.length === 0 :
+              section.id === "awards" ? formValues.awards.length === 0 :
+              section.id === "personal" ? (!formValues.personalInfo.fullName && !formValues.personalInfo.email) :
+              false;
+            const emptyHints: Record<string, string> = {
+              personal: "Add your name, contact, and summary",
+              education: "No education yet — add your degree",
+              experience: "No work experience yet — add your first role",
+              leadership: "No leadership entries yet",
+              awards: "No awards or honors yet",
+            };
+
+            return (
+              <div
+                key={section.id}
+                className={`${index === 0 ? "" : "border-t border-[color:var(--page-line)]"} rounded-[10px] px-2 py-3 transition hover:bg-[color:var(--page-bg)]`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleSectionOpen(section.id)}
+                      className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[color:var(--page-muted)] transition hover:bg-[color:var(--brand-soft)] hover:text-[color:var(--brand)]"
+                    >
+                      {activeSectionId === section.id ? <span>▼</span> : <span>▶</span>}
+                    </button>
+                    <span className="text-[color:var(--page-muted)]">{sectionIcon(section.icon)}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleSectionOpen(section.id)}
+                      className="text-sm font-medium text-[color:var(--page-text)] transition hover:text-[color:var(--brand)]"
+                    >
+                      {section.label}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {section.id === "personal" ? (
+                      <button
+                        type="button"
+                        onClick={() => setActiveSectionId(section.id)}
+                        className="text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)]"
+                        aria-label="Edit section"
+                      >
+                        <span>✏️</span>
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleSectionAdd(section.id)}
+                          className="text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)]"
+                          aria-label="Add item"
+                        >
+                          <span>➕</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSectionOpen(section.id)}
+                          className="text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+                          aria-label="Open section"
+                        >
+                          <span>▶</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {mounted && isEmpty && (
+                  <div className="ml-11 mt-1 truncate text-xs text-[color:var(--page-muted)] opacity-70">
+                    {emptyHints[section.id]}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {createMode && (
+            <div className="px-2 pb-5 pt-2">
+              <button
+                type="button"
+                onClick={openAddContentModal}
+                className="inline-flex w-full items-center justify-center gap-3 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] px-4 py-3 text-base font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
+              >
+                <span>➕</span>
+                Add Section
+              </button>
+            </div>
+          )}
+        </div>
+
+        {!createMode && (
+          <div className="mt-auto border-t border-[color:var(--page-line)] px-3 py-3">
+            <button
+              type="button"
+              onClick={openAddContentModal}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] px-3 py-2.5 text-sm font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
+            >
+              <span>➕</span>
+              Add Section
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex h-[100dvh] max-h-[100dvh] min-h-0 flex-1 flex-col overflow-hidden bg-[color:var(--page-surface)] text-[color:var(--page-text)]">
       {isUpdatingAnalysis && (
@@ -789,12 +1109,12 @@ export function AnalysisWorkspace({
         }}
         onSaveTitle={() => onRename?.(editedTitle)}
         onOpenPrimaryReview={openPrimaryReview}
-        onOpenTailorModal={() => modals.setModalView("tailor")}
-        onOpenTemplatesModal={() => modals.setModalView("templates")}
+        onOpenTailorModal={() => modals.modals.setModalView("tailor")}
+        onOpenTemplatesModal={() => modals.modals.setModalView("templates")}
         onOpenShortcutsModal={() => modals.openShortcuts()}
         onUndo={undo}
         onRedo={redo}
-        onPrint={handlePrint}
+        onPrint={() => window.print()}
         onDownloadOriginal={() => void handleDownloadOriginal()}
         onMobileSidebarOpen={() => setMobileSidebarOpen(true)}
       />
@@ -830,53 +1150,33 @@ export function AnalysisWorkspace({
             onClick={() => setMobileSidebarOpen(false)}
           />
         )}
-        <WorkspaceSidebar
-          activeSectionId={activeSectionId}
-          setActiveSectionId={setActiveSectionId}
-          formValues={formValues}
-          createMode={createMode}
-          resumeTitle={resumeTitle}
-          mounted={mounted}
-          analysisResult={analysisResult}
-          targetRole={targetRole}
-          tailorEnabled={tailorEnabled}
-          tailorDraftLoading={tailorDraftLoading}
-          tailorProposals={tailorProposals}
-          leadershipEditorMode={leadershipEditorMode}
-          awardsEditorMode={awardsEditorMode}
-          setLeadershipEditorMode={setLeadershipEditorMode}
-          setAwardsEditorMode={setAwardsEditorMode}
-          enhanceBullets={enhanceBullets}
-          updatePersonalInfo={updatePersonalInfo}
-          updateEducation={updateEducation}
-          addEducation={addEducation}
-          removeEducation={removeEducation}
-          updateExperience={updateExperience}
-          addExperience={addExperience}
-          removeExperience={removeExperience}
-          addExperienceBullet={addExperienceBullet}
-          updateExperienceBullet={updateExperienceBullet}
-          removeExperienceBullet={removeExperienceBullet}
-          updateLeadership={updateLeadership}
-          addLeadership={addLeadership}
-          removeLeadership={removeLeadership}
-          updateAwards={updateAwards}
-          addAward={addAward}
-          removeAward={removeAward}
-          openPrimaryReview={openPrimaryReview}
-          handleGuideAction={handleGuideAction}
-          handleAnalysisStepAction={handleAnalysisStepAction}
-          handleApplyAnalysisStepAction={handleApplyAnalysisStepAction}
-          handleExportJson={handleExportJson}
-          handlePrint={handlePrint}
-          handleResetCreateDraft={handleResetCreateDraft}
-          openAddContentModal={() => modals.setModalView("content")}
-          openProjectModal={modals.openProjectModal}
-          setMobileSidebarOpen={setMobileSidebarOpen}
-          mobileSidebarOpen={mobileSidebarOpen}
-        />
+        <aside
+          className={`shrink-0 border-r border-[color:var(--page-line)] bg-white transition-transform duration-300 ease-in-out ${
+            createMode
+              ? `${mobileCreateView === "editor" ? "flex" : "hidden"} w-full border-r-0 xl:flex xl:w-[390px] xl:border-r`
+              : `fixed inset-y-0 left-0 z-50 w-80 transform ${
+                  mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+                } xl:static xl:z-auto xl:w-[360px] xl:transform-none xl:translate-x-0 2xl:w-[400px]`
+          }`}
+        >
+          <div className="flex h-full flex-col">
+            <div className={`${createMode ? "hidden" : "flex"} items-center justify-between border-b border-[color:var(--page-line)] px-4 py-3 xl:hidden`}>
+              <span className="font-semibold text-[color:var(--page-text)]">Editor</span>
+              <button
+                type="button"
+                onClick={() => setMobileSidebarOpen(false)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] border border-[color:var(--page-line)] text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+              >
+                <CloseIcon />
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              {renderEditor()}
+            </div>
+          </div>
+        </aside>
 
-      <section
+        <section
           className={`${createMode && mobileCreateView === "editor" ? "hidden xl:flex" : "flex"} min-h-0 flex-1 overflow-hidden bg-[color:var(--page-bg-strong)]`}
         >
           <div className="flex h-full flex-1 gap-0">
@@ -904,15 +1204,15 @@ export function AnalysisWorkspace({
       </div>
 
       <ContentModal
-        open={modals.modalView === "content"}
-        onOpenChange={(open) => open ? modals.setModalView("content") : modals.closeModal()}
+        open={modalView === "content"}
+        onOpenChange={(open) => open ? modals.setModalView("content") : closeModal()}
         onSelectOption={handleAddContentOption}
-        onOpenProjectModal={modals.openProjectModal}
+        onOpenProjectModal={openProjectModal}
       />
 
       <ProjectModal
-        open={modals.modalView === "project"}
-        onOpenChange={(open) => open ? modals.setModalView("project") : modals.closeModal()}
+        open={modalView === "project"}
+        onOpenChange={(open) => open ? modals.setModalView("project") : closeModal()}
         draft={modals.projectDraft}
         onDraftChange={(key, value) => modals.updateProjectDraft(key, value)}
         formError={modals.projectFormError}
@@ -921,8 +1221,8 @@ export function AnalysisWorkspace({
       />
 
       <TailorModal
-        open={modals.modalView === "tailor"}
-        onOpenChange={(open) => open ? modals.setModalView("tailor") : modals.closeModal()}
+        open={modalView === "tailor"}
+        onOpenChange={(open) => open ? modals.setModalView("tailor") : closeModal()}
         jobDescription={newJobDescription}
         onJobDescriptionChange={setNewJobDescription}
         isUpdating={isUpdatingAnalysis}
@@ -932,8 +1232,8 @@ export function AnalysisWorkspace({
       />
 
       <TemplatesModal
-        open={modals.modalView === "templates"}
-        onOpenChange={(open) => open ? modals.setModalView("templates") : modals.closeModal()}
+        open={modalView === "templates"}
+        onOpenChange={(open) => open ? modals.setModalView("templates") : closeModal()}
         activeTemplateId={activeTemplateId}
         onSelectTemplate={handleSelectTemplate}
       />
