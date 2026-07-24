@@ -3,11 +3,12 @@ import { sql } from "drizzle-orm";
 import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
 
 import { env } from "../config/env.js";
-import { databaseTables, resumeAnalysesTable, accountAnalysisUsageTable } from "./schema.js";
+import { databaseTables, resumeAnalysesTable, accountAnalysisUsageTable, productEventsTable } from "./schema.js";
 
 type AppDatabase = NeonHttpDatabase<{
   resumeAnalysesTable: typeof resumeAnalysesTable;
   accountAnalysisUsageTable: typeof accountAnalysisUsageTable;
+  productEventsTable: typeof productEventsTable;
 }>;
 
 const neonClient = env.DATABASE_URL ? neon(env.DATABASE_URL) : null;
@@ -16,6 +17,7 @@ const drizzleClient = neonClient
       schema: {
         resumeAnalysesTable,
         accountAnalysisUsageTable,
+        productEventsTable,
       },
     })
   : null;
@@ -113,6 +115,22 @@ async function initializeSchema() {
         analysis_id text NOT NULL,
         redeemed_at timestamptz NOT NULL DEFAULT now()
       )
+    `);
+
+    await drizzleClient.execute(sql`
+      CREATE TABLE IF NOT EXISTS ${sql.raw(databaseTables.productEvents)} (
+        id text PRIMARY KEY,
+        user_id text NOT NULL,
+        analysis_id text,
+        name text NOT NULL,
+        metadata jsonb,
+        created_at timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+
+    await drizzleClient.execute(sql`
+      CREATE INDEX IF NOT EXISTS product_events_user_name_idx
+      ON ${sql.raw(databaseTables.productEvents)} (user_id, name)
     `);
 
     await drizzleClient.execute(sql`
