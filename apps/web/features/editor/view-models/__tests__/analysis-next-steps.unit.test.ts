@@ -27,7 +27,7 @@ const baseAnalysis: ResumeAnalysisResult = {
 const readyForm: ResumeForm = {
   personalInfo: {
     fullName: "Pat Rivera",
-    phone: "",
+    phone: "555-0100",
     email: "pat@example.com",
     summary: "Frontend Engineer building accessible React and TypeScript interfaces.",
     skills: "React, TypeScript, accessibility, APIs, performance",
@@ -70,15 +70,16 @@ describe("getAnalysisNextStepsState", () => {
     ]);
     expect(guide.steps.map((step) => step.title)).toEqual([
       "Show Frontend Engineer near the top",
+      "Make sections easy to scan",
       "Add job words to Skills",
       "Make work bullets clearer",
       "Add education",
       "Check again with the job post",
     ]);
     expect(guide.steps.filter((step) => !step.complete).every((step) => step.buttonLabel.length > 0)).toBe(true);
-    expect(guide.steps.slice(0, 4).every((step) => step.applyLabel === "Add suggestion")).toBe(true);
-    expect(guide.steps[1]?.applyDescription).toContain("TypeScript");
-    expect(guide.steps[2]?.applyDescription).toContain("placeholders");
+    expect(guide.steps.slice(0, 5).every((step) => step.applyLabel === "Add suggestion")).toBe(true);
+    expect(guide.steps[2]?.applyDescription).toContain("TypeScript");
+    expect(guide.steps[3]?.applyDescription).toContain("placeholders");
   });
 
   it("marks the checklist ready when role, skills, impact, education, and score are strong", () => {
@@ -90,14 +91,17 @@ describe("getAnalysisNextStepsState", () => {
         metricsFound: 1,
         missingKeywords: ["backend"],
         parsedResumeText: "",
+        scoreBreakdown: { jobWords: 80, mustHaves: 75, clarity: 70 },
       },
       "Frontend Engineer",
     );
 
     expect(guide.statusLabel).toBe("Ready to review");
-    expect(guide.completedCount).toBe(5);
+    expect(guide.completedCount).toBe(6);
     expect(guide.progress).toBe(100);
     expect(guide.steps.every((step) => step.complete)).toBe(true);
     expect(guide.steps.every((step) => step.applyLabel === undefined)).toBe(true);
+    expect(guide.matchedKeywordPreview).toEqual(["React"]);
+    expect(guide.scoreBreakdown?.jobWords).toBe(80);
   });
 });
