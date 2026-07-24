@@ -12,6 +12,12 @@ export interface AnalysisSuggestion {
   category: AnalysisCategory;
 }
 
+export interface ScoreBreakdown {
+  jobWords: number;
+  mustHaves: number;
+  clarity: number;
+}
+
 export interface ResumeAnalysisResult {
   id?: string;
   targetRole: string;
@@ -19,6 +25,7 @@ export interface ResumeAnalysisResult {
   selectedTemplateId?: string;
   parsedResumeText?: string;
   score: number;
+  scoreBreakdown?: ScoreBreakdown;
   metricsFound: number;
   matchedKeywords: string[];
   missingKeywords: string[];
