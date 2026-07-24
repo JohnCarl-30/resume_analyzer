@@ -12,12 +12,22 @@ export interface AnalysisSuggestion {
   category: AnalysisCategory;
 }
 
+export interface ScoreBreakdown {
+  /** 0–100 job-word alignment */
+  jobWords: number;
+  /** 0–100 required-skills hit rate */
+  mustHaves: number;
+  /** 0–100 writing / structure / impact clarity */
+  clarity: number;
+}
+
 export interface ResumeAnalysis {
   id?: string;
   targetRole: string;
   jobDescription?: string;
   selectedTemplateId?: string;
   score: number;
+  scoreBreakdown?: ScoreBreakdown;
   metricsFound?: number;
   matchedKeywords: string[];
   missingKeywords: string[];
