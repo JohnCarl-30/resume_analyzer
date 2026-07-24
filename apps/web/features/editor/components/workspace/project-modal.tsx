@@ -1,5 +1,5 @@
 import React from "react";
-import { PlusIcon, TrashIcon, CalendarIcon, SparklesIcon, CloseIcon } from "../../../onboarding/components/wizard-icons";
+import { PlusIcon, TrashIcon, CalendarIcon, SparklesIcon, CloseIcon, CheckCircleIcon } from "../../../onboarding/components/wizard-icons";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
 export interface ProjectDraft {
@@ -84,7 +84,7 @@ export function ProjectModal({
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="inline-flex size-9 items-center justify-center rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-surface)] text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+            className="inline-flex size-9 items-center justify-center rounded-lg border border-[color:var(--page-line)] bg-[color:var(--page-surface)] text-[color:var(--page-muted)] transition-all duration-140 ease-out hover:text-[color:var(--page-text)] hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] active:scale-95"
             aria-label="Close add projects"
           >
             <CloseIcon />
@@ -264,12 +264,12 @@ export function ProjectModal({
             >
               Cancel
             </button>
-            <button
+          <button
               type="button"
               onClick={onSave}
-              className="inline-flex h-9 items-center justify-center rounded-lg bg-[color:var(--brand)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-strong)]"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-[color:var(--brand)] bg-[color:var(--brand)] px-5 py-2.5 text-sm font-medium text-white transition-all duration-140 ease-out hover:bg-[color:var(--brand-strong)] hover:shadow-[0_4px_12px_rgba(21,93,252,0.2)] active:scale-95"
             >
-              Save Changes
+              <CheckCircleIcon /> Save
             </button>
           </div>
         </div>
