@@ -9,7 +9,12 @@ interface ResumeRendererProps {
 }
 
 function contactItems(form: ResumeForm) {
-  return [form.personalInfo.phone, form.personalInfo.email].filter((item) => item.trim().length > 0);
+  return [
+    form.personalInfo.phone,
+    form.personalInfo.email,
+    form.personalInfo.linkedin,
+    form.personalInfo.github,
+  ].filter((item) => item.trim().length > 0);
 }
 
 function ContactLine({
@@ -191,10 +196,10 @@ function HarvardClassicLayout({ form }: { form: ResumeForm }) {
 
 function ModernSansLayout({ form }: { form: ResumeForm }) {
   return (
-    <div className="font-sans text-[#1e293b]">
+    <div className="resume-document-sans text-[#1e293b]">
       <header className="mb-10 flex justify-between items-end border-b-2 border-slate-900 pb-8">
         <div>
-          <h1 className="text-5xl font-extrabold tracking-tighter uppercase leading-none mb-2 text-slate-900">
+          <h1 className="text-5xl font-extrabold tracking-tight uppercase leading-none mb-2 text-slate-900">
             {form.personalInfo.fullName || "Your Name"}
           </h1>
         </div>
@@ -500,7 +505,12 @@ function MinimalistGridLayout({
   showPlaceholders?: boolean;
 }) {
   const placeholderContactItems = showPlaceholders
-    ? [form.personalInfo.phone || "(123) 456-7890", form.personalInfo.email || "you@example.com"]
+    ? [
+        form.personalInfo.phone || "(123) 456-7890",
+        form.personalInfo.email || "you@example.com",
+        form.personalInfo.linkedin || "linkedin.com/in/you",
+        form.personalInfo.github || "github.com/you",
+      ]
     : contactItems(form);
   const shouldShowSummaryPlaceholder = showPlaceholders && !form.personalInfo.summary;
   const shouldShowSkillsPlaceholder = showPlaceholders && !form.personalInfo.skills;
@@ -509,7 +519,7 @@ function MinimalistGridLayout({
   const shouldShowProjectsPlaceholder = showPlaceholders && form.projects.length === 0;
 
   return (
-    <div className="resume-document space-y-10">
+    <div className="resume-document-sans space-y-10">
       <header className="space-y-4 border-b border-[color:var(--page-line)] pb-8">
         <h1 className="text-4xl font-bold tracking-tight text-[color:var(--page-text)] uppercase text-center">
           {form.personalInfo.fullName || "Your Name"}
