@@ -45,6 +45,7 @@ export const analysisService = {
     return {
       targetRole: jdExtraction.targetRoleTitle || payload.targetRole,
       score: analysisResult.score,
+      scoreBreakdown: analysisResult.scoreBreakdown,
       metricsFound: analysisResult.metricsFound,
       matchedKeywords: analysisResult.matchedKeywords,
       missingKeywords: analysisResult.missingKeywords,
@@ -60,6 +61,7 @@ export const analysisService = {
     selectedTemplateId: unknown;
     resumeFile?: Express.Multer.File;
   }): Promise<PersistedResumeAnalysis> {
+    const startedAt = Date.now();
     await accountService.assertCanCreateAnalysis(input.userId);
 
     const payload = createUploadedAnalysisSchema.parse({
@@ -103,6 +105,7 @@ export const analysisService = {
       extractedCharacterCount: extracted.text.length,
       extractedProfile,
       extractionProvider: extractedProfile ? aiProvider.getExtractionProviderLabel() : "parser",
+      processingTimeMs: Date.now() - startedAt,
     });
 
     await accountService.recordAnalysisRedemption(input.userId, persisted.id);
@@ -116,6 +119,7 @@ export const analysisService = {
     selectedTemplateId: unknown;
     resumeText: string;
   }): Promise<PersistedResumeAnalysis> {
+    const startedAt = Date.now();
     await accountService.assertCanCreateAnalysis(input.userId);
 
     const payload = createTemplateAnalysisSchema.parse({
@@ -145,12 +149,12 @@ export const analysisService = {
       extractedCharacterCount: input.resumeText.length,
       extractedProfile,
       extractionProvider: extractedProfile ? aiProvider.getExtractionProviderLabel() : "parser",
+      processingTimeMs: Date.now() - startedAt,
     });
 
     await accountService.recordAnalysisRedemption(input.userId, persisted.id);
     return persisted;
   },
-
   async getAnalysisById(analysisId: string, userId: string): Promise<PersistedResumeAnalysis> {
     const analysis = await analysisRepository.findById(analysisId, userId);
 
@@ -176,6 +180,7 @@ export const analysisService = {
     userId: string,
     input: { jobDescription: string; targetRole?: string },
   ): Promise<PersistedResumeAnalysis> {
+    const startedAt = Date.now();
     const existing = await this.getAnalysisById(analysisId, userId);
 
     const updatedAnalysis = await this.createAnalysis({
@@ -190,6 +195,7 @@ export const analysisService = {
       id: analysisId,
       jobDescription: input.jobDescription,
       targetRole: input.targetRole ?? existing.targetRole,
+      processingTimeMs: Date.now() - startedAt,
     };
 
     return analysisRepository.update(analysisId, persisted);
