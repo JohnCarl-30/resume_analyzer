@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useAnalysisProgress } from "../../onboarding/view-models/use-analysis-progress";
 import { updateResumeAnalysis } from "../../onboarding/utils/analysis-api";
 import type { ResumeAnalysisResult } from "../model/resume-analysis";
+import { queryKeys } from "@/lib/query/keys";
 
 interface UseWorkspaceReanalyzeOptions {
   analysisId?: string;
@@ -23,6 +25,7 @@ export function useWorkspaceReanalyze({
   onJobDescriptionChange,
   onComplete,
 }: UseWorkspaceReanalyzeOptions) {
+  const queryClient = useQueryClient();
   const [newJobDescription, setNewJobDescriptionState] = useState(initialJobDescription);
   const [isUpdatingAnalysis, setIsUpdatingAnalysis] = useState(false);
   const [updateError, setUpdateError] = useState("");
@@ -54,6 +57,8 @@ export function useWorkspaceReanalyze({
         targetRole,
       });
       onAnalysisUpdate?.(updated);
+      // Invalidate analyses list so the home page reflects the updated score/title
+      void queryClient.invalidateQueries({ queryKey: queryKeys.analyses });
       onComplete?.();
     } catch (error) {
       setUpdateError(
