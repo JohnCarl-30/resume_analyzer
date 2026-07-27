@@ -20,11 +20,11 @@ interface UseWorkspaceTailorDraftOptions {
 
 const CACHE_PREFIX = "tailor-draft:";
 
-function cloneForm(form: ResumeForm): ResumeForm {
+export function cloneForm(form: ResumeForm): ResumeForm {
   return structuredClone(form);
 }
 
-function applyProposalToForm(form: ResumeForm, proposal: TailorProposal): ResumeForm {
+export function applyProposalToForm(form: ResumeForm, proposal: TailorProposal): ResumeForm {
   const next = cloneForm(form);
 
   if (proposal.type === "summary") {
