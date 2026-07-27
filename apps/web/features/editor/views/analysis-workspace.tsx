@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import type { ResumeAnalysisResult } from "../model/resume-analysis";
 import { emptyResumeForm, type ResumeForm } from "../model/resume-form";
 import { sampleTemplates, type ResumeTemplateVariant } from "../../templates/model/template";
@@ -11,6 +12,7 @@ import { useWorkspaceEnhance } from "../view-models/use-workspace-enhance";
 import { useWorkspaceExport } from "../view-models/use-workspace-export";
 import { useWorkspaceReanalyze } from "../view-models/use-workspace-reanalyze";
 import { useWorkspaceTailorDraft } from "../view-models/use-workspace-tailor-draft";
+import { cloneForm, applyProposalToForm } from "../view-models/use-workspace-tailor-draft";
 import type { TailorProposal } from "../model/resume-tailor-draft";
 import { ResumeTailorReviewModal } from "../components/workspace/resume-tailor-review-modal";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -18,6 +20,17 @@ import { AnalysisProgressStatus } from "../../onboarding/components/analysis-pro
 import { WorkspaceHeader } from "../components/workspace/workspace-header";
 import { DocumentPreview } from "../components/workspace/document-preview";
 import { ContentModal } from "../components/workspace/content-modal";
+import { ErrorBoundary } from "@/components/error-boundary";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ProjectModal, emptyProjectDraft, type ProjectDraft } from "../components/workspace/project-modal";
 import { TailorModal } from "../components/workspace/tailor-modal";
 import { TemplatesModal } from "../components/workspace/templates-modal";
@@ -176,7 +189,6 @@ export function AnalysisWorkspace({
   const [awardsEditorMode, setAwardsEditorMode] = useState<AwardsEditorMode>("awards");
   const [leadershipEditorMode, setLeadershipEditorMode] = useState<LeadershipEditorMode>("leadership");
   const [previewZoom, setPreviewZoom] = useState(100);
-  const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(resumeFileName);
   const [saveFlash, setSaveFlash] = useState(false);
@@ -186,6 +198,7 @@ export function AnalysisWorkspace({
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileCreateView, setMobileCreateView] = useState<MobileCreateView>("editor");
   const [mounted, setMounted] = useState(false);
+  const [confirmBackOpen, setConfirmBackOpen] = useState(false);
   const hasStructuredResumeData = Boolean(
     analysisResult?.extractedProfile || initialForm?.personalInfo?.fullName || createMode,
   );
@@ -209,8 +222,11 @@ export function AnalysisWorkspace({
   const selectedTemplate = sampleTemplates.find((template) => template.id === activeTemplateId) ?? sampleTemplates[0];
 
   const showToast = (message: string, type: "error" | "success") => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), type === "error" ? 5000 : 3000);
+    if (type === "error") {
+      toast.error(message);
+    } else {
+      toast.success(message);
+    }
   };
 
   const { enhanceBullets } = useWorkspaceEnhance({
@@ -234,6 +250,19 @@ export function AnalysisWorkspace({
       analysisId: analysisResult?.id,
     });
     window.print();
+  };
+
+  const handleBack = () => {
+    if (form.state.isDirty) {
+      setConfirmBackOpen(true);
+    } else {
+      onBack();
+    }
+  };
+
+  const confirmBack = () => {
+    setConfirmBackOpen(false);
+    onBack();
   };
 
   const {
@@ -315,7 +344,10 @@ export function AnalysisWorkspace({
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === "z") {
+      const mod = e.metaKey || e.ctrlKey;
+
+      // ⌘+Z / ⌘+Shift+Z / ⌘+Y — Undo / Redo
+      if (mod && e.key === "z") {
         e.preventDefault();
         if (e.shiftKey) {
           redo();
@@ -323,14 +355,60 @@ export function AnalysisWorkspace({
           undo();
         }
       }
-      if ((e.metaKey || e.ctrlKey) && e.key === "y") {
+      if (mod && e.key === "y") {
         e.preventDefault();
         redo();
+      }
+
+      // ⌘+K — Toggle keyboard shortcuts
+      if (mod && e.key === "k") {
+        e.preventDefault();
+        modals.toggleShortcuts();
+      }
+
+      // ⌘+S — Save confirmation toast
+      if (mod && e.key === "s") {
+        e.preventDefault();
+        toast.success("Saved");
+      }
+
+      // ⌘+E — Enhance focused bullet (experience editor only)
+      if (mod && e.key === "e") {
+        const el = document.activeElement;
+        if (
+          el instanceof HTMLTextAreaElement &&
+          el.dataset.entryId &&
+          el.dataset.bulletIndex !== undefined
+        ) {
+          e.preventDefault();
+          const entryId = el.dataset.entryId;
+          const bulletIndex = parseInt(el.dataset.bulletIndex, 10);
+          const entry = formValues.experience.find((exp) => exp.id === entryId);
+          if (entry && entry.bullets[bulletIndex]) {
+            const bullet = entry.bullets[bulletIndex];
+            void enhanceBullets(entry.role, [bullet]).then((enhanced) => {
+              if (enhanced.length > 0) {
+                updateExperienceBullet(entryId, bulletIndex, enhanced[0]);
+              }
+            });
+          }
+        }
       }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [undo, redo]);
+  }, [undo, redo, modals.toggleShortcuts, formValues, enhanceBullets, updateExperienceBullet]);
+
+  // Warn before closing tab / refreshing with unsaved changes
+  useEffect(() => {
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      if (form.state.isDirty) {
+        e.preventDefault();
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [form.state.isDirty]);
 
   useEffect(() => {
     setMounted(true);
@@ -634,8 +712,7 @@ export function AnalysisWorkspace({
 
       updatePersonalInfo({ summary: nextSummary });
       setActiveSectionId("personal");
-      setToast({ message: "Added an editable summary suggestion", type: "success" });
-      setTimeout(() => setToast(null), 3000);
+      toast.success("Added an editable summary suggestion");
       return;
     }
 
@@ -645,8 +722,7 @@ export function AnalysisWorkspace({
         updatePersonalInfo({ skills: mergeCommaList(formValues.personalInfo.skills, keywords) });
       }
       setActiveSectionId("personal");
-      setToast({ message: "Added editable job words to Skills", type: "success" });
-      setTimeout(() => setToast(null), 3000);
+      toast.success("Added editable job words to Skills");
       return;
     }
 
@@ -661,16 +737,14 @@ export function AnalysisWorkspace({
         addExperienceBullet(formValues.experience[0].id, bullet);
       }
       setActiveSectionId("experience");
-      setToast({ message: "Added an editable bullet suggestion", type: "success" });
-      setTimeout(() => setToast(null), 3000);
+      toast.success("Added an editable bullet suggestion");
       return;
     }
 
     if (action === "education") {
       if (formValues.education.length === 0) {
         addEducation();
-        setToast({ message: "Added an editable Education row", type: "success" });
-        setTimeout(() => setToast(null), 3000);
+        toast.success("Added an editable Education row");
       }
       setActiveSectionId("education");
       return;
@@ -690,8 +764,23 @@ export function AnalysisWorkspace({
     }
   }
 
+  const previousFormRef = useRef<ResumeForm | null>(null);
+
   function handleTailorProposalApprove(proposal: TailorProposal) {
+    // Store current form for rollback on error
+    previousFormRef.current = cloneForm(formValues);
+    // Optimistically apply the proposal immediately
+    const nextForm = applyProposalToForm(formValues, proposal);
+    resetForm(nextForm);
     approveProposal(proposal);
+  }
+
+  async function handleTailorProposalRollback() {
+    if (previousFormRef.current) {
+      resetForm(previousFormRef.current);
+      previousFormRef.current = null;
+      toast.error("Failed to save changes. Reverted to previous state.");
+    }
   }
 
   function handleResetCreateDraft() {
@@ -720,27 +809,6 @@ export function AnalysisWorkspace({
             steps={reanalyzeProgress.steps}
             activeStepIndex={reanalyzeProgress.activeStepIndex}
           />
-        </div>
-      )}
-
-      {toast && (
-        <div className="absolute left-1/2 top-4 z-[70] -translate-x-1/2">
-          <div
-            className={`rounded-lg px-5 py-3 text-sm font-medium shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition ${
-              toast.type === "error"
-                ? "border border-[#f1c9c7] bg-[#fdebec] text-[#9f2f2d]"
-                : "border border-[#cfe0cd] bg-[#edf3ec] text-[#346538]"
-            }`}
-          >
-            {toast.message}
-            <button
-              type="button"
-              onClick={() => setToast(null)}
-              className="ml-3 text-xs font-semibold uppercase tracking-wider opacity-70 hover:opacity-100"
-            >
-              Dismiss
-            </button>
-          </div>
         </div>
       )}
 
@@ -780,7 +848,7 @@ export function AnalysisWorkspace({
         sourcePreviewLoading={sourcePreviewLoading}
         resumeSourceUrl={resumeSourceUrl}
         canLoadSourcePreview={canLoadSourcePreview}
-        onBack={onBack}
+        onBack={handleBack}
         onEditTitleChange={setEditedTitle}
         onStartEditTitle={() => setIsEditingTitle(true)}
         onStopEditTitle={() => {
@@ -830,75 +898,79 @@ export function AnalysisWorkspace({
             onClick={() => setMobileSidebarOpen(false)}
           />
         )}
-        <WorkspaceSidebar
-          activeSectionId={activeSectionId}
-          setActiveSectionId={setActiveSectionId}
-          formValues={formValues}
-          createMode={createMode}
-          resumeTitle={resumeTitle}
-          mounted={mounted}
-          analysisResult={analysisResult}
-          targetRole={targetRole}
-          tailorEnabled={tailorEnabled}
-          tailorDraftLoading={tailorDraftLoading}
-          tailorProposals={tailorProposals}
-          leadershipEditorMode={leadershipEditorMode}
-          awardsEditorMode={awardsEditorMode}
-          setLeadershipEditorMode={setLeadershipEditorMode}
-          setAwardsEditorMode={setAwardsEditorMode}
-          enhanceBullets={enhanceBullets}
-          updatePersonalInfo={updatePersonalInfo}
-          updateEducation={updateEducation}
-          addEducation={addEducation}
-          removeEducation={removeEducation}
-          updateExperience={updateExperience}
-          addExperience={addExperience}
-          removeExperience={removeExperience}
-          addExperienceBullet={addExperienceBullet}
-          updateExperienceBullet={updateExperienceBullet}
-          removeExperienceBullet={removeExperienceBullet}
-          updateLeadership={updateLeadership}
-          addLeadership={addLeadership}
-          removeLeadership={removeLeadership}
-          updateAwards={updateAwards}
-          addAward={addAward}
-          removeAward={removeAward}
-          openPrimaryReview={openPrimaryReview}
-          handleGuideAction={handleGuideAction}
-          handleAnalysisStepAction={handleAnalysisStepAction}
-          handleApplyAnalysisStepAction={handleApplyAnalysisStepAction}
-          handleExportJson={handleExportJson}
-          handlePrint={handlePrint}
-          handleResetCreateDraft={handleResetCreateDraft}
-          openAddContentModal={() => modals.setModalView("content")}
-          openProjectModal={modals.openProjectModal}
-          setMobileSidebarOpen={setMobileSidebarOpen}
-          mobileSidebarOpen={mobileSidebarOpen}
-        />
+        <ErrorBoundary label="editor sidebar">
+          <WorkspaceSidebar
+            activeSectionId={activeSectionId}
+            setActiveSectionId={setActiveSectionId}
+            formValues={formValues}
+            createMode={createMode}
+            resumeTitle={resumeTitle}
+            mounted={mounted}
+            analysisResult={analysisResult}
+            targetRole={targetRole}
+            tailorEnabled={tailorEnabled}
+            tailorDraftLoading={tailorDraftLoading}
+            tailorProposals={tailorProposals}
+            leadershipEditorMode={leadershipEditorMode}
+            awardsEditorMode={awardsEditorMode}
+            setLeadershipEditorMode={setLeadershipEditorMode}
+            setAwardsEditorMode={setAwardsEditorMode}
+            enhanceBullets={enhanceBullets}
+            updatePersonalInfo={updatePersonalInfo}
+            updateEducation={updateEducation}
+            addEducation={addEducation}
+            removeEducation={removeEducation}
+            updateExperience={updateExperience}
+            addExperience={addExperience}
+            removeExperience={removeExperience}
+            addExperienceBullet={addExperienceBullet}
+            updateExperienceBullet={updateExperienceBullet}
+            removeExperienceBullet={removeExperienceBullet}
+            updateLeadership={updateLeadership}
+            addLeadership={addLeadership}
+            removeLeadership={removeLeadership}
+            updateAwards={updateAwards}
+            addAward={addAward}
+            removeAward={removeAward}
+            openPrimaryReview={openPrimaryReview}
+            handleGuideAction={handleGuideAction}
+            handleAnalysisStepAction={handleAnalysisStepAction}
+            handleApplyAnalysisStepAction={handleApplyAnalysisStepAction}
+            handleExportJson={handleExportJson}
+            handlePrint={handlePrint}
+            handleResetCreateDraft={handleResetCreateDraft}
+            openAddContentModal={() => modals.setModalView("content")}
+            openProjectModal={modals.openProjectModal}
+            setMobileSidebarOpen={setMobileSidebarOpen}
+            mobileSidebarOpen={mobileSidebarOpen}
+          />
+        </ErrorBoundary>
 
       <section
           className={`${createMode && mobileCreateView === "editor" ? "hidden xl:flex" : "flex"} min-h-0 flex-1 overflow-hidden bg-[color:var(--page-bg-strong)]`}
         >
           <div className="flex h-full flex-1 gap-0">
-            <DocumentPreview
-              previewMode={previewMode}
-              previewZoom={previewZoom}
-              resumePreviewUrl={resumePreviewUrl}
-              sourcePreviewLoading={sourcePreviewLoading}
-              sourcePreviewError={sourcePreviewError}
-              canLoadSourcePreview={canLoadSourcePreview}
-              canZoomDocument={canZoomDocument}
-              parsedResumeText={analysisResult?.parsedResumeText}
-              form={formValues}
-              activeTemplateId={activeTemplateId}
-              showResumePlaceholders={showResumePlaceholders}
-              showDownloadButton={!createMode}
-              onAdjustZoom={adjustPreviewZoom}
-              onDownloadOriginal={() => void handleDownloadOriginal()}
-              onShowOriginalPreview={() => void handleShowOriginalPreview()}
-              onShowLayoutPreview={() => setPreviewMode("structured")}
-              hasSourcePreviewChoice={hasSourcePreviewChoice}
-            />
+            <ErrorBoundary label="document preview">
+              <DocumentPreview
+                previewMode={previewMode}
+                previewZoom={previewZoom}
+                resumePreviewUrl={resumePreviewUrl}
+                sourcePreviewLoading={sourcePreviewLoading}
+                sourcePreviewError={sourcePreviewError}
+                canLoadSourcePreview={canLoadSourcePreview}
+                canZoomDocument={canZoomDocument}
+                parsedResumeText={analysisResult?.parsedResumeText}
+                form={formValues}
+                activeTemplateId={activeTemplateId}
+                showResumePlaceholders={showResumePlaceholders}
+                showDownloadButton={!createMode}
+                onAdjustZoom={adjustPreviewZoom}
+                onDownloadOriginal={() => void handleDownloadOriginal()}
+                onShowOriginalPreview={() => void handleShowOriginalPreview()}
+                onShowLayoutPreview={() => setPreviewMode("structured")}
+                hasSourcePreviewChoice={hasSourcePreviewChoice}
+              />
+            </ErrorBoundary>
           </div>
         </section>
       </div>
@@ -942,6 +1014,23 @@ export function AnalysisWorkspace({
         open={modals.showShortcuts}
         onOpenChange={modals.closeShortcuts}
       />
+
+      <AlertDialog open={confirmBackOpen} onOpenChange={setConfirmBackOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes that will be lost if you leave. Your work
+              is auto-saved to your browser, but you may want to stay and review
+              before going back.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmBack}>Leave</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
