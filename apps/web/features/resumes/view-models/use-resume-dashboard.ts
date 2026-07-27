@@ -62,6 +62,8 @@ export function useResumeDashboard() {
     queryKey: queryKeys.analyses,
     queryFn: listResumeAnalyses,
     enabled: isLoaded && Boolean(isSignedIn),
+    staleTime: 60_000,
+    refetchOnWindowFocus: true,
   });
 
   const mapped = query.data ? mapAnalyses(query.data) : null;
