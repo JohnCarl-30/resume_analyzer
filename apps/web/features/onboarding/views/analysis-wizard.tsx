@@ -18,6 +18,7 @@ import { StepJobDescription } from "../components/step-job-description";
 import { StepDocumentUpload } from "../components/step-document-upload";
 import { StepTemplateSelection } from "../components/step-template-selection";
 import { AnalysisWorkspace } from "../../editor/views/analysis-workspace";
+import { WorkspaceSkeleton } from "../../editor/components/workspace/workspace-skeleton";
 import type { ResumeAnalysisResult } from "../../editor/model/resume-analysis";
 import {
   emptyResumeForm,
@@ -698,19 +699,7 @@ export function AnalysisWizard({ onExit, initialAnalysisId }: AnalysisWizardProp
                 )}
 
                 {analysisIdFromUrl && isRestoringAnalysis ? (
-                  <div className="flex flex-1 items-center justify-center px-6 py-16">
-                    <div className="max-w-md space-y-3 text-center">
-                      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[color:var(--brand)]">
-                        Restoring
-                      </p>
-                      <h2 className="display-serif text-3xl text-[color:var(--page-text)]">
-                        Loading your saved check
-                      </h2>
-                      <p className="text-base text-[color:var(--page-muted)]">
-                        We&apos;re loading the last result so you can keep working after a refresh.
-                      </p>
-                    </div>
-                  </div>
+                  <WorkspaceSkeleton />
                 ) : awaitingQuota ? (
                   <div className="flex flex-1 items-center justify-center px-6 py-16">
                     <div className="max-w-md space-y-3 text-center">
