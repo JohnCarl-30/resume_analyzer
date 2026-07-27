@@ -14,6 +14,7 @@ export function useResumeAnalysis(analysisId: string | null | undefined) {
     queryKey: id ? queryKeys.analysis(id) : queryKeys.analysis("pending"),
     queryFn: () => getResumeAnalysis(id!),
     enabled: Boolean(id),
+    staleTime: Infinity,
     placeholderData: () => {
       if (!id) {
         return undefined;
