@@ -19,3 +19,18 @@ vi.mock("@clerk/nextjs", () => ({
     },
   }),
 }));
+
+const mockQueryClient = {
+  invalidateQueries: vi.fn().mockResolvedValue(undefined),
+  setQueryData: vi.fn(),
+  getQueryData: vi.fn(),
+  cancelQueries: vi.fn().mockResolvedValue(undefined),
+};
+
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
+  return {
+    ...actual,
+    useQueryClient: () => mockQueryClient,
+  };
+});
