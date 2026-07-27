@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { toast } from "sonner";
 import { ExperienceEntry } from "../../model/resume-form";
 import { PlusIcon } from "../../../onboarding/components/wizard-icons";
 import { SectionEditorHeader } from "./section-editor-header";
@@ -11,6 +12,11 @@ import {
   editorLabelClass,
   editorTextareaClass,
 } from "./editor-field";
+
+interface EnhancingBullet {
+  entryId: string;
+  bulletIndex: number;
+}
 
 interface ExperienceEditorProps {
   entries: ExperienceEntry[];
@@ -35,18 +41,24 @@ export function ExperienceEditor({
   onEnhanceBullets,
   onBack,
 }: ExperienceEditorProps) {
-  const [enhancingId, setEnhancingId] = useState<string | null>(null);
+  const [enhancingBullet, setEnhancingBullet] = useState<EnhancingBullet | null>(null);
   const [newBullets, setNewBullets] = useState<Record<string, string>>({});
 
-  const handleEnhance = async (entry: ExperienceEntry) => {
-    setEnhancingId(entry.id);
+  const isEnhancing = (entryId: string, bulletIndex: number) =>
+    enhancingBullet?.entryId === entryId && enhancingBullet?.bulletIndex === bulletIndex;
+
+  const handleEnhanceSingleBullet = async (entryId: string, bulletIndex: number, bullet: string, role: string) => {
+    setEnhancingBullet({ entryId, bulletIndex });
     try {
-      const enhanced = await onEnhanceBullets(entry.id, entry.role, entry.bullets);
-      enhanced.forEach((bullet) => onAddBullet(entry.id, bullet));
+      const enhanced = await onEnhanceBullets(entryId, role, [bullet]);
+      if (enhanced.length > 0) {
+        onUpdateBullet(entryId, bulletIndex, enhanced[0]);
+      }
     } catch (error) {
       console.error("Enhancement failed:", error);
+      toast.error("Unable to enhance bullet. Please try again.");
     } finally {
-      setEnhancingId(null);
+      setEnhancingBullet(null);
     }
   };
 
@@ -102,21 +114,12 @@ export function ExperienceEditor({
               </div>
 
               <div className="flex flex-col gap-2.5">
-                <div className="flex items-center justify-between gap-3">
-                  <p className={editorLabelClass}>Bullets</p>
-                  <button
-                    type="button"
-                    onClick={() => void handleEnhance(entry)}
-                    disabled={enhancingId === entry.id || entry.bullets.length === 0}
-                    className="shrink-0 rounded-md border border-[color:var(--page-line)] bg-white px-2.5 py-1.5 text-xs font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--page-line-strong)] hover:bg-[color:var(--page-bg)] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {enhancingId === entry.id ? "Improving…" : "Improve bullets"}
-                  </button>
-                </div>
+                <p className={editorLabelClass}>Bullets</p>
 
                 <ul className="flex flex-col gap-2">
                   {entry.bullets.map((bullet, bulletIndex) => {
                     const bulletFieldId = `${entry.id}-bullet-${bulletIndex}`;
+                    const enhancing = isEnhancing(entry.id, bulletIndex);
                     return (
                       <li key={bulletFieldId} className="flex items-start gap-2">
                         <span
@@ -127,10 +130,25 @@ export function ExperienceEditor({
                           id={bulletFieldId}
                           value={bullet}
                           onChange={(e) => onUpdateBullet(entry.id, bulletIndex, e.target.value)}
+                          data-entry-id={entry.id}
+                          data-bullet-index={bulletIndex}
                           className={`${editorTextareaClass} min-h-[3.25rem]`}
                           rows={2}
                           placeholder="Describe what you did and the result…"
                         />
+                        <button
+                          type="button"
+                          onClick={() => void handleEnhanceSingleBullet(entry.id, bulletIndex, bullet, entry.role)}
+                          disabled={enhancing || !bullet.trim()}
+                          className="mt-1 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-[color:var(--brand)] transition hover:bg-[color:var(--brand-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                          aria-label={enhancing ? "Enhancing bullet…" : "Enhance bullet with AI"}
+                        >
+                          {enhancing ? (
+                            <SpinnerIcon />
+                          ) : (
+                            <SparkleIcon />
+                          )}
+                        </button>
                         <button
                           type="button"
                           onClick={() => onRemoveBullet(entry.id, bulletIndex)}
@@ -190,6 +208,37 @@ export function ExperienceEditor({
         <EditorAddButton label="Add another role" onClick={onAdd} />
       </EditorScrollBody>
     </div>
+  );
+}
+
+function SparkleIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="size-4">
+      <path
+        d="M10 2L12.09 7.26L18 8.27L13.82 12.14L14.82 18.02L10 15.27L5.18 18.02L6.18 12.14L2 8.27L7.91 7.26L10 2Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function SpinnerIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden className="size-4 animate-spin">
+      <circle
+        className="opacity-25"
+        cx="10"
+        cy="10"
+        r="8"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M10 2a8 8 0 018 8h-2a6 6 0 00-6-6V2z"
+      />
+    </svg>
   );
 }
 
