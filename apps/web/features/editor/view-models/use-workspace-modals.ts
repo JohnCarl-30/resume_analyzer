@@ -50,6 +50,10 @@ export function useWorkspaceModals() {
     setShowShortcuts(false);
   }, []);
 
+  const toggleShortcuts = useCallback(() => {
+    setShowShortcuts((prev) => !prev);
+  }, []);
+
   const updateProjectDraft = useCallback((key: keyof ProjectDraft, value: unknown) => {
     setProjectDraft((current) => ({ ...current, [key]: value }));
   }, []);
@@ -76,6 +80,7 @@ export function useWorkspaceModals() {
     closeTailorReview,
     openShortcuts,
     closeShortcuts,
+    toggleShortcuts,
     updateProjectDraft,
     clearProjectError,
     setProjectError,
