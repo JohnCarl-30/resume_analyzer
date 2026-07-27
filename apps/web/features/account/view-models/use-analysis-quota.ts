@@ -13,6 +13,7 @@ export function useAnalysisQuota() {
     queryKey: queryKeys.analysisQuota,
     queryFn: getAnalysisQuota,
     enabled: isLoaded && Boolean(isSignedIn),
+    staleTime: 10_000,
   });
 
   return {
