@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Geist, Geist_Mono, Lora } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "sonner";
 
 import "./globals.css";
 import { AuthSessionProvider } from "@/components/auth-session-provider";
@@ -106,6 +107,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <QueryProvider>
               <PageTransition />
               {children}
+              <Toaster position="top-center" richColors closeButton />
             </QueryProvider>
           </AuthSessionProvider>
         </body>
