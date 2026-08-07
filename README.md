@@ -2,7 +2,7 @@
 
 Resume Analyzer is a full-stack monorepo for AI-powered resume creation and analysis. Upload a resume and job description to get structured feedback, or build a resume from scratch with AI-guided editing, multiple templates, and PDF export.
 
-**[▶ Live demo](https://resume-analyzer.vercel.app)**
+**[▶ Live demo](https://resumae.tech)**
 
 ## Why This Project
 
