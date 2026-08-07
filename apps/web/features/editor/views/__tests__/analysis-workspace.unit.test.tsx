@@ -229,7 +229,10 @@ describe("AnalysisWorkspace — unit tests (task 7.7)", () => {
     renderWorkspace({ initialForm: emptyResumeForm });
 
     fireEvent.click(screen.getByRole("button", { name: /check resume again/i }));
-    expect(screen.getByRole("dialog", { name: /check a different job post/i })).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { name: /check a different job post/i })).toBeInTheDocument();
+    });
 
     fireEvent.keyDown(screen.getByRole("dialog", { name: /check a different job post/i }), {
       key: "Escape",
@@ -258,6 +261,11 @@ describe("AnalysisWorkspace — unit tests (task 7.7)", () => {
     // Open the tailor modal
     const tailorButton = screen.getByRole("button", { name: /check resume again/i });
     fireEvent.click(tailorButton);
+
+    // Wait for the modal to appear
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/paste the full job post here/i)).toBeInTheDocument();
+    });
 
     // The modal should be open — fill in a valid job post (≥30 chars)
     const textarea = screen.getByPlaceholderText(/paste the full job post here/i);
@@ -292,6 +300,11 @@ describe("AnalysisWorkspace — unit tests (task 7.7)", () => {
     // Open the tailor modal
     const tailorButton = screen.getByRole("button", { name: /check resume again/i });
     fireEvent.click(tailorButton);
+
+    // Wait for the modal to appear
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/paste the full job post here/i)).toBeInTheDocument();
+    });
 
     // Fill in a valid job post
     const textarea = screen.getByPlaceholderText(/paste the full job post here/i);
@@ -390,7 +403,9 @@ describe("AnalysisWorkspace — tailor review flow", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: /review job edits/i })[0]!);
 
-    expect(screen.getByRole("dialog", { name: /review job edits/i })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { name: /review job edits/i })).toBeInTheDocument();
+    });
 
     await waitFor(() => {
       expect(mockTailorResumeDraft).toHaveBeenCalled();
@@ -445,6 +460,8 @@ describe("AnalysisWorkspace — tailor review flow", () => {
       expect(mockTailorResumeDraft).toHaveBeenCalled();
     });
 
-    expect(screen.getByRole("dialog", { name: /review job edits/i })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { name: /review job edits/i })).toBeInTheDocument();
+    });
   });
 });

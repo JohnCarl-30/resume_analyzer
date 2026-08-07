@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import type { ResumeAnalysisResult } from "../model/resume-analysis";
 import { emptyResumeForm, type ResumeForm } from "../model/resume-form";
@@ -14,13 +15,25 @@ import { useWorkspaceReanalyze } from "../view-models/use-workspace-reanalyze";
 import { useWorkspaceTailorDraft } from "../view-models/use-workspace-tailor-draft";
 import { cloneForm, applyProposalToForm } from "../view-models/use-workspace-tailor-draft";
 import type { TailorProposal } from "../model/resume-tailor-draft";
-import { ResumeTailorReviewModal } from "../components/workspace/resume-tailor-review-modal";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { AnalysisProgressStatus } from "../../onboarding/components/analysis-progress-status";
 import { WorkspaceHeader } from "../components/workspace/workspace-header";
 import { DocumentPreview } from "../components/workspace/document-preview";
 import { ContentModal } from "../components/workspace/content-modal";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { ProjectModal, emptyProjectDraft, type ProjectDraft } from "../components/workspace/project-modal";
+import { TemplatesModal } from "../components/workspace/templates-modal";
+import { WorkspaceSidebar } from "../components/workspace/workspace-sidebar";
+import type { AwardsEditorMode, LeadershipEditorMode } from "../components/workspace/workspace-sidebar";
+import { trackProductEvent } from "@/lib/product-events";
+
+const ResumeTailorReviewModal = dynamic(
+  () => import("../components/workspace/resume-tailor-review-modal").then((m) => ({ default: m.ResumeTailorReviewModal })),
+);
+import { TailorModal } from "../components/workspace/tailor-modal";
+const KeyboardShortcutsModal = dynamic(
+  () => import("../components/workspace/keyboard-shortcuts-modal").then((m) => ({ default: m.KeyboardShortcutsModal })),
+);
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,13 +44,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ProjectModal, emptyProjectDraft, type ProjectDraft } from "../components/workspace/project-modal";
-import { TailorModal } from "../components/workspace/tailor-modal";
-import { TemplatesModal } from "../components/workspace/templates-modal";
-import { KeyboardShortcutsModal } from "../components/workspace/keyboard-shortcuts-modal";
-import { WorkspaceSidebar } from "../components/workspace/workspace-sidebar";
-import type { AwardsEditorMode, LeadershipEditorMode } from "../components/workspace/workspace-sidebar";
-import { trackProductEvent } from "@/lib/product-events";
 
 interface AnalysisWorkspaceProps {
   targetRole: string;
