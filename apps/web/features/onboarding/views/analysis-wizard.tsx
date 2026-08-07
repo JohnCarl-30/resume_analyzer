@@ -11,13 +11,13 @@ import React, {
   type DragEvent,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import { ArrowLeftIcon, BrandMark } from "../components/wizard-icons";
 import { AccountMenu } from "@/features/auth/components/account-menu";
 import { StepTargetRole } from "../components/step-target-role";
 import { StepJobDescription } from "../components/step-job-description";
 import { StepDocumentUpload } from "../components/step-document-upload";
 import { StepTemplateSelection } from "../components/step-template-selection";
-import { AnalysisWorkspace } from "../../editor/views/analysis-workspace";
 import { WorkspaceSkeleton } from "../../editor/components/workspace/workspace-skeleton";
 import type { ResumeAnalysisResult } from "../../editor/model/resume-analysis";
 import {
@@ -45,6 +45,11 @@ import { useResumeAnalysis } from "../view-models/use-resume-analysis";
 import type { AnalysisProgressMode } from "../model/analysis-progress";
 import { queryKeys } from "@/lib/query/keys";
 import { useQueryClient } from "@tanstack/react-query";
+
+const AnalysisWorkspace = dynamic(
+  () => import("../../editor/views/analysis-workspace").then((m) => ({ default: m.AnalysisWorkspace })),
+  { ssr: false },
+);
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
 type ViewMode = "wizard" | "workspace";
