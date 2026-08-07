@@ -1,6 +1,7 @@
 import type { ResumeTemplateVariant } from "../model/template";
 import { ResumeRenderer } from "../../editor/components/resume-renderer";
 import { defaultResumeForm } from "../../editor/model/resume-form";
+import Image from "next/image";
 
 const previewPageWidth = 1000;
 const previewPageHeight = 1414;
@@ -46,11 +47,13 @@ export function TemplateRealPreview({ variantId }: { variantId: ResumeTemplateVa
   if (imageUrl) {
     return (
       <div className="relative h-full w-full overflow-hidden flex items-center justify-center p-2">
-        <div className="h-full w-full bg-white shadow-lg rounded-sm overflow-hidden border border-black/5">
-          <img 
-            src={imageUrl} 
+        <div className="relative h-full w-full bg-white shadow-lg rounded-sm overflow-hidden border border-black/5">
+          <Image
+            src={imageUrl}
             alt={`Preview of ${variantId}`}
-            className="h-full w-full object-cover object-top"
+            fill
+            sizes="(max-width: 640px) 100vw, 300px"
+            className="object-cover object-top"
           />
         </div>
       </div>
