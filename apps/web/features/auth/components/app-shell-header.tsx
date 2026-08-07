@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 import { AccountMenu } from "./account-menu";
 
-type AppShellNav = "home" | "new" | "settings";
+type AppShellNav = "home" | "new" | "tracker" | "settings";
 
 interface AppShellHeaderProps {
   active?: AppShellNav;
@@ -22,6 +22,7 @@ interface AppShellHeaderProps {
 const baseNavItems: Array<{ id: AppShellNav; href: string; label: string }> = [
   { id: "home", href: "/home", label: "Home" },
   { id: "new", href: NEW_ANALYSIS_PATH, label: "Upload resume" },
+  { id: "tracker", href: "/applications", label: "Applications" },
   { id: "settings", href: "/account", label: "Account" },
 ];
 

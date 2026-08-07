@@ -6,6 +6,7 @@ import { uploadRouter } from "./upload.routes.js";
 import { resumeRouter } from "./resume.routes.js";
 import { enhancementRouter } from "./enhancement.routes.js";
 import { productEventsRouter } from "./product-events.routes.js";
+import { jobApplicationRouter } from "./job-application.routes.js";
 
 export const apiRouter = Router();
 
@@ -15,3 +16,4 @@ apiRouter.use("/uploads", uploadRouter);
 apiRouter.use("/resumes", resumeRouter);
 apiRouter.use("/enhance", enhancementRouter);
 apiRouter.use("/events", productEventsRouter);
+apiRouter.use("/applications", jobApplicationRouter);

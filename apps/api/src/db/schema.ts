@@ -2,6 +2,7 @@ import { integer, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import type { AnalysisSuggestion } from "../types/analysis.js";
 import type { ExtractedResumeProfile } from "../types/resume-extraction.js";
+import type { JobApplicationStatus } from "../types/job-application.js";
 
 export const databaseTables = {
   resumes: "resumes",
@@ -10,6 +11,7 @@ export const databaseTables = {
   analysisJobs: "analysis_jobs",
   accountAnalysisUsage: "account_analysis_usage",
   productEvents: "product_events",
+  jobApplications: "job_applications",
 } as const;
 
 export const resumeAnalysesTable = pgTable(databaseTables.resumeAnalyses, {
@@ -69,4 +71,19 @@ export const productEventsTable = pgTable(databaseTables.productEvents, {
   })
     .defaultNow()
     .notNull(),
+});
+
+export const jobApplicationsTable = pgTable(databaseTables.jobApplications, {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  company: text("company").notNull(),
+  role: text("role").notNull(),
+  status: text("status").$type<JobApplicationStatus>().notNull(),
+  location: text("location"),
+  jobUrl: text("job_url"),
+  notes: text("notes"),
+  appliedAt: text("applied_at"),
+  analysisId: text("analysis_id"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
 });

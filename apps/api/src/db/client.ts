@@ -3,12 +3,13 @@ import { sql } from "drizzle-orm";
 import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
 
 import { env } from "../config/env.js";
-import { databaseTables, resumeAnalysesTable, accountAnalysisUsageTable, productEventsTable } from "./schema.js";
+import { databaseTables, resumeAnalysesTable, accountAnalysisUsageTable, productEventsTable, jobApplicationsTable } from "./schema.js";
 
 type AppDatabase = NeonHttpDatabase<{
   resumeAnalysesTable: typeof resumeAnalysesTable;
   accountAnalysisUsageTable: typeof accountAnalysisUsageTable;
   productEventsTable: typeof productEventsTable;
+  jobApplicationsTable: typeof jobApplicationsTable;
 }>;
 
 const neonClient = env.DATABASE_URL ? neon(env.DATABASE_URL) : null;
@@ -18,6 +19,7 @@ const drizzleClient = neonClient
         resumeAnalysesTable,
         accountAnalysisUsageTable,
         productEventsTable,
+        jobApplicationsTable,
       },
     })
   : null;
@@ -131,6 +133,28 @@ async function initializeSchema() {
     await drizzleClient.execute(sql`
       CREATE INDEX IF NOT EXISTS product_events_user_name_idx
       ON ${sql.raw(databaseTables.productEvents)} (user_id, name)
+    `);
+
+    await drizzleClient.execute(sql`
+      CREATE TABLE IF NOT EXISTS ${sql.raw(databaseTables.jobApplications)} (
+        id text PRIMARY KEY,
+        user_id text NOT NULL,
+        company text NOT NULL,
+        role text NOT NULL,
+        status text NOT NULL,
+        location text,
+        job_url text,
+        notes text,
+        applied_at text,
+        analysis_id text,
+        created_at text NOT NULL,
+        updated_at text NOT NULL
+      )
+    `);
+
+    await drizzleClient.execute(sql`
+      CREATE INDEX IF NOT EXISTS job_applications_user_updated_idx
+      ON ${sql.raw(databaseTables.jobApplications)} (user_id, updated_at)
     `);
 
     await drizzleClient.execute(sql`
