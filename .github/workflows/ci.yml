@@ -29,6 +29,9 @@ jobs:
       - name: Typecheck Workspace
         run: pnpm run typecheck
 
+      - name: Test Workspace
+        run: pnpm run test
+
       - name: Build Web
         env:
           NEXT_PUBLIC_API_BASE_URL: https://resume-analyzer-api.johncarlsantos30.workers.dev

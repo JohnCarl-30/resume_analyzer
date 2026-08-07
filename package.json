@@ -11,7 +11,8 @@
     "dev:web": "corepack pnpm --filter @resume-analyzer/web dev",
     "build:api": "corepack pnpm --filter @resume-analyzer/api build",
     "build:web": "corepack pnpm --filter @resume-analyzer/web build",
-    "typecheck": "corepack pnpm -r typecheck"
+    "typecheck": "corepack pnpm -r typecheck",
+    "test": "corepack pnpm -r test"
   },
   "pnpm": {
     "onlyBuiltDependencies": ["esbuild", "sharp"]
