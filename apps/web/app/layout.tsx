@@ -13,11 +13,13 @@ import { cn } from "@/lib/utils";
 const geistSans = Geist({
   subsets: ["latin"],
   variable: "--font-geist-sans",
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-geist-mono",
+  display: "swap",
 });
 
 const lora = Lora({
@@ -25,6 +27,7 @@ const lora = Lora({
   weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
   variable: "--font-lora",
+  display: "swap",
 });
 
 const siteUrl =
