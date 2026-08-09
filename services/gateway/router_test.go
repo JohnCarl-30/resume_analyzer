@@ -3,84 +3,81 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"sync/atomic"
 	"testing"
+
+	"github.com/JohnCarl-30/resume_analyzer/services/gateway/internal/jobapplication"
 )
 
-// countingUpstream reports how many requests actually reached Node.
-func countingUpstream(t *testing.T, hits *atomic.Int64) string {
-	t.Helper()
-
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		hits.Add(1)
-		w.WriteHeader(http.StatusOK)
-		_, _ = io.WriteString(w, "from node")
-	}))
-	t.Cleanup(server.Close)
-	return server.URL
+func newTestRouter() http.Handler {
+	return NewRouter(Deps{
+		Applications: jobapplication.NewMemoryStore(),
+		// Matches production wiring today: authentication is not configured, so
+		// the middleware must fail closed.
+		Verifier: nil,
+		Logger:   slog.New(slog.NewTextHandler(io.Discard, nil)),
+	})
 }
 
-func TestHealthIsServedByTheGatewayItself(t *testing.T) {
-	var hits atomic.Int64
-	gatewayURL := newTestGateway(t, countingUpstream(t, &hits))
+func TestHealthReportsOK(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	newTestRouter().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/healthz", nil))
 
-	resp, err := http.Get(gatewayURL + "/gateway/healthz")
-	if err != nil {
-		t.Fatalf("request health: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("status = %d, want %d", resp.StatusCode, http.StatusOK)
+	if got, want := recorder.Code, http.StatusOK; got != want {
+		t.Fatalf("status = %d, want %d", got, want)
 	}
 
 	var payload struct {
 		Status string `json:"status"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+	if err := json.NewDecoder(recorder.Body).Decode(&payload); err != nil {
 		t.Fatalf("decode health payload: %v", err)
 	}
 	if payload.Status != "ok" {
 		t.Errorf("status field = %q, want %q", payload.Status, "ok")
 	}
-
-	if got := hits.Load(); got != 0 {
-		t.Errorf("upstream received %d requests, want 0", got)
-	}
 }
 
-func TestUnmigratedRoutesReachNode(t *testing.T) {
-	var hits atomic.Int64
-	gatewayURL := newTestGateway(t, countingUpstream(t, &hits))
+func TestUnportedRoutesReturnNotFound(t *testing.T) {
+	router := newTestRouter()
 
+	// These still live in the Express API; this service does not forward.
 	for _, path := range []string{"/api/resumes", "/api/enhance", "/"} {
-		resp, err := http.Get(gatewayURL + path)
-		if err != nil {
-			t.Fatalf("request %s: %v", path, err)
-		}
-		resp.Body.Close()
-	}
+		t.Run(path, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
 
-	if got, want := hits.Load(), int64(3); got != want {
-		t.Errorf("upstream received %d requests, want %d", got, want)
+			if got, want := recorder.Code, http.StatusNotFound; got != want {
+				t.Errorf("status = %d, want %d", got, want)
+			}
+		})
 	}
 }
 
-// The health route is registered for GET only, so any other method is still
-// Node's problem. This documents the ServeMux pattern semantics we rely on.
-func TestNonGetHealthIsProxied(t *testing.T) {
-	var hits atomic.Int64
-	gatewayURL := newTestGateway(t, countingUpstream(t, &hits))
+func TestApplicationRoutesRejectAnonymousCallers(t *testing.T) {
+	router := newTestRouter()
 
-	resp, err := http.Post(gatewayURL+"/gateway/healthz", "application/json", nil)
-	if err != nil {
-		t.Fatalf("post health: %v", err)
+	tests := []struct {
+		method string
+		path   string
+	}{
+		{http.MethodGet, "/api/applications"},
+		{http.MethodPost, "/api/applications"},
+		{http.MethodGet, "/api/applications/abc"},
+		{http.MethodPatch, "/api/applications/abc"},
+		{http.MethodDelete, "/api/applications/abc"},
 	}
-	defer resp.Body.Close()
 
-	if got, want := hits.Load(), int64(1); got != want {
-		t.Errorf("upstream received %d requests, want %d", got, want)
+	for _, tt := range tests {
+		t.Run(tt.method+" "+tt.path, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			router.ServeHTTP(recorder, httptest.NewRequest(tt.method, tt.path, nil))
+
+			if got, want := recorder.Code, http.StatusUnauthorized; got != want {
+				t.Errorf("status = %d, want %d", got, want)
+			}
+		})
 	}
 }
