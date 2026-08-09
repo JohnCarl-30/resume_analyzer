@@ -9,9 +9,16 @@ import (
 	"github.com/JohnCarl-30/resume_analyzer/services/api/internal/httpx"
 )
 
-// UnauthorizedMessage matches the wording the Express API used, so the web
-// app's existing handling keeps working after cutover.
-const UnauthorizedMessage = "Sign in to check your resume."
+// These match the Express API's wording exactly, so the web app's existing
+// handling keeps working after cutover.
+const (
+	// MissingTokenMessage is used when a request carries no usable bearer token.
+	MissingTokenMessage = "Sign in to check your resume."
+	// InvalidTokenMessage is used when a token fails verification.
+	InvalidTokenMessage = "Your sign-in session expired. Sign in again."
+	// NotConfiguredMessage is used when the server has no Clerk key at all.
+	NotConfiguredMessage = "Sign-in is not configured on the server yet."
+)
 
 // Verifier turns a bearer token into a user ID.
 type Verifier interface {
@@ -48,14 +55,22 @@ func RequireUser(verifier Verifier) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token, ok := bearerToken(r)
-			if !ok || verifier == nil {
-				httpx.WriteError(w, http.StatusUnauthorized, UnauthorizedMessage)
+			if !ok {
+				httpx.WriteError(w, http.StatusUnauthorized, MissingTokenMessage)
+				return
+			}
+
+			// A nil verifier means no Clerk key is configured. That is a gap on
+			// the server, not a bad token, so it is reported as 503 rather than
+			// blaming the caller — and it still refuses the request.
+			if verifier == nil {
+				httpx.WriteError(w, http.StatusServiceUnavailable, NotConfiguredMessage)
 				return
 			}
 
 			userID, err := verifier.VerifyToken(r.Context(), token)
 			if err != nil || userID == "" {
-				httpx.WriteError(w, http.StatusUnauthorized, UnauthorizedMessage)
+				httpx.WriteError(w, http.StatusUnauthorized, InvalidTokenMessage)
 				return
 			}
 
