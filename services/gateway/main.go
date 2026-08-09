@@ -1,8 +1,8 @@
-// Command gateway is the Go front door for the Resume Analyzer API.
+// Command gateway serves the Resume Analyzer API in Go.
 //
-// It accepts every request and forwards anything it does not yet serve itself
-// to the existing Node/Express API. Routes move from Node into Go one at a
-// time; see README.md for the migration plan.
+// It is being built to parity with the existing Node/Express API, which
+// continues to serve production until the port is complete. Routes appear in
+// NewRouter as they are ported; anything not yet here answers 404.
 package main
 
 import (
@@ -15,6 +15,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/JohnCarl-30/resume_analyzer/services/gateway/internal/jobapplication"
 )
 
 func main() {
@@ -23,7 +25,7 @@ func main() {
 	}))
 
 	if err := run(context.Background(), os.Getenv, logger); err != nil {
-		logger.Error("gateway stopped", "error", err)
+		logger.Error("service stopped", "error", err)
 		os.Exit(1)
 	}
 }
@@ -34,9 +36,17 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger) e
 		return err
 	}
 
+	deps := Deps{
+		Applications: jobapplication.NewMemoryStore(),
+		// Clerk verification is not wired up yet. A nil Verifier fails closed,
+		// so every authenticated route answers 401 until it is.
+		Verifier: nil,
+		Logger:   logger,
+	}
+
 	server := &http.Server{
 		Addr:    cfg.Addr,
-		Handler: NewRouter(cfg, logger),
+		Handler: NewRouter(deps),
 		// Guards against slowloris-style clients holding connections open.
 		// No WriteTimeout: it would truncate long-running AI responses.
 		ReadHeaderTimeout: 10 * time.Second,
@@ -48,10 +58,7 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger) e
 
 	serveErr := make(chan error, 1)
 	go func() {
-		logger.Info("gateway listening",
-			"addr", cfg.Addr,
-			"upstream", cfg.Upstream.String(),
-		)
+		logger.Info("service listening", "addr", cfg.Addr)
 		serveErr <- server.ListenAndServe()
 	}()
 
@@ -72,6 +79,6 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger) e
 		return fmt.Errorf("graceful shutdown: %w", err)
 	}
 
-	logger.Info("gateway stopped cleanly")
+	logger.Info("service stopped cleanly")
 	return nil
 }
