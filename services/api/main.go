@@ -16,6 +16,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/JohnCarl-30/resume_analyzer/services/api/internal/authn"
+	"github.com/JohnCarl-30/resume_analyzer/services/api/internal/clerkauth"
 	"github.com/JohnCarl-30/resume_analyzer/services/api/internal/jobapplication"
 )
 
@@ -38,10 +40,8 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger) e
 
 	deps := Deps{
 		Applications: jobapplication.NewMemoryStore(),
-		// Clerk verification is not wired up yet. A nil Verifier fails closed,
-		// so every authenticated route answers 401 until it is.
-		Verifier: nil,
-		Logger:   logger,
+		Verifier:     newVerifier(getenv, logger),
+		Logger:       logger,
 	}
 
 	server := &http.Server{
@@ -81,4 +81,23 @@ func run(ctx context.Context, getenv func(string) string, logger *slog.Logger) e
 
 	logger.Info("service stopped cleanly")
 	return nil
+}
+
+// newVerifier builds the Clerk token verifier, or nil when no key is
+// configured. A nil verifier makes authenticated routes answer 503 instead of
+// serving anyone unauthenticated.
+func newVerifier(getenv func(string) string, logger *slog.Logger) authn.Verifier {
+	secretKey := getenv("CLERK_SECRET_KEY")
+	if secretKey == "" {
+		logger.Warn("CLERK_SECRET_KEY is not set; authenticated routes will answer 503")
+		return nil
+	}
+
+	verifier, err := clerkauth.New(secretKey, clerkauth.ResolveOrigins(getenv("APP_ORIGIN")))
+	if err != nil {
+		logger.Error("configure clerk verification", "error", err)
+		return nil
+	}
+
+	return verifier
 }
