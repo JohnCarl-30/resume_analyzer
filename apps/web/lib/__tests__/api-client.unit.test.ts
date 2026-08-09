@@ -92,7 +92,11 @@ describe("createApiClient", () => {
     const { getAccessToken, setAccessTokenGetter } = await import("../auth-token");
     setAccessTokenGetter(async () => "clerk-token");
 
-    const pdfBytes = new Blob(["%PDF"], { type: "application/pdf" });
+    // Raw bytes rather than a jsdom Blob: on Node 22 (which CI and the
+    // production image both run) undici's Response rejects a jsdom Blob with
+    // "object.stream is not a function". response.blob() still takes its type
+    // from the Content-Type header below, so the assertions are unchanged.
+    const pdfBytes = new TextEncoder().encode("%PDF");
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(pdfBytes, {
         status: 200,
