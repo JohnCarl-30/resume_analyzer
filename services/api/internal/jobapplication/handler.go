@@ -133,7 +133,7 @@ func (h *Handler) remove(w http.ResponseWriter, r *http.Request) {
 func requireUser(w http.ResponseWriter, r *http.Request) (string, bool) {
 	userID, ok := authn.UserID(r.Context())
 	if !ok {
-		httpx.WriteError(w, http.StatusUnauthorized, authn.UnauthorizedMessage)
+		httpx.WriteError(w, http.StatusUnauthorized, authn.MissingTokenMessage)
 		return "", false
 	}
 	return userID, true
