@@ -4,38 +4,49 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/JohnCarl-30/resume_analyzer/services/gateway/internal/authn"
+	"github.com/JohnCarl-30/resume_analyzer/services/gateway/internal/httpx"
+	"github.com/JohnCarl-30/resume_analyzer/services/gateway/internal/jobapplication"
 )
 
-// NewRouter builds the gateway's handler.
-//
-// Routes already migrated to Go are registered explicitly; the catch-all "/"
-// pattern forwards everything else to the Node API. Migrating a route means
-// registering it here — nothing else has to change.
-func NewRouter(cfg Config, logger *slog.Logger) http.Handler {
-	proxy := NewProxy(cfg.Upstream, cfg.UpstreamTimeout, logger)
+// Deps are the collaborators NewRouter needs.
+type Deps struct {
+	Applications jobapplication.Store
+	Verifier     authn.Verifier
+	Logger       *slog.Logger
+}
 
+// NewRouter builds the service's handler.
+//
+// Routes appear here as they are ported from the Express API. Until the port
+// reaches parity Express still serves production, so anything not yet
+// registered simply 404s rather than being forwarded anywhere.
+func NewRouter(deps Deps) http.Handler {
 	mux := http.NewServeMux()
 
-	// Served by Go itself, never forwarded. Namespaced under /gateway so it
-	// cannot collide with a route belonging to the API.
-	mux.HandleFunc("GET /gateway/healthz", handleHealth)
+	mux.HandleFunc("GET /healthz", handleHealth)
 
-	// Everything else is still Node's.
-	mux.Handle("/", proxy)
+	jobapplication.NewHandler(deps.Applications).
+		Register(mux, authn.RequireUser(deps.Verifier))
 
-	return withRequestLogging(mux, logger)
+	mux.HandleFunc("/", handleNotFound)
+
+	return withRequestLogging(mux, deps.Logger)
 }
 
 func handleHealth(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(`{"status":"ok"}`))
+	httpx.WriteJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func handleNotFound(w http.ResponseWriter, _ *http.Request) {
+	httpx.WriteError(w, http.StatusNotFound, "Not found")
 }
 
 // statusRecorder captures the response status for logging.
 //
 // It deliberately implements Flush and Unwrap: the API streams AI responses,
-// and a ResponseWriter wrapper that swallows those would buffer the stream and
+// and a ResponseWriter wrapper that swallowed those would buffer the stream and
 // break server-sent events without any error surfacing.
 type statusRecorder struct {
 	http.ResponseWriter
