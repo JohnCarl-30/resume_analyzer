@@ -1,4 +1,4 @@
-// Command gateway serves the Resume Analyzer API in Go.
+// Command api serves the Resume Analyzer API in Go.
 //
 // It is being built to parity with the existing Node/Express API, which
 // continues to serve production until the port is complete. Routes appear in
@@ -16,7 +16,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/JohnCarl-30/resume_analyzer/services/gateway/internal/jobapplication"
+	"github.com/JohnCarl-30/resume_analyzer/services/api/internal/jobapplication"
 )
 
 func main() {

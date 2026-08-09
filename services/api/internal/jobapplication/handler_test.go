@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/JohnCarl-30/resume_analyzer/services/gateway/internal/authn"
+	"github.com/JohnCarl-30/resume_analyzer/services/api/internal/authn"
 )
 
 const (

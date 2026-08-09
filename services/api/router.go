@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/JohnCarl-30/resume_analyzer/services/gateway/internal/authn"
-	"github.com/JohnCarl-30/resume_analyzer/services/gateway/internal/httpx"
-	"github.com/JohnCarl-30/resume_analyzer/services/gateway/internal/jobapplication"
+	"github.com/JohnCarl-30/resume_analyzer/services/api/internal/authn"
+	"github.com/JohnCarl-30/resume_analyzer/services/api/internal/httpx"
+	"github.com/JohnCarl-30/resume_analyzer/services/api/internal/jobapplication"
 )
 
 // Deps are the collaborators NewRouter needs.

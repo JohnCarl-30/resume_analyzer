@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/JohnCarl-30/resume_analyzer/services/gateway/internal/httpx"
+	"github.com/JohnCarl-30/resume_analyzer/services/api/internal/httpx"
 )
 
 // UnauthorizedMessage matches the wording the Express API used, so the web

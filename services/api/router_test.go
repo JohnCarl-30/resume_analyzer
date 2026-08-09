@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/JohnCarl-30/resume_analyzer/services/gateway/internal/jobapplication"
+	"github.com/JohnCarl-30/resume_analyzer/services/api/internal/jobapplication"
 )
 
 func newTestRouter() http.Handler {
