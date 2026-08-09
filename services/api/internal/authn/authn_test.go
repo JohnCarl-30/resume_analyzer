@@ -79,7 +79,8 @@ func TestRequireUserRejectsBadRequests(t *testing.T) {
 }
 
 // A nil verifier means authentication is unconfigured. It must reject
-// everything rather than letting requests through unauthenticated.
+// everything rather than letting requests through unauthenticated, and report
+// it as a server-side gap rather than blaming the caller's token.
 func TestRequireUserFailsClosedWithoutVerifier(t *testing.T) {
 	var seen string
 	handler := RequireUser(nil)(captureUser(&seen))
@@ -90,11 +91,25 @@ func TestRequireUserFailsClosedWithoutVerifier(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
 
-	if got, want := recorder.Code, http.StatusUnauthorized; got != want {
+	if got, want := recorder.Code, http.StatusServiceUnavailable; got != want {
 		t.Errorf("status = %d, want %d", got, want)
 	}
 	if seen != "" {
 		t.Errorf("handler ran with user %q, want it not to run", seen)
+	}
+}
+
+// A request with no bearer token is the caller's problem even when the server
+// has no verifier, so it must still be a 401 rather than a 503.
+func TestMissingTokenBeatsMissingVerifier(t *testing.T) {
+	var seen string
+	handler := RequireUser(nil)(captureUser(&seen))
+
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/applications", nil))
+
+	if got, want := recorder.Code, http.StatusUnauthorized; got != want {
+		t.Errorf("status = %d, want %d", got, want)
 	}
 }
 
