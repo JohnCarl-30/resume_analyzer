@@ -116,7 +116,10 @@ describe(
             unmount();
             return prefillOk;
           }),
-          { numRuns: 100 },
+          // Fewer runs than the other properties: this one renders the whole
+          // AnalysisWorkspace per iteration and at 100 runs took ~34s, about
+          // 40% of the suite. 25 still covers a wide spread of job posts.
+          { numRuns: 25 },
         );
       },
       30000,
