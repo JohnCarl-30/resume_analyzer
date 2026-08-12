@@ -8,6 +8,10 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
+    // Property tests render a real component on every fast-check iteration, so
+    // the 5s default is unreachable for them on a loaded CI runner. This raises
+    // the ceiling without weakening any assertion.
+    testTimeout: 30_000,
   },
   resolve: {
     alias: {
