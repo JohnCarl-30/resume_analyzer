@@ -1,5 +1,7 @@
 "use client";
 
+import type { CSSProperties } from "react";
+
 import { AppShellHeader } from "@/features/auth/components/app-shell-header";
 import type { ResumeSummary } from "@/features/resumes/model/resume";
 import type { AnalysisQuota } from "@/lib/account-api";
@@ -46,10 +48,11 @@ export function HomePageView({
   return (
     <>
       <AppShellHeader active="home" quotaNav={quotaNav} />
-      <main id="home-main" className="app-home min-h-screen bg-background text-foreground">
+      <main id="main-content" className="app-home min-h-screen bg-background text-foreground">
         <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
           <div className="app-home-launchpad">
             <HomeIdentityBar
+              className="app-surface-enter"
               quota={quota}
               quotaNav={quotaNav}
               quotaError={quotaError}
@@ -62,6 +65,8 @@ export function HomePageView({
               onQuotaRetry={onQuotaRetry}
             />
             <SavedChecksPanel
+              className="app-surface-enter"
+              style={{ "--enter-delay": "70ms" } as CSSProperties}
               quotaNav={quotaNav}
               resumes={resumes}
               isLoading={resumesLoading}
