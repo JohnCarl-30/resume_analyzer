@@ -278,7 +278,7 @@ export function TrackerView() {
   return (
     <>
       <AppShellHeader active="tracker" quotaNav={quotaNav} />
-      <main className="min-h-screen bg-background text-foreground">
+      <main id="main-content" className="min-h-screen bg-background text-foreground">
         <section
           className={`mx-auto flex w-full max-w-5xl flex-col ${GAP.major} px-4 py-12 sm:px-6 lg:px-8 lg:py-16`}
         >
