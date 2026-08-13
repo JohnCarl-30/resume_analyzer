@@ -1,4 +1,4 @@
-import { generateObject } from "ai";
+import { loadAiSdk } from "../ai/ai-sdk.js";
 import { z } from "zod";
 
 import { aiProvider } from "../lib/ai-provider.js";
@@ -183,8 +183,9 @@ export const resumeTailoringService = {
     }
 
     try {
+      const { generateObject } = await loadAiSdk();
       const { object } = await generateObject({
-        model: aiProvider.getModel(),
+        model: await aiProvider.getModel(),
         schema: tailorOutputSchema,
         temperature: 0.3,
         system:
