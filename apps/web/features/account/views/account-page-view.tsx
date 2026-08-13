@@ -83,7 +83,7 @@ export function AccountPageView({
   return (
     <>
       <AppShellHeader active="settings" quotaNav={quotaNav} />
-      <main className="app-account page-enter min-h-screen bg-background text-foreground">
+      <main id="main-content" className="app-account page-enter min-h-screen bg-background text-foreground">
         <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
           <header className="app-account-masthead app-surface-enter">
             <div className="min-w-0 space-y-2">
