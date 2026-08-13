@@ -1,4 +1,4 @@
-import { generateObject } from "ai";
+import { loadAiSdk } from "../ai/ai-sdk.js";
 import { z } from "zod";
 import { env } from "../config/env.js";
 import { aiProvider } from "../lib/ai-provider.js";
@@ -29,8 +29,9 @@ export const jdExtractionService = {
     }
 
     try {
+      const { generateObject } = await loadAiSdk();
       const { object } = await generateObject({
-        model: aiProvider.getModel(),
+        model: await aiProvider.getModel(),
         schema: jdExtractionResultSchema,
         temperature: 0.1,
         system:
