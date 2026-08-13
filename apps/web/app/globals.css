@@ -422,6 +422,43 @@ textarea {
   }
 }
 
+@keyframes tour-pin-halo {
+  from {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+}
+
+@keyframes tour-scan {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  10% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+
+@keyframes cta-sheen {
+  from {
+    transform: translateX(0) skewX(-18deg);
+  }
+  to {
+    transform: translateX(360%) skewX(-18deg);
+  }
+}
+
 @keyframes enter-right {
   from {
     transform: translateX(20px);
@@ -462,6 +499,10 @@ textarea {
   animation-delay: var(--drift-delay, 0s);
 }
 
+.callout-pin {
+  transform: translate(-50%, -50%);
+}
+
 .scroll-reveal.is-armed:not(.is-in-view) .callout-pin {
   opacity: 0;
   transform: translate(-50%, -50%) scale(0.55);
@@ -470,6 +511,227 @@ textarea {
 .scroll-reveal.is-in-view .callout-pin {
   animation: callout-pop 480ms var(--ease-out-expo) both;
   animation-delay: var(--pin-delay, 200ms);
+}
+
+/* Guided markup tour: the resume figure walks the visitor through each note */
+.callout-pin-face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  block-size: 1.5rem;
+  inline-size: 1.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--foreground);
+  transition:
+    opacity var(--motion-base) var(--ease-out-quart),
+    border-color var(--motion-base) var(--ease-out-quart),
+    color var(--motion-base) var(--ease-out-quart),
+    box-shadow var(--motion-base) var(--ease-out-expo);
+}
+
+.callout-pin-face[data-dim] {
+  opacity: 0.4;
+}
+
+.callout-pin-face[data-active] {
+  border-color: var(--tour-color);
+  color: var(--tour-color);
+  box-shadow:
+    var(--shadow-md),
+    0 0 0 3px color-mix(in srgb, var(--tour-color) 18%, transparent);
+}
+
+.callout-pin-halo {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 1px solid var(--tour-color);
+  pointer-events: none;
+  animation: tour-pin-halo 900ms var(--ease-out-expo) both;
+}
+
+.tour-band {
+  position: absolute;
+  z-index: 5;
+  inset-inline: 0;
+  top: 0;
+  block-size: 100%;
+  transform-origin: top;
+  opacity: 0;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--tour-color) 13%, transparent);
+  transition:
+    transform 460ms var(--ease-out-expo),
+    background-color 320ms var(--ease-out-quart),
+    opacity var(--motion-base) var(--ease-out-quart);
+}
+
+.tour-band.is-visible {
+  opacity: 1;
+}
+
+.tour-scanline {
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  pointer-events: none;
+  animation: tour-scan 1500ms var(--ease-in-out) both;
+}
+
+.tour-scanline::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  block-size: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  box-shadow: 0 0 18px 6px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.tour-connector {
+  position: absolute;
+  inset-block: 1.75rem -1.75rem;
+  inset-inline-start: calc(0.75rem - 0.5px);
+  inline-size: 1px;
+  background: var(--border);
+  pointer-events: none;
+}
+
+.tour-connector-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: top;
+  background: var(--tour-color);
+  transition:
+    transform 420ms var(--ease-out-expo),
+    background-color 320ms var(--ease-out-quart);
+}
+
+.tour-step-marker,
+.tour-step-body {
+  transition:
+    opacity var(--motion-base) var(--ease-out-quart),
+    border-color var(--motion-base) var(--ease-out-quart),
+    color var(--motion-base) var(--ease-out-quart),
+    box-shadow var(--motion-base) var(--ease-out-expo);
+}
+
+.tour-step[data-dim] .tour-step-marker,
+.tour-step[data-dim] .tour-step-body {
+  opacity: 0.45;
+}
+
+.tour-step[data-active] .tour-step-marker {
+  border-color: var(--tour-color);
+  color: var(--tour-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tour-color) 14%, transparent);
+}
+
+.tour-step-dot {
+  transition: transform var(--motion-base) var(--ease-out-expo);
+}
+
+.tour-step[data-active] .tour-step-dot {
+  transform: scale(1.7);
+}
+
+.cta-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-sheen::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: -60%;
+  inline-size: 45%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: cta-sheen 900ms var(--ease-out-quart) 1150ms both;
+}
+
+.landing-header {
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition:
+    background-color var(--motion-base) var(--ease-out-quart),
+    border-color var(--motion-base) var(--ease-out-quart),
+    backdrop-filter var(--motion-base) var(--ease-out-quart),
+    box-shadow var(--motion-base) var(--ease-out-expo);
+}
+
+.landing-header.is-lifted {
+  background: color-mix(in srgb, var(--background) 78%, transparent);
+  border-bottom-color: var(--border);
+  backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: 0 1px 20px rgb(15 23 42 / 0.05);
+}
+
+/* The card reads as "under inspection" only while the sweep runs. */
+.tour-stage {
+  transition: box-shadow 420ms var(--ease-out-expo);
+}
+
+.tour-stage.is-scanning {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--primary) 28%, transparent),
+    0 10px 34px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.rotating-word.is-sized {
+  transition: width 480ms var(--ease-out-expo);
+}
+
+.landing-link {
+  position: relative;
+  transition: color var(--motion-fast) var(--ease-out-quart);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .landing-link::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: -2px;
+    block-size: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--motion-base) var(--ease-out-expo);
+  }
+
+  .landing-link:hover::after {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .landing-header.is-lifted {
+    background: var(--background);
+    backdrop-filter: none;
+  }
+}
+
+.sticky-cta {
+  opacity: 0;
+  transform: translateY(100%);
+  pointer-events: none;
+  transition:
+    opacity var(--motion-base) var(--ease-out-quart),
+    transform 420ms var(--ease-out-expo);
+}
+
+.sticky-cta.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .animate-enter-right {
@@ -530,13 +792,56 @@ button:disabled {
   .animate-enter-up,
   .animate-enter-up-safe,
   .animate-enter-right,
-  .auth-callout-pin,
-  .atmosphere-label,
-  .callout-pin {
+  .auth-callout-pin {
     animation: none;
     opacity: 1;
     transform: none;
     transition: none;
+  }
+
+  /* Decorative only — hold it at drift opacity instead of shouting at full. */
+  .atmosphere-label {
+    animation: none;
+    opacity: 0.2;
+    transform: none;
+    transition: none;
+  }
+
+  .callout-pin {
+    animation: none;
+    opacity: 1;
+    transform: translate(-50%, -50%);
+    transition: none;
+  }
+
+  /* Reduced motion keeps the tour's meaning, drops the travel */
+  .tour-band,
+  .tour-scanline,
+  .callout-pin-halo,
+  .cta-sheen::after {
+    display: none;
+  }
+
+  .tour-connector-fill {
+    transform: scaleY(1) !important;
+  }
+
+  .tour-stage.is-scanning {
+    box-shadow: none;
+  }
+
+  .rotating-word.is-sized {
+    transition: none;
+  }
+
+  .landing-link::after {
+    display: none;
+  }
+
+  .sticky-cta {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
   }
 
   *,
@@ -667,6 +972,99 @@ button:disabled {
 
 /* Impeccable · /home launchpad · product register · motion: state-only
  * Single column: masthead (greeting + primary CTA) → quota strip → saved checks */
+
+/* Keyboard users land on the header first; give them a way past it. */
+.skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 80;
+  transform: translateY(-200%);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--background);
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+  box-shadow: var(--shadow-lg);
+  transition: transform var(--motion-base) var(--ease-out-expo);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.app-shell-header {
+  z-index: var(--z-sticky);
+  background: var(--background);
+  border-bottom: 1px solid var(--border);
+  transition:
+    background-color var(--motion-base) var(--ease-out-quart),
+    box-shadow var(--motion-base) var(--ease-out-expo);
+}
+
+/* Sticky only from sm up: on phones the tab strip would eat too much viewport. */
+@media (min-width: 640px) {
+  .app-shell-header {
+    position: sticky;
+    top: 0;
+  }
+
+  .app-shell-header.is-lifted {
+    background: color-mix(in srgb, var(--background) 80%, transparent);
+    backdrop-filter: blur(14px) saturate(160%);
+    box-shadow: 0 1px 20px rgb(15 23 42 / 0.05);
+  }
+}
+
+.app-shell-tabs {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  padding-inline: 1rem;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-shell-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* Owns its own breakpoint: this rule is unlayered, so a Tailwind `sm:hidden`
+   utility (which lives in a cascade layer) would lose to it. */
+@media (min-width: 640px) {
+  .app-shell-tabs {
+    display: none;
+  }
+}
+
+.app-shell-tab {
+  flex: none;
+  padding-block: 0.5rem 0.625rem;
+  border-bottom: 2px solid transparent;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+  transition:
+    color var(--motion-fast) var(--ease-out-quart),
+    border-color var(--motion-base) var(--ease-out-expo);
+}
+
+.app-shell-tab[aria-current="page"] {
+  border-bottom-color: var(--primary);
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .app-shell-header.is-lifted {
+    background: var(--background);
+    backdrop-filter: none;
+  }
+}
 
 .app-home-launchpad {
   display: flex;
@@ -1341,6 +1739,10 @@ button:disabled {
     animation: none;
     transform: none;
     opacity: 1;
+  }
+
+  .skip-link {
+    transition: none;
   }
 
   .app-skeleton::after {
