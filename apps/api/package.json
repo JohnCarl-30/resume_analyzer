@@ -9,7 +9,11 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "jest && jest --config ./test/jest-e2e.json",
     "test:unit": "jest",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "typeorm": "typeorm -d dist/database/data-source.js",
+    "migration:generate": "pnpm build && pnpm typeorm migration:generate",
+    "migration:run": "pnpm build && pnpm typeorm migration:run",
+    "migration:revert": "pnpm build && pnpm typeorm migration:revert"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.15",
