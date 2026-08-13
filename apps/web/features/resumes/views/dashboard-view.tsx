@@ -217,7 +217,7 @@ export function DashboardView({
   return (
     <>
       <AppShellHeader active="home" quotaNav={quotaNav} />
-      <main className="min-h-screen bg-background text-foreground">
+      <main id="main-content" className="min-h-screen bg-background text-foreground">
       <section className={`mx-auto flex w-full max-w-7xl flex-col ${GAP.major} px-4 py-12 sm:px-6 lg:px-8 lg:py-16`}>
         <header className={`flex flex-col ${GAP.default} border-b border-border pb-8 md:flex-row md:items-end md:justify-between`}>
           <div className={`flex max-w-2xl flex-col ${GAP.inline}`}>
