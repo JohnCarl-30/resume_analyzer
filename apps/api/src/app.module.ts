@@ -1,7 +1,9 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 
+import { DatabaseModule } from "./database/database.module.js";
 import { HealthController } from "./health/health.controller.js";
+import { ProductEventsModule } from "./product-events/product-events.module.js";
 
 /**
  * Root module.
@@ -18,6 +20,8 @@ import { HealthController } from "./health/health.controller.js";
       // ConfigService reading the same values rather than a second source.
       envFilePath: [".env"],
     }),
+    DatabaseModule.forRoot(),
+    ProductEventsModule.register(),
   ],
   controllers: [HealthController],
 })
