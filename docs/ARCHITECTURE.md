@@ -3,7 +3,7 @@
 This repo is a small pnpm monorepo with two apps:
 
 - `apps/web`: Next.js UI for resume creation, analysis onboarding, dashboards, templates, and editor flows.
-- `apps/api`: Express API for uploads, parsing, analysis, AI-backed enhancement, and persistence.
+- `apps/api`: Hono API for uploads, parsing, analysis, AI-backed enhancement, and persistence.
 
 ## Web App
 
@@ -69,7 +69,7 @@ The API follows a request pipeline:
 routes -> controllers -> services -> analyzers/repositories/storage
 ```
 
-- `routes/`: Express route registration only.
+- `routes/`: Hono route registration only.
 - `controllers/`: Request/response shape and validation handoff.
 - `services/`: Application workflow and orchestration.
 - `analyzers/`: Pure resume/job analysis logic.
