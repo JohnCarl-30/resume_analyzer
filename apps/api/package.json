@@ -7,7 +7,9 @@
     "build": "nest build",
     "start": "node dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "jest"
+    "test": "jest && jest --config ./test/jest-e2e.json",
+    "test:unit": "jest",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.15",
