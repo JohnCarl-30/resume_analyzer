@@ -1,4 +1,4 @@
-import { generateObject } from "ai";
+import { loadAiSdk } from "../ai/ai-sdk.js";
 import { z } from "zod";
 import { env } from "../config/env.js";
 import { aiProvider } from "../lib/ai-provider.js";
@@ -27,8 +27,9 @@ export const bulletEnhancementService = {
       ? `Existing bullets:\n${existingBullets.map((b) => `- ${b}`).join("\n")}\n\nEnhance these and add more impactful achievements.`
       : `Generate 3-4 strong, metric-driven bullet points for this role.`;
 
+    const { generateObject } = await loadAiSdk();
     const { object } = await generateObject({
-      model: aiProvider.getModel(),
+      model: await aiProvider.getModel(),
       schema: enhanceSchema,
       temperature: 0.3,
       system:
