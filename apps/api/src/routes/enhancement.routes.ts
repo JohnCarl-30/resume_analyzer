@@ -1,14 +1,16 @@
-import { Router } from "express";
+import { Hono } from "hono";
+
+import { tailorResumeSchema } from "../schemas/tailor-resume.schema.js";
 import { bulletEnhancementService } from "../services/bullet-enhancement.service.js";
 import { resumeTailoringService } from "../services/resume-tailoring.service.js";
-import { tailorResumeSchema } from "../schemas/tailor-resume.schema.js";
-import { asyncHandler } from "../utils/async-handler.js";
+import type { AppEnv } from "../types/hono.js";
 import { HttpError } from "../utils/http-error.js";
+import { readJsonBody } from "../utils/request-body.js";
 
-export const enhancementRouter = Router();
+export const enhancementRouter = new Hono<AppEnv>();
 
-enhancementRouter.post("/bullets", asyncHandler(async (req, res) => {
-  const { role, bullets } = req.body;
+enhancementRouter.post("/bullets", async (c) => {
+  const { role, bullets } = await readJsonBody(c);
 
   if (!role || typeof role !== "string") {
     throw new HttpError(400, "Role is required.");
@@ -23,11 +25,11 @@ enhancementRouter.post("/bullets", asyncHandler(async (req, res) => {
     existingBullets: Array.isArray(bullets) ? bullets : [],
   });
 
-  res.json({ data: enhanced });
-}));
+  return c.json({ data: enhanced });
+});
 
-enhancementRouter.post("/tailor-resume", asyncHandler(async (req, res) => {
-  const payload = tailorResumeSchema.parse(req.body);
+enhancementRouter.post("/tailor-resume", async (c) => {
+  const payload = tailorResumeSchema.parse(await readJsonBody(c));
   const draft = await resumeTailoringService.tailorResume(payload);
-  res.json({ data: draft });
-}));
+  return c.json({ data: draft });
+});

@@ -1,7 +1,4 @@
-import { createServer, type Server } from "node:http";
-import type { AddressInfo } from "node:net";
-
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { generateObjectMock, verifyClerkAccessTokenMock } = vi.hoisted(() => ({
   generateObjectMock: vi.fn(),
@@ -34,47 +31,16 @@ const validAnalysisBody = {
   resumeText: sampleResumeText,
 };
 
-async function startTestServer(): Promise<{ baseUrl: string; close: () => Promise<void> }> {
-  const server: Server = createServer(app);
-
-  await new Promise<void>((resolve) => {
-    server.listen(0, "127.0.0.1", resolve);
-  });
-
-  const address = server.address() as AddressInfo;
-
-  return {
-    baseUrl: `http://127.0.0.1:${address.port}`,
-    close: () =>
-      new Promise<void>((resolve, reject) => {
-        server.close((error) => {
-          if (error) {
-            reject(error);
-            return;
-          }
-          resolve();
-        });
-      }),
-  };
-}
-
 describe("POST /api/analysis", () => {
-  let testServer: Awaited<ReturnType<typeof startTestServer>>;
-
-  beforeEach(async () => {
+  beforeEach(() => {
     generateObjectMock.mockReset();
     verifyClerkAccessTokenMock.mockClear();
     vi.spyOn(aiProvider, "isEnabled").mockReturnValue(false);
     vi.spyOn(aiProvider, "getModel").mockReturnValue("mock-model" as never);
-    testServer = await startTestServer();
-  });
-
-  afterEach(async () => {
-    await testServer.close();
   });
 
   it("requires sign-in before analyzing a resume", async () => {
-    const response = await fetch(`${testServer.baseUrl}/api/analysis`, {
+    const response = await app.request("/api/analysis", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(validAnalysisBody),
@@ -87,7 +53,7 @@ describe("POST /api/analysis", () => {
   });
 
   it("returns a resume fit analysis for an authenticated request", async () => {
-    const response = await fetch(`${testServer.baseUrl}/api/analysis`, {
+    const response = await app.request("/api/analysis", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -124,7 +90,7 @@ describe("POST /api/analysis", () => {
   });
 
   it("rejects invalid analysis payloads", async () => {
-    const response = await fetch(`${testServer.baseUrl}/api/analysis`, {
+    const response = await app.request("/api/analysis", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

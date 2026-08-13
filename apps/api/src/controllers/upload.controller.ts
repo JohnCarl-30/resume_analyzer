@@ -1,10 +1,11 @@
-import type { Request, Response } from "express";
+import type { Context } from "hono";
 
 import { uploadService } from "../services/upload.service.js";
+import { readJsonBody } from "../utils/request-body.js";
 
 export const uploadController = {
-  async sign(req: Request, res: Response) {
-    const upload = await uploadService.createUploadTarget(req.body);
-    res.status(201).json({ data: upload });
+  async sign(c: Context) {
+    const upload = await uploadService.createUploadTarget(await readJsonBody(c));
+    return c.json({ data: upload }, 201);
   },
 };

@@ -1,86 +1,113 @@
-import type { Request, Response } from "express";
+import type { Context } from "hono";
 
 import { analysisService } from "../services/analysis.service.js";
-import { semanticSearchService } from "../services/semantic-search.service.js";
 import { evaluationService } from "../services/evaluation.service.js";
 import { fewShotService } from "../services/few-shot.service.js";
+import { resumeParserService } from "../services/resume-parser.service.js";
+import { semanticSearchService } from "../services/semantic-search.service.js";
+import type { AppEnv } from "../types/hono.js";
+import { readMultipartForm } from "../utils/multipart.js";
+import { readJsonBody } from "../utils/request-body.js";
 
-function getUserId(req: Request) {
-  return req.userId!;
-}
+const MAX_RESUME_BYTES = 10 * 1024 * 1024;
+
+// Headroom over the file limit for the job description and other text fields.
+const MAX_UPLOAD_REQUEST_BYTES = MAX_RESUME_BYTES + 1024 * 1024;
 
 export const analysisController = {
-  async list(req: Request, res: Response) {
-    const analyses = await analysisService.listAnalyses(getUserId(req));
-    res.json({ data: analyses });
+  async list(c: Context<AppEnv>) {
+    const analyses = await analysisService.listAnalyses(c.get("userId"));
+    return c.json({ data: analyses });
   },
 
-  async create(req: Request, res: Response) {
-    const analysis = await analysisService.createAnalysis(req.body);
-    res.status(201).json({ data: analysis });
+  async create(c: Context<AppEnv>) {
+    const analysis = await analysisService.createAnalysis(await readJsonBody(c));
+    return c.json({ data: analysis }, 201);
   },
 
-  async getById(req: Request, res: Response) {
-    const analysisId = Array.isArray(req.params.analysisId)
-      ? req.params.analysisId[0]
-      : req.params.analysisId;
-
-    const analysis = await analysisService.getAnalysisById(analysisId, getUserId(req));
-    res.json({ data: analysis });
+  async getById(c: Context<AppEnv, "/:analysisId">) {
+    const analysis = await analysisService.getAnalysisById(
+      c.req.param("analysisId"),
+      c.get("userId"),
+    );
+    return c.json({ data: analysis });
   },
 
-  async update(req: Request, res: Response) {
-    const analysisId = Array.isArray(req.params.analysisId)
-      ? req.params.analysisId[0]
-      : req.params.analysisId;
+  async update(c: Context<AppEnv, "/:analysisId">) {
+    const body = await readJsonBody(c);
 
-    const updated = await analysisService.updateAnalysis(analysisId, getUserId(req), req.body);
-    res.json({ data: updated });
+    const updated = await analysisService.updateAnalysis(
+      c.req.param("analysisId"),
+      c.get("userId"),
+      // The service re-validates through createAnalysis, so an unchecked shape
+      // here still ends up as a 400 rather than reaching the analyzer.
+      body as { jobDescription: string; targetRole?: string },
+    );
+
+    return c.json({ data: updated });
   },
 
-  async createFromUpload(req: Request, res: Response) {
+  async createFromUpload(c: Context<AppEnv>) {
+    const { fields, file } = await readMultipartForm(c, "resume", {
+      maxFileBytes: MAX_RESUME_BYTES,
+      maxRequestBytes: MAX_UPLOAD_REQUEST_BYTES,
+      isSupportedMimeType: resumeParserService.isSupportedMimeType,
+      tooLargeMessage: "Resume must be 10 MB or smaller.",
+      unsupportedTypeMessage:
+        "Please upload a PDF or DOCX resume so we can parse it.",
+    });
+
     const analysis = await analysisService.createAnalysisFromUpload({
-      userId: getUserId(req),
-      targetRole: req.body.targetRole,
-      jobDescription: req.body.jobDescription,
-      selectedTemplateId: req.body.selectedTemplateId,
-      resumeFile: req.file,
+      userId: c.get("userId"),
+      targetRole: fields.targetRole,
+      jobDescription: fields.jobDescription,
+      selectedTemplateId: fields.selectedTemplateId,
+      resumeFile: file,
     });
 
-    res.status(201).json({ data: analysis });
+    return c.json({ data: analysis }, 201);
   },
 
-  async createFromTemplate(req: Request, res: Response) {
+  async createFromTemplate(c: Context<AppEnv>) {
+    const body = await readJsonBody(c);
+
     const analysis = await analysisService.createAnalysisFromTemplate({
-      userId: getUserId(req),
-      targetRole: req.body.targetRole,
-      jobDescription: req.body.jobDescription,
-      selectedTemplateId: req.body.selectedTemplateId,
-      resumeText: req.body.resumeText,
+      userId: c.get("userId"),
+      targetRole: body.targetRole,
+      jobDescription: body.jobDescription,
+      selectedTemplateId: body.selectedTemplateId,
+      // createTemplateAnalysisSchema rejects a non-string before this is read,
+      // which is the same guarantee the untyped Express body had.
+      resumeText: body.resumeText as string,
     });
 
-    res.status(201).json({ data: analysis });
+    return c.json({ data: analysis }, 201);
   },
 
-  async getSourceFile(req: Request, res: Response) {
-    const analysisId = Array.isArray(req.params.analysisId)
-      ? req.params.analysisId[0]
-      : req.params.analysisId;
+  async getSourceFile(c: Context<AppEnv, "/:analysisId/source">) {
+    const sourceFile = await analysisService.getAnalysisSourceFile(
+      c.req.param("analysisId"),
+      c.get("userId"),
+    );
 
-    const sourceFile = await analysisService.getAnalysisSourceFile(analysisId, getUserId(req));
-
-    res.setHeader("Content-Type", sourceFile.contentType);
-    res.setHeader(
+    c.header("Content-Type", sourceFile.contentType);
+    c.header(
       "Content-Disposition",
       `inline; filename="${encodeURIComponent(sourceFile.fileName)}"`,
     );
-    res.send(Buffer.from(sourceFile.dataBase64, "base64"));
+
+    return c.body(Buffer.from(sourceFile.dataBase64, "base64"));
   },
 
-  async semanticSearch(req: Request, res: Response) {
-    const { jobDescription, resumeText, topK = 5 } = req.body;
+  async semanticSearch(c: Context<AppEnv>) {
+    const body = await readJsonBody(c);
+    const { jobDescription, resumeText, topK = 5 } = body as {
+      jobDescription: string;
+      resumeText: string;
+      topK?: number;
+    };
 
-    const analyses = await analysisService.listAnalyses(getUserId(req));
+    const analyses = await analysisService.listAnalyses(c.get("userId"));
 
     const results = await semanticSearchService.hybridSearch(
       jobDescription,
@@ -97,32 +124,42 @@ export const analysisController = {
       topK,
     );
 
-    res.json({ data: results });
+    return c.json({ data: results });
   },
 
-  async evaluate(req: Request, res: Response) {
+  async evaluate(c: Context<AppEnv>) {
+    const body = (await readJsonBody(c)) as {
+      groundTruthKeywords?: string[];
+      matchedKeywords?: string[];
+      missingKeywords?: string[];
+    };
+
     const result = evaluationService.runEvaluation({
-      groundTruthKeywords: req.body.groundTruthKeywords,
-      matchedKeywords: req.body.matchedKeywords,
-      missingKeywords: req.body.missingKeywords,
+      groundTruthKeywords: body.groundTruthKeywords,
+      matchedKeywords: body.matchedKeywords,
+      missingKeywords: body.missingKeywords,
     });
 
-    res.json({ data: result });
+    return c.json({ data: result });
   },
 
-  async getFewShotExamples(_req: Request, res: Response) {
+  async getFewShotExamples(c: Context<AppEnv>) {
     const examples = fewShotService.getAllExamples();
-    res.json({ data: examples });
+    return c.json({ data: examples });
   },
 
-  async createFewShotExample(req: Request, res: Response) {
+  async createFewShotExample(c: Context<AppEnv>) {
+    const body = (await readJsonBody(c)) as Parameters<
+      typeof fewShotService.storeExample
+    >[0];
+
     const example = await fewShotService.storeExample({
-      resumeText: req.body.resumeText,
-      targetRole: req.body.targetRole,
-      extractedProfile: req.body.extractedProfile,
-      quality: req.body.quality,
+      resumeText: body.resumeText,
+      targetRole: body.targetRole,
+      extractedProfile: body.extractedProfile,
+      quality: body.quality,
     });
 
-    res.status(201).json({ data: example });
+    return c.json({ data: example }, 201);
   },
 };

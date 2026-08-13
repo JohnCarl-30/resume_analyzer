@@ -1,10 +1,10 @@
-import { Router } from "express";
+import { Hono } from "hono";
 
 import { resumeController } from "../controllers/resume.controller.js";
-import { asyncHandler } from "../utils/async-handler.js";
+import type { AppEnv } from "../types/hono.js";
 
-export const resumeRouter = Router();
+export const resumeRouter = new Hono<AppEnv>();
 
-resumeRouter.get("/", asyncHandler(resumeController.list));
-resumeRouter.get("/:resumeId", asyncHandler(resumeController.getById));
-resumeRouter.post("/", asyncHandler(resumeController.create));
+resumeRouter.get("/", resumeController.list);
+resumeRouter.get("/:resumeId", resumeController.getById);
+resumeRouter.post("/", resumeController.create);

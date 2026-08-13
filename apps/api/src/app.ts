@@ -1,34 +1,32 @@
-import * as Sentry from "@sentry/node";
-import express from "express";
-import cors from "cors";
+import { Hono } from "hono";
+import { cors } from "hono/cors";
 
 import { resolveAppOrigins } from "./config/app-origins.js";
-import { apiRouter } from "./routes/index.js";
 import { privateApiCacheHeaders } from "./middlewares/cache-control.js";
 import { errorHandler } from "./middlewares/error-handler.js";
+import { apiRouter } from "./routes/index.js";
+import type { AppEnv } from "./types/hono.js";
 
-export const app = express();
+export const app = new Hono<AppEnv>();
 
 app.use(
+  "*",
   cors({
-    origin(origin, callback) {
-      const allowedOrigins = new Set(resolveAppOrigins());
-
-      if (!origin || allowedOrigins.has(origin)) {
-        callback(null, true);
-        return;
+    // Origins are resolved per request so APP_ORIGIN changes take effect
+    // without a restart, matching the previous Express behaviour.
+    origin: (origin) => {
+      if (!origin) {
+        return origin;
       }
 
-      callback(null, false);
+      return resolveAppOrigins().includes(origin) ? origin : null;
     },
   }),
 );
-app.use(express.json());
 
-app.get("/health", (_req, res) => {
-  res.json({ status: "ok" });
-});
+app.get("/health", (c) => c.json({ status: "ok" }));
 
-app.use("/api", privateApiCacheHeaders, apiRouter);
-Sentry.setupExpressErrorHandler(app);
-app.use(errorHandler);
+app.use("/api/*", privateApiCacheHeaders);
+app.route("/api", apiRouter);
+
+app.onError(errorHandler);

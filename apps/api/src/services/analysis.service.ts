@@ -1,4 +1,5 @@
 import type { ResumeAnalysis, AnalysisSuggestion } from "../types/analysis.js";
+import type { UploadedFile } from "../types/uploaded-file.js";
 import {
   createAnalysisSchema,
   createUploadedAnalysisSchema,
@@ -59,7 +60,7 @@ export const analysisService = {
     targetRole: unknown;
     jobDescription: unknown;
     selectedTemplateId: unknown;
-    resumeFile?: Express.Multer.File;
+    resumeFile?: UploadedFile;
   }): Promise<PersistedResumeAnalysis> {
     const startedAt = Date.now();
     await accountService.assertCanCreateAnalysis(input.userId);

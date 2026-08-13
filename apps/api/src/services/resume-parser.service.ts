@@ -1,6 +1,7 @@
 import mammoth from "mammoth";
 import { extractText, getDocumentProxy } from "unpdf";
 
+import type { UploadedFile } from "../types/uploaded-file.js";
 import { HttpError } from "../utils/http-error.js";
 
 const supportedMimeTypes = [
@@ -26,7 +27,7 @@ function isSupportedMimeType(value: string) {
 export const resumeParserService = {
   isSupportedMimeType,
 
-  async extractText(file: Express.Multer.File) {
+  async extractText(file: UploadedFile) {
     if (!file.buffer?.length) {
       throw new HttpError(400, "The uploaded resume is empty.");
     }

@@ -1,10 +1,11 @@
-import type { Request, Response } from "express";
+import type { Context } from "hono";
 
 import { accountService } from "../services/account.service.js";
+import type { AppEnv } from "../types/hono.js";
 
 export const accountController = {
-  async getAnalysisQuota(req: Request, res: Response) {
-    const quota = await accountService.getAnalysisQuota(req.userId!);
-    res.json({ data: quota });
+  async getAnalysisQuota(c: Context<AppEnv>) {
+    const quota = await accountService.getAnalysisQuota(c.get("userId"));
+    return c.json({ data: quota });
   },
 };

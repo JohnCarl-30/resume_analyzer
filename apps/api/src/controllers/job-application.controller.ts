@@ -1,55 +1,47 @@
-import type { Request, Response } from "express";
+import type { Context } from "hono";
 
 import { jobApplicationService } from "../services/job-application.service.js";
-
-function getUserId(req: Request) {
-  return req.userId!;
-}
-
-function getApplicationId(req: Request) {
-  return Array.isArray(req.params.applicationId)
-    ? req.params.applicationId[0]
-    : req.params.applicationId;
-}
+import type { AppEnv } from "../types/hono.js";
+import { readJsonBody } from "../utils/request-body.js";
 
 export const jobApplicationController = {
-  async list(req: Request, res: Response) {
+  async list(c: Context<AppEnv>) {
     const applications = await jobApplicationService.listApplications(
-      getUserId(req),
+      c.get("userId"),
     );
-    res.json({ data: applications });
+    return c.json({ data: applications });
   },
 
-  async getById(req: Request, res: Response) {
+  async getById(c: Context<AppEnv, "/:applicationId">) {
     const application = await jobApplicationService.getApplicationById(
-      getApplicationId(req),
-      getUserId(req),
+      c.req.param("applicationId"),
+      c.get("userId"),
     );
-    res.json({ data: application });
+    return c.json({ data: application });
   },
 
-  async create(req: Request, res: Response) {
+  async create(c: Context<AppEnv>) {
     const application = await jobApplicationService.createApplication(
-      getUserId(req),
-      req.body,
+      c.get("userId"),
+      await readJsonBody(c),
     );
-    res.status(201).json({ data: application });
+    return c.json({ data: application }, 201);
   },
 
-  async update(req: Request, res: Response) {
+  async update(c: Context<AppEnv, "/:applicationId">) {
     const application = await jobApplicationService.updateApplication(
-      getApplicationId(req),
-      getUserId(req),
-      req.body,
+      c.req.param("applicationId"),
+      c.get("userId"),
+      await readJsonBody(c),
     );
-    res.json({ data: application });
+    return c.json({ data: application });
   },
 
-  async remove(req: Request, res: Response) {
+  async remove(c: Context<AppEnv, "/:applicationId">) {
     await jobApplicationService.deleteApplication(
-      getApplicationId(req),
-      getUserId(req),
+      c.req.param("applicationId"),
+      c.get("userId"),
     );
-    res.status(204).send();
+    return c.body(null, 204);
   },
 };

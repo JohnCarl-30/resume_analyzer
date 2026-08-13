@@ -1,3 +1,4 @@
+import { serve } from "@hono/node-server";
 import * as Sentry from "@sentry/node";
 
 import { app } from "./app.js";
@@ -6,8 +7,8 @@ import { ensureDatabaseSchema } from "./db/client.js";
 
 await ensureDatabaseSchema();
 
-const server = app.listen(env.PORT, () => {
-  console.log(`API listening on http://localhost:${env.PORT}`);
+const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
+  console.log(`API listening on http://localhost:${info.port}`);
 });
 
 function gracefulShutdown(signal: string) {

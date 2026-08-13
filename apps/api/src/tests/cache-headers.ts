@@ -1,6 +1,4 @@
 import assert from "node:assert/strict";
-import { createServer } from "node:http";
-import type { AddressInfo } from "node:net";
 
 import { app } from "../app.js";
 
@@ -55,19 +53,9 @@ const PRIVATE_API_CASES: ApiHeaderCase[] = [
 ];
 
 async function run() {
-  const server = createServer(app);
-
-  await new Promise<void>((resolve) => {
-    server.listen(0, "127.0.0.1", resolve);
-  });
-
-  const address = server.address() as AddressInfo;
-  const baseUrl = `http://127.0.0.1:${address.port}`;
-
-  try {
     await Promise.all(
       PRIVATE_API_CASES.map(async (testCase) => {
-        const response = await fetch(`${baseUrl}${testCase.path}`, testCase.init);
+        const response = await app.request(testCase.path, testCase.init);
 
         assert.equal(
           response.headers.get("cache-control"),
@@ -92,18 +80,7 @@ async function run() {
       }),
     );
 
-    console.log("Private API cache header checks passed.");
-  } finally {
-    await new Promise<void>((resolve, reject) => {
-      server.close((error) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve();
-      });
-    });
-  }
+  console.log("Private API cache header checks passed.");
 }
 
 void run().catch((error) => {

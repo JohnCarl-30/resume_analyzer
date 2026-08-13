@@ -1,15 +1,20 @@
-import type { Request, Response } from "express";
+import type { Context } from "hono";
 
 import { productEventsService } from "../services/product-events.service.js";
+import type { AppEnv } from "../types/hono.js";
+import { readJsonBody } from "../utils/request-body.js";
 
 export const productEventsController = {
-  async create(req: Request, res: Response) {
-    const event = await productEventsService.track(req.userId!, req.body);
-    res.status(201).json({ data: event });
+  async create(c: Context<AppEnv>) {
+    const event = await productEventsService.track(
+      c.get("userId"),
+      await readJsonBody(c),
+    );
+    return c.json({ data: event }, 201);
   },
 
-  async summary(req: Request, res: Response) {
-    const counts = await productEventsService.summarizeForUser(req.userId!);
-    res.json({ data: counts });
+  async summary(c: Context<AppEnv>) {
+    const counts = await productEventsService.summarizeForUser(c.get("userId"));
+    return c.json({ data: counts });
   },
 };

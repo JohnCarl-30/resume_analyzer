@@ -1,33 +1,13 @@
-import { Router } from "express";
+import { Hono } from "hono";
 
 import { jobApplicationController } from "../controllers/job-application.controller.js";
 import { requireAuth } from "../middlewares/require-auth.js";
-import { asyncHandler } from "../utils/async-handler.js";
+import type { AppEnv } from "../types/hono.js";
 
-export const jobApplicationRouter = Router();
+export const jobApplicationRouter = new Hono<AppEnv>();
 
-jobApplicationRouter.get(
-  "/",
-  requireAuth,
-  asyncHandler(jobApplicationController.list),
-);
-jobApplicationRouter.post(
-  "/",
-  requireAuth,
-  asyncHandler(jobApplicationController.create),
-);
-jobApplicationRouter.get(
-  "/:applicationId",
-  requireAuth,
-  asyncHandler(jobApplicationController.getById),
-);
-jobApplicationRouter.patch(
-  "/:applicationId",
-  requireAuth,
-  asyncHandler(jobApplicationController.update),
-);
-jobApplicationRouter.delete(
-  "/:applicationId",
-  requireAuth,
-  asyncHandler(jobApplicationController.remove),
-);
+jobApplicationRouter.get("/", requireAuth, jobApplicationController.list);
+jobApplicationRouter.post("/", requireAuth, jobApplicationController.create);
+jobApplicationRouter.get("/:applicationId", requireAuth, jobApplicationController.getById);
+jobApplicationRouter.patch("/:applicationId", requireAuth, jobApplicationController.update);
+jobApplicationRouter.delete("/:applicationId", requireAuth, jobApplicationController.remove);

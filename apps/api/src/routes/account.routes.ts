@@ -1,13 +1,9 @@
-import { Router } from "express";
+import { Hono } from "hono";
 
 import { accountController } from "../controllers/account.controller.js";
 import { requireAuth } from "../middlewares/require-auth.js";
-import { asyncHandler } from "../utils/async-handler.js";
+import type { AppEnv } from "../types/hono.js";
 
-export const accountRouter = Router();
+export const accountRouter = new Hono<AppEnv>();
 
-accountRouter.get(
-  "/analysis-quota",
-  requireAuth,
-  asyncHandler(accountController.getAnalysisQuota),
-);
+accountRouter.get("/analysis-quota", requireAuth, accountController.getAnalysisQuota);

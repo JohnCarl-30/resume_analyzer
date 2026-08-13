@@ -1,23 +1,22 @@
-import type { Request, Response } from "express";
+import type { Context } from "hono";
 
 import { resumeService } from "../services/resume.service.js";
+import type { AppEnv } from "../types/hono.js";
+import { readJsonBody } from "../utils/request-body.js";
 
 export const resumeController = {
-  async list(_req: Request, res: Response) {
+  async list(c: Context) {
     const resumes = await resumeService.listResumes();
-    res.json({ data: resumes });
+    return c.json({ data: resumes });
   },
 
-  async getById(req: Request, res: Response) {
-    const resumeId = Array.isArray(req.params.resumeId)
-      ? req.params.resumeId[0]
-      : req.params.resumeId;
-    const resume = await resumeService.getResumeById(resumeId);
-    res.json({ data: resume });
+  async getById(c: Context<AppEnv, "/:resumeId">) {
+    const resume = await resumeService.getResumeById(c.req.param("resumeId"));
+    return c.json({ data: resume });
   },
 
-  async create(req: Request, res: Response) {
-    const resume = await resumeService.createResume(req.body);
-    res.status(201).json({ data: resume });
+  async create(c: Context) {
+    const resume = await resumeService.createResume(await readJsonBody(c));
+    return c.json({ data: resume }, 201);
   },
 };

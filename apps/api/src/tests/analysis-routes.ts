@@ -1,21 +1,9 @@
 import assert from "node:assert/strict";
-import { createServer } from "node:http";
-import type { AddressInfo } from "node:net";
 
 import { app } from "../app.js";
 
 async function run() {
-  const server = createServer(app);
-
-  await new Promise<void>((resolve) => {
-    server.listen(0, "127.0.0.1", resolve);
-  });
-
-  const address = server.address() as AddressInfo;
-  const baseUrl = `http://127.0.0.1:${address.port}`;
-
-  try {
-    const listResponse = await fetch(`${baseUrl}/api/analysis/examples`);
+    const listResponse = await app.request(`/api/analysis/examples`);
     assert.equal(
       listResponse.status,
       200,
@@ -25,7 +13,7 @@ async function run() {
     const listPayload = (await listResponse.json()) as { data?: unknown };
     assert.ok(Array.isArray(listPayload.data), "Few-shot examples response should include a data array");
 
-    const createResponse = await fetch(`${baseUrl}/api/analysis/examples`, {
+    const createResponse = await app.request(`/api/analysis/examples`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -69,7 +57,7 @@ async function run() {
     );
     assert.ok(createdPayload.data?.id, "Created few-shot example should return an id");
 
-    const refreshedListResponse = await fetch(`${baseUrl}/api/analysis/examples`);
+    const refreshedListResponse = await app.request(`/api/analysis/examples`);
     const refreshedPayload = (await refreshedListResponse.json()) as {
       data?: Array<{ id?: string }>;
     };
@@ -79,7 +67,7 @@ async function run() {
       "Created few-shot example should appear in the examples list",
     );
 
-    const shadowedResponse = await fetch(`${baseUrl}/api/analysis/examples`);
+    const shadowedResponse = await app.request(`/api/analysis/examples`);
     const shadowedPayload = (await shadowedResponse.json()) as { error?: string };
 
     assert.notEqual(
@@ -88,18 +76,7 @@ async function run() {
       "GET /api/analysis/examples must not be handled by /:analysisId",
     );
 
-    console.log("Analysis route ordering checks passed.");
-  } finally {
-    await new Promise<void>((resolve, reject) => {
-      server.close((error) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve();
-      });
-    });
-  }
+  console.log("Analysis route ordering checks passed.");
 }
 
 void run().catch((error) => {
