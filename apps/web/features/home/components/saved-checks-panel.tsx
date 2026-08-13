@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ArchiveIcon, ChevronRightIcon, Pencil1Icon, ReloadIcon } from "@radix-ui/react-icons";
+import type { CSSProperties } from "react";
+import {
+  ArchiveIcon,
+  ChevronRightIcon,
+  Pencil1Icon,
+  PlusIcon,
+  ReloadIcon,
+} from "@radix-ui/react-icons";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -44,15 +51,18 @@ function SavedChecksSkeleton() {
 
 function IndexRow({
   resume,
+  index,
   onOpenAnalysis,
 }: {
   resume: ResumeSummary;
+  index: number;
   onOpenAnalysis: (analysisId: string) => void;
 }) {
   return (
     <button
       type="button"
-      className="app-checks-row group"
+      className="app-checks-row app-stagger-item group"
+      style={{ "--stagger-index": index } as CSSProperties}
       aria-label={savedCheckRowLabel(resume)}
       onClick={() => onOpenAnalysis(resume.id)}
     >
@@ -97,17 +107,25 @@ interface SavedChecksPanelProps {
   onRefetch: () => void;
   layout?: "default" | "workbench";
   className?: string;
+  style?: CSSProperties;
 }
 
 function EmptyActions({
   quotaNav,
+  onNewAnalysis,
   onScratchBuilder,
 }: {
   quotaNav: AnalysisQuotaNavigationState;
+  onNewAnalysis: () => void;
   onScratchBuilder: () => void;
 }) {
   if (quotaNav.canUpload) {
-    return null;
+    return (
+      <Button type="button" onClick={onNewAnalysis}>
+        <PlusIcon data-icon="inline-start" aria-hidden="true" />
+        Upload resume
+      </Button>
+    );
   }
 
   return (
@@ -138,10 +156,12 @@ export function SavedChecksPanel({
   onRefetch,
   layout = "default",
   className,
+  style,
 }: SavedChecksPanelProps) {
   return (
     <section
       className={cn("app-home-checks min-w-0", className)}
+      style={style}
       aria-labelledby="home-saved-checks-heading"
     >
       <header className="mb-4 space-y-1">
@@ -184,7 +204,11 @@ export function SavedChecksPanel({
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <EmptyActions quotaNav={quotaNav} onScratchBuilder={onScratchBuilder} />
+            <EmptyActions
+              quotaNav={quotaNav}
+              onNewAnalysis={onNewAnalysis}
+              onScratchBuilder={onScratchBuilder}
+            />
           </EmptyContent>
         </Empty>
       ) : null}
@@ -199,8 +223,13 @@ export function SavedChecksPanel({
             <span>Date</span>
             <span className="text-right">Match</span>
           </div>
-          {resumes.map((resume) => (
-            <IndexRow key={resume.id} resume={resume} onOpenAnalysis={onOpenAnalysis} />
+          {resumes.map((resume, index) => (
+            <IndexRow
+              key={resume.id}
+              resume={resume}
+              index={index}
+              onOpenAnalysis={onOpenAnalysis}
+            />
           ))}
         </div>
       ) : null}
