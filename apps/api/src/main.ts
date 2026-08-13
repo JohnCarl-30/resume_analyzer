@@ -6,11 +6,14 @@ import { Logger } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 
 import { AppModule } from "./app.module.js";
+import { HttpErrorFilter } from "./common/http-error.filter.js";
 import { env } from "./config/env.js";
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
 
+  // Preserves the Express response shapes the web app parses.
+  app.useGlobalFilters(new HttpErrorFilter());
   app.enableShutdownHooks();
 
   await app.listen(env.PORT);
