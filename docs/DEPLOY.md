@@ -45,7 +45,7 @@ wrangler r2 bucket cors set resume-analyzer --file infra/r2/cors.json
 
 ## 4. Deploy API (Cloudflare Containers)
 
-The Express API runs in a Docker container behind a Cloudflare Worker proxy.
+The Hono API runs in a Docker container behind a Cloudflare Worker proxy.
 
 ```bash
 cd cloudflare-api
@@ -108,7 +108,7 @@ Remove any legacy `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` / `NEXT_PUBLIC_CLERK_AFT
 ## Architecture
 
 ```
-User → Vercel (Next.js) → CF Worker → CF Container (Express API)
+User → Vercel (Next.js) → CF Worker → CF Container (Hono API)
                               ↓
                     Clerk / Postgres / OpenAI / R2
 ```
