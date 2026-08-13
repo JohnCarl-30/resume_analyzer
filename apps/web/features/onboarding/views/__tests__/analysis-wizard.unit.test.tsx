@@ -263,7 +263,11 @@ describe("AnalysisWizard unit tests", () => {
       fireEvent.click(backBtn);
 
       // Free quota is used after a check — don't trap users on the upload step.
-      expect(mockRouter.push).toHaveBeenCalledWith("/home");
+      // Waited rather than asserted directly: AnalysisWorkspace is a dynamic
+      // import, so leaving it navigates a tick after the click.
+      await waitFor(() => {
+        expect(mockRouter.push).toHaveBeenCalledWith("/home");
+      });
     });
   });
 
