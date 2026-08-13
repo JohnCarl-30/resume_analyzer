@@ -4,70 +4,35 @@ import { ArrowRightIcon } from "@radix-ui/react-icons";
 
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { Button } from "@/components/ui/button";
-import { HeaderAuthActions } from "@/features/auth/components/header-auth-actions";
-import { ResumeRenderer } from "@/features/editor/components/resume-renderer";
-import { defaultResumeForm } from "@/features/editor/model/resume-form";
 import { HeroAtmosphere } from "@/features/landing/components/hero-atmosphere";
+import { LandingHeader } from "@/features/landing/components/landing-header";
+import { MarkupTour } from "@/features/landing/components/markup-tour";
 import { RotatingWord } from "@/features/landing/components/rotating-word";
+import { StickyCta } from "@/features/landing/components/sticky-cta";
 import { BrandMark } from "@/features/onboarding/components/wizard-icons";
-
-const CALLOUTS = [
-  {
-    number: "01",
-    label: "Job words",
-    insight: "Words the posting repeats often — but your summary never uses — get flagged here.",
-    position: { top: "10%", left: "97%" },
-    dot: "bg-primary",
-  },
-  {
-    number: "02",
-    label: "Bullet strength",
-    insight: "A bullet that names activity but not outcome gets a note: what changed because of it?",
-    position: { top: "62%", left: "3%" },
-    dot: "bg-[var(--tag-bullet)]",
-  },
-  {
-    number: "03",
-    label: "Layout & scan",
-    insight: "Dense paragraphs and long section names slow a six-second skim. We flag both.",
-    position: { top: "80%", left: "97%" },
-    dot: "bg-success",
-  },
-] as const;
 
 function enterDelay(ms: number): CSSProperties {
   return { "--enter-delay": `${ms}ms` } as CSSProperties;
 }
 
-function pinDelay(ms: number): CSSProperties {
-  return { "--pin-delay": `${ms}ms` } as CSSProperties;
-}
-
 export function LandingPageView() {
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link
-            href="/"
-            className="brand-logo inline-flex items-center gap-2 text-base font-semibold tracking-tight"
-          >
-            <BrandMark />
-            <span className="font-brand">Resumae</span>
-          </Link>
-          <HeaderAuthActions />
-        </div>
-      </header>
+      <LandingHeader />
 
       <section className="relative overflow-hidden">
         <HeroAtmosphere />
 
         <div className="relative z-10 mx-auto max-w-3xl px-4 pt-16 pb-14 sm:px-6 sm:pt-20 sm:pb-16 lg:px-8">
           <h1
-            className="animate-enter-up display-serif max-w-[28ch] text-[length:var(--text-display)] text-foreground"
+            className="animate-enter-up display-serif max-w-[38ch] text-[length:var(--text-display)] text-foreground"
             style={enterDelay(0)}
           >
-            Paste a job post. See what your <RotatingWord /> needs.
+            {/* Split so the rotating word only ever resizes its own line. */}
+            <span className="block">Paste a job post.</span>
+            <span className="block">
+              See what your <RotatingWord /> needs.
+            </span>
           </h1>
           <p
             className="animate-enter-up mt-5 max-w-[58ch] text-base leading-7 text-muted-foreground sm:text-lg"
@@ -77,14 +42,24 @@ export function LandingPageView() {
             short — the words that are missing, the bullets that undersell you, the layout that
             is hard to scan.
           </p>
-          <p className="animate-enter-up mt-6 text-sm text-muted-foreground" style={enterDelay(170)}>
-            Starting from a blank page?{" "}
-            <Link
-              href="/create-resume"
-              className="motion-link font-medium text-primary underline-offset-4 hover:underline"
-            >
-              Build a clean resume first, no sign-in needed
-            </Link>
+
+          <div
+            className="animate-enter-up mt-8 flex flex-col gap-3 sm:flex-row sm:items-center"
+            style={enterDelay(180)}
+          >
+            <Button asChild size="lg" className="cta-sheen h-11 gap-2 px-5 text-base">
+              <Link href="/analysis/new">
+                Check my resume
+                <ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="h-11 gap-2 px-5 text-base">
+              <Link href="/create-resume">Build a resume first</Link>
+            </Button>
+          </div>
+
+          <p className="animate-enter-up mt-5 text-sm text-muted-foreground" style={enterDelay(260)}>
+            Building is free and needs no sign-in. Checking uses one free AI review per account.
           </p>
         </div>
       </section>
@@ -100,75 +75,10 @@ export function LandingPageView() {
             </p>
           </ScrollReveal>
 
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(16rem,1fr)] lg:items-start lg:gap-14">
-            <ScrollReveal as="figure" className="min-w-0" delay={80}>
-              <div className="relative mx-auto aspect-[1/1.32] max-w-[26rem] overflow-hidden border border-border bg-card px-6 py-7">
-                <ResumeRenderer form={defaultResumeForm} variantId="minimalist-grid" />
-                <div
-                  aria-hidden="true"
-                  className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-card to-transparent"
-                />
-                {CALLOUTS.map((callout, index) => (
-                  <span
-                    key={callout.number}
-                    aria-hidden="true"
-                    className="callout-pin absolute z-10 flex size-6 items-center justify-center rounded-full border border-border bg-background font-mono text-[0.62rem] font-semibold text-foreground shadow-[var(--shadow-md)]"
-                    style={{
-                      top: callout.position.top,
-                      left: callout.position.left,
-                      ...pinDelay(220 + index * 120),
-                    }}
-                  >
-                    {callout.number}
-                  </span>
-                ))}
-              </div>
-              <figcaption className="mt-3 text-xs text-muted-foreground">
-                Sample check on Resumae&rsquo;s own placeholder resume.
-              </figcaption>
-            </ScrollReveal>
-
-            <ol className="flex flex-col gap-7">
-              {CALLOUTS.map((callout, index) => (
-                <ScrollReveal
-                  as="li"
-                  key={callout.number}
-                  className="flex gap-3"
-                  delay={140 + index * 90}
-                >
-                  <span
-                    aria-hidden="true"
-                    className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border border-border font-mono text-[0.62rem] font-semibold text-foreground"
-                  >
-                    {callout.number}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.1em] text-muted-foreground uppercase">
-                      <span
-                        className={`size-1.5 shrink-0 rounded-full ${callout.dot}`}
-                        aria-hidden="true"
-                      />
-                      {callout.label}
-                    </p>
-                    <p className="mt-1.5 text-sm leading-6 text-foreground">{callout.insight}</p>
-                  </div>
-                </ScrollReveal>
-              ))}
-            </ol>
-          </div>
+          <MarkupTour />
         </div>
 
-        <aside className="sticky bottom-0 border-t border-border bg-background/95 backdrop-blur-sm">
-          <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-            <p className="text-sm text-muted-foreground">One AI check per account, free to start.</p>
-            <Button asChild size="lg" className="h-11 justify-between gap-2 px-4 text-base sm:w-auto">
-              <Link href="/analysis/new">
-                Check my resume
-                <ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
-              </Link>
-            </Button>
-          </div>
-        </aside>
+        <StickyCta />
       </section>
 
       <footer className="bg-background">
@@ -190,15 +100,15 @@ export function LandingPageView() {
             aria-label="Footer navigation"
             className="mt-6 flex flex-wrap items-center gap-x-2 gap-y-2 text-sm text-muted-foreground"
           >
-            <Link href="/create-resume" className="motion-link hover:text-foreground">
+            <Link href="/create-resume" className="landing-link hover:text-foreground">
               Build a resume
             </Link>
             <span aria-hidden="true">·</span>
-            <Link href="/auth/sign-in?next=%2Fanalysis%2Fnew" className="motion-link hover:text-foreground">
+            <Link href="/auth/sign-in?next=%2Fanalysis%2Fnew" className="landing-link hover:text-foreground">
               Check a resume
             </Link>
             <span aria-hidden="true">·</span>
-            <Link href="/auth/sign-in?next=%2Fhome" className="motion-link hover:text-foreground">
+            <Link href="/auth/sign-in?next=%2Fhome" className="landing-link hover:text-foreground">
               Saved checks
             </Link>
           </nav>
