@@ -1,6 +1,20 @@
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
 
+// jsdom ships no matchMedia; components that read prefers-reduced-motion need one.
+if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
+  window.matchMedia = ((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })) as unknown as typeof window.matchMedia;
+}
+
 vi.mock("@clerk/nextjs", () => ({
   SignedIn: ({ children }: { children: React.ReactNode }) => children,
   SignedOut: () => null,
