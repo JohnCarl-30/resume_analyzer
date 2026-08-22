@@ -49,6 +49,7 @@ import {
   type JobApplicationStatus,
 } from "../model/job-application";
 import { useJobApplications } from "../view-models/use-job-applications";
+import { ApplicationGroup } from "../components/application-group";
 import { ApplicationFormDialog } from "../components/application-form-dialog";
 import { StatusMenu } from "../components/status-menu";
 
@@ -209,13 +210,22 @@ export function TrackerView() {
   const displayStats = [
     { label: "Tracked", value: stats.total, description: "Total applications" },
     { label: "Active", value: stats.active, description: "In the pipeline" },
-    {
-      label: "Interviewing",
-      value: stats.interviewing,
-      description: "Conversations open",
-    },
-    { label: "Offers", value: stats.offers, description: "Decisions to make" },
   ];
+
+  // Ordered by how much attention each group needs rather than by pipeline
+  // position, so open conversations sit above things merely bookmarked.
+  const GROUP_ORDER: JobApplicationStatus[] = [
+    "interviewing",
+    "offer",
+    "applied",
+    "saved",
+    "rejected",
+  ];
+
+  const grouped = GROUP_ORDER.map((status) => ({
+    status,
+    items: applications.filter((application) => application.status === status),
+  })).filter((group) => group.items.length > 0);
 
   async function handleCreate(values: JobApplicationFormValues) {
     await createApplication(formValuesToPayload(values));
@@ -299,7 +309,7 @@ export function TrackerView() {
             </Button>
           </header>
 
-          <dl className="grid overflow-hidden rounded-lg border border-border bg-card sm:grid-cols-2 lg:grid-cols-4">
+          <dl className="grid overflow-hidden rounded-lg border border-border bg-card sm:grid-cols-2">
             {displayStats.map((stat) => (
               <div
                 key={stat.label}
@@ -348,16 +358,27 @@ export function TrackerView() {
               </EmptyContent>
             </Empty>
           ) : (
-            <div className="overflow-hidden rounded-lg border border-border bg-background">
-              {applications.map((application) => (
-                <ApplicationRow
-                  key={application.id}
-                  application={application}
-                  onStatusChange={handleStatusChange}
-                  onEdit={setEditing}
-                  onDelete={setPendingDelete}
-                  disabled={isUpdating}
-                />
+            <div className="divide-y divide-border border-y border-border">
+              {grouped.map((group) => (
+                <ApplicationGroup
+                  key={group.status}
+                  status={group.status}
+                  count={group.items.length}
+                  // Rejected applications are kept for the record, not for
+                  // daily reading, so that group starts collapsed.
+                  defaultOpen={group.status !== "rejected"}
+                >
+                  {group.items.map((application) => (
+                    <ApplicationRow
+                      key={application.id}
+                      application={application}
+                      onStatusChange={handleStatusChange}
+                      onEdit={setEditing}
+                      onDelete={setPendingDelete}
+                      disabled={isUpdating}
+                    />
+                  ))}
+                </ApplicationGroup>
               ))}
             </div>
           )}
