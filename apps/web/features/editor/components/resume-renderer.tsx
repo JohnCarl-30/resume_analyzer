@@ -42,6 +42,14 @@ function ContactLine({
   );
 }
 
+/*
+ * The candidate's name is rendered as a paragraph, not a heading.
+ *
+ * A rendered resume is always embedded in a page that has its own h1 --
+ * the landing tour, the editor preview, the template picker -- so marking
+ * it up as a heading gave those pages two h1 elements and put a stranger's
+ * name at the top of the heading outline.
+ */
 export function ResumeRenderer({ form, variantId, showPlaceholders = false }: ResumeRendererProps) {
   if (variantId === "minimalist-grid") {
     return <MinimalistGridLayout form={form} showPlaceholders={showPlaceholders} />;
@@ -66,9 +74,9 @@ function HarvardClassicLayout({ form }: { form: ResumeForm }) {
   return (
     <div className="resume-document text-[#0f172a]">
       <header className="text-center mb-8 border-b border-gray-300 pb-6">
-        <h1 className="text-4xl font-bold uppercase tracking-tight mb-3">
+        <p className="text-4xl font-bold uppercase tracking-tight mb-3">
           {form.personalInfo.fullName || "Your Name"}
-        </h1>
+        </p>
         <ContactLine
           items={contactItems(form)}
           className="flex flex-wrap justify-center gap-3 text-[0.95rem] text-gray-600"
@@ -199,9 +207,9 @@ function ModernSansLayout({ form }: { form: ResumeForm }) {
     <div className="resume-document-sans text-[#1e293b]">
       <header className="mb-10 flex justify-between items-end border-b-2 border-slate-900 pb-8">
         <div>
-          <h1 className="text-5xl font-extrabold tracking-tight uppercase leading-none mb-2 text-slate-900">
+          <p className="text-5xl font-extrabold tracking-tight uppercase leading-none mb-2 text-slate-900">
             {form.personalInfo.fullName || "Your Name"}
-          </h1>
+          </p>
         </div>
         <div className="text-right text-sm font-medium text-slate-600">
           {contactItems(form).map((item) => (
@@ -355,9 +363,9 @@ function RubyAccentLayout({ form }: { form: ResumeForm }) {
   return (
     <div className="resume-document text-[#1a1a1a]">
       <header className="text-center mb-10">
-        <h1 className="text-4xl font-bold tracking-tight mb-4" style={{ color: accentColor }}>
+        <p className="text-4xl font-bold tracking-tight mb-4" style={{ color: accentColor }}>
           {(form.personalInfo.fullName || "Your Name").toUpperCase()}
-        </h1>
+        </p>
         <ContactLine
           items={contactItems(form)}
           className="flex flex-wrap justify-center gap-3 text-sm font-medium text-gray-500"
@@ -521,9 +529,9 @@ function MinimalistGridLayout({
   return (
     <div className="resume-document-sans space-y-10">
       <header className="space-y-4 border-b border-[color:var(--page-line)] pb-8">
-        <h1 className="text-4xl font-bold tracking-tight text-[color:var(--page-text)] uppercase text-center">
+        <p className="text-4xl font-bold tracking-tight text-[color:var(--page-text)] uppercase text-center">
           {form.personalInfo.fullName || "Your Name"}
-        </h1>
+        </p>
         <ContactLine
           items={placeholderContactItems}
           separator="•"
