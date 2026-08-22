@@ -1751,45 +1751,50 @@ button:disabled {
   }
 }
 
-/* Landing FAQ ------------------------------------------------------------- */
+/* Disclosure (FAQ, tracker groups) ------------------------------------------------------------- */
 
-.faq-item > summary::-webkit-details-marker {
+.disclosure > summary::-webkit-details-marker {
   display: none;
 }
 
-.faq-item > summary:focus-visible {
+.disclosure > summary:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 4px;
   border-radius: var(--radius-sm);
 }
 
-.faq-marker {
+.disclosure-marker {
   transition: transform 240ms var(--ease-out-quart);
 }
 
-.faq-item[open] .faq-marker {
+/* A plus turns into a cross; a chevron flips. */
+.disclosure[open] .disclosure-marker {
   transform: rotate(45deg);
+}
+
+.disclosure[open] .disclosure-marker[data-marker="chevron"] {
+  transform: rotate(180deg);
 }
 
 /* The answer height is unknown ahead of time, so it is revealed with a grid
    row that animates from 0fr to 1fr -- the one way to transition to auto. */
-.faq-answer {
+.disclosure-panel {
   display: grid;
   grid-template-rows: 0fr;
   transition: grid-template-rows 280ms var(--ease-out-quart);
 }
 
-.faq-item[open] .faq-answer {
+.disclosure[open] .disclosure-panel {
   grid-template-rows: 1fr;
 }
 
-.faq-answer > * {
+.disclosure-panel > * {
   overflow: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .faq-marker,
-  .faq-answer {
+  .disclosure-marker,
+  .disclosure-panel {
     transition: none;
   }
 }
