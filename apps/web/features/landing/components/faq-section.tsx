@@ -46,15 +46,15 @@ export function FaqSection() {
             <ScrollReveal key={faq.question} delay={index * 50}>
               {/* A native details element: keyboard and screen-reader behaviour
                   come for free, and it works before hydration. */}
-              <details className="faq-item group">
+              <details className="disclosure group">
                 <summary className="flex w-full cursor-pointer list-none items-center justify-between gap-4 py-5 text-left">
                   <span className="text-base font-medium text-foreground">{faq.question}</span>
                   <PlusIcon
-                    className="faq-marker shrink-0 text-muted-foreground"
+                    className="disclosure-marker shrink-0 text-muted-foreground"
                     aria-hidden="true"
                   />
                 </summary>
-                <div className="faq-answer">
+                <div className="disclosure-panel">
                   <p className="max-w-[64ch] pb-5 text-sm leading-6 text-muted-foreground">
                     {faq.answer}
                   </p>
