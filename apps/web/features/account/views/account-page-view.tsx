@@ -7,6 +7,7 @@ import { ArrowLeftIcon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ManageProfileButton } from "@/features/account/components/manage-profile-button";
 import { SessionActionsMenu } from "@/features/account/components/session-actions-menu";
 import { AppShellHeader } from "@/features/auth/components/app-shell-header";
 import type { AnalysisQuota } from "@/lib/account-api";
@@ -139,9 +140,12 @@ export function AccountPageView({
             aria-labelledby="account-identity-heading"
             style={{ "--enter-delay": "100ms" } as CSSProperties}
           >
-            <h2 id="account-identity-heading" className="app-section-label">
-              Identity
-            </h2>
+            <div className="flex items-center justify-between gap-4">
+              <h2 id="account-identity-heading" className="app-section-label">
+                Identity
+              </h2>
+              <ManageProfileButton />
+            </div>
             <table className="app-spec-sheet mt-4 w-full">
               <tbody>
                 {profileLoading ? (
@@ -155,7 +159,7 @@ export function AccountPageView({
                     <SpecRow
                       label="Email"
                       value={email ?? "—"}
-                      note="Used for sign-in and account recovery through Clerk."
+                      note="Used for sign-in and account recovery. Change it under Manage."
                     />
                   </>
                 )}
