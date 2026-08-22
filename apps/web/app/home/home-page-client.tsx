@@ -1,12 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 
 import { useAnalysisQuota } from "@/features/account/view-models/use-analysis-quota";
 import { HomePageView } from "@/features/home/views/home-page-view";
 import { getInitials } from "@/features/home/lib/home-display";
 import { useResumeDashboard } from "@/features/resumes/view-models/use-resume-dashboard";
+import { isWelcomeComplete } from "@/features/welcome/model/welcome-profile";
 import {
   getAnalysisQuotaNavigationState,
   NEW_ANALYSIS_PATH,
@@ -27,6 +29,17 @@ export function HomePageClient() {
     isLoading: quotaLoading,
     error: quotaError,
   });
+
+  // First visit after signing up: collect the three questions before the
+  // account lands anywhere else. Skipping records a timestamp too, so this
+  // never asks twice.
+  const needsWelcome = isProfileLoaded && Boolean(user) && !isWelcomeComplete(user?.unsafeMetadata);
+
+  useEffect(() => {
+    if (needsWelcome) {
+      router.replace("/welcome");
+    }
+  }, [needsWelcome, router]);
 
   const displayName =
     user?.fullName?.trim() ||
