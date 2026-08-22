@@ -9,7 +9,7 @@ function ResumeLine({ width, tone }: { width: string; tone?: "keyword" | "bullet
       ? "color-mix(in oklab, var(--primary) 18%, transparent)"
       : tone === "bullet"
         ? "color-mix(in oklab, var(--tag-bullet) 20%, transparent)"
-        : "var(--muted)";
+        : "color-mix(in oklab, var(--foreground) 11%, transparent)";
 
   return <span className="block h-2 rounded-full" style={{ width, background }} />;
 }
@@ -39,28 +39,47 @@ export function HeroPreview() {
       </div>
 
       <div className="grid gap-px bg-border sm:grid-cols-[1.35fr_1fr]">
-        <div className="space-y-4 bg-card p-5 sm:p-6" aria-hidden="true">
-          <div className="space-y-2">
-            <ResumeLine width="45%" />
+        <div className="bg-card p-5 sm:p-6" aria-hidden="true">
+          <p className="text-sm font-semibold tracking-tight text-foreground">Alex Chen</p>
+          <p className="mt-0.5 text-caption text-muted-foreground">Backend Engineer</p>
+
+          <div className="mt-4 space-y-2">
+            <ResumeLine width="92%" />
             <ResumeLine width="72%" tone="keyword" />
           </div>
-          <div className="space-y-2 pt-2">
-            <ResumeLine width="30%" />
+
+          <p className="mt-5 text-caption font-medium tracking-wide text-muted-foreground">
+            EXPERIENCE
+          </p>
+          <div className="mt-2 space-y-2">
             <ResumeLine width="88%" />
             <ResumeLine width="80%" tone="bullet" />
             <ResumeLine width="64%" />
-          </div>
-          <div className="space-y-2 pt-2">
-            <ResumeLine width="34%" />
-            <ResumeLine width="76%" />
+            <ResumeLine width="84%" />
             <ResumeLine width="58%" />
+          </div>
+
+          <p className="mt-5 text-caption font-medium tracking-wide text-muted-foreground">
+            SKILLS
+          </p>
+          <div className="mt-2 space-y-2">
+            <ResumeLine width="76%" />
+            <ResumeLine width="62%" tone="keyword" />
+          </div>
+
+          <p className="mt-5 text-caption font-medium tracking-wide text-muted-foreground">
+            EDUCATION
+          </p>
+          <div className="mt-2 space-y-2">
+            <ResumeLine width="70%" />
+            <ResumeLine width="48%" />
           </div>
         </div>
 
         <div className="space-y-5 bg-card p-5 sm:p-6">
           <div>
             <p className="text-caption text-muted-foreground">Match score</p>
-            <p className="display-serif mt-1 text-4xl leading-none text-foreground">78</p>
+            <p className="display-serif mt-1 text-5xl leading-none text-foreground">78</p>
           </div>
 
           <div className="space-y-2">
