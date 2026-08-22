@@ -66,6 +66,7 @@ export function HomePageView({
             <HomeActionTiles
               className="app-surface-enter"
               quotaNav={quotaNav}
+              isProfileLoaded={isProfileLoaded}
               onNewAnalysis={onNewAnalysis}
               onScratchBuilder={onScratchBuilder}
             />
