@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 
 interface HomeActionTilesProps {
   quotaNav: AnalysisQuotaNavigationState;
+  /** While false the real tiles are unknowable, so placeholders stand in. */
+  isProfileLoaded: boolean;
   onNewAnalysis: () => void;
   onScratchBuilder: () => void;
   className?: string;
@@ -53,10 +55,27 @@ function TileBody({
  */
 export function HomeActionTiles({
   quotaNav,
+  isProfileLoaded,
   onNewAnalysis,
   onScratchBuilder,
   className,
 }: HomeActionTilesProps) {
+  // Which tiles apply depends on the account's quota. Rendering the ones we
+  // already know about would leave a single card stranded in a three column
+  // row, so the whole set waits behind placeholders.
+  if (!isProfileLoaded) {
+    return (
+      <div className={cn("grid gap-3 sm:grid-cols-3", className)} aria-hidden="true">
+        {[0, 1, 2].map((index) => (
+          <div
+            key={index}
+            className="app-skeleton min-h-28 rounded-[var(--radius-xl)] border border-border"
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <nav
       aria-label="Start something"
