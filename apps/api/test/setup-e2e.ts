@@ -8,3 +8,12 @@
  * present, so this also survives .env being loaded afterwards.
  */
 process.env.DATABASE_URL = "";
+
+/**
+ * Authentication is deliberately left unconfigured too.
+ *
+ * A machine with a real CLERK_SECRET_KEY in .env would otherwise take a
+ * different branch through the guard than CI, which has none -- so the same
+ * suite would assert different behaviour in the two places.
+ */
+process.env.CLERK_SECRET_KEY = "";
