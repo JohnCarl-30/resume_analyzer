@@ -31,12 +31,7 @@ export function HowItWorks() {
 
         <ol className="grid gap-8 sm:grid-cols-3 sm:gap-6">
           {STEPS.map((step, index) => (
-            <ScrollReveal
-              as="li"
-              key={step.number}
-              className="app-stagger-item"
-              style={{ "--enter-delay": `${index * 80}ms` } as React.CSSProperties}
-            >
+            <ScrollReveal as="li" key={step.number} delay={index * 80}>
               <span className="step-pill" aria-hidden="true">
                 {step.number}
               </span>
