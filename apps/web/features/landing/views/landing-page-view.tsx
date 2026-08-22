@@ -26,7 +26,7 @@ export function LandingPageView() {
       <section className="relative overflow-hidden">
         <HeroAtmosphere />
 
-        <div className="relative z-10 mx-auto max-w-6xl px-4 pt-14 sm:px-6 sm:pt-20 lg:px-8">
+        <div className="relative z-10 mx-auto max-w-6xl px-4 pt-14 pb-px sm:px-6 sm:pt-20 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <Link
               href="/create-resume"
@@ -84,14 +84,13 @@ export function LandingPageView() {
           {/* The product shot sits directly under the calls to action and runs
               past the fold, so the page reads as a tool rather than a pitch. */}
           <div
-            className="animate-enter-up mx-auto mt-12 max-w-4xl sm:mt-16"
+            className="animate-enter-up mx-auto mt-12 max-w-5xl sm:mt-16"
             style={enterDelay(400)}
           >
             <HeroPreview />
           </div>
         </div>
 
-        <div className="h-16 sm:h-24" aria-hidden="true" />
       </section>
 
       <HowItWorks />
