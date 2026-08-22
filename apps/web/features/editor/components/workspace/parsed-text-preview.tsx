@@ -60,12 +60,12 @@ export const ParsedTextPreview = React.memo(function ParsedTextPreview({ text }:
           <div key={`${firstLine}-${blockIndex}`} className="mb-5 space-y-1 last:mb-0">
             {block.map((line, lineIndex) =>
               blockIndex === 0 && lineIndex === 0 ? (
-                <h1
+                <p
                   key={`${line}-${lineIndex}`}
                   className="text-center text-[2.65rem] font-semibold uppercase tracking-tight text-slate-950"
                 >
                   {line}
-                </h1>
+                </p>
               ) : (
                 <p
                   key={`${line}-${lineIndex}`}
