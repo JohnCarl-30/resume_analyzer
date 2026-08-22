@@ -30,6 +30,7 @@ describe("HomeActionTiles", () => {
     render(
       <HomeActionTiles
         quotaNav={getAnalysisQuotaNavigationState(READY_QUOTA, false, false)}
+        isProfileLoaded
         onNewAnalysis={onNewAnalysis}
         onScratchBuilder={vi.fn()}
       />,
@@ -43,6 +44,7 @@ describe("HomeActionTiles", () => {
     render(
       <HomeActionTiles
         quotaNav={getAnalysisQuotaNavigationState(SPENT_QUOTA, false, false)}
+        isProfileLoaded
         onNewAnalysis={vi.fn()}
         onScratchBuilder={vi.fn()}
       />,
@@ -59,6 +61,7 @@ describe("HomeActionTiles", () => {
     render(
       <HomeActionTiles
         quotaNav={getAnalysisQuotaNavigationState(READY_QUOTA, false, false)}
+        isProfileLoaded
         onNewAnalysis={vi.fn()}
         onScratchBuilder={vi.fn()}
       />,
@@ -75,6 +78,7 @@ describe("HomeActionTiles", () => {
     render(
       <HomeActionTiles
         quotaNav={getAnalysisQuotaNavigationState(READY_QUOTA, false, false)}
+        isProfileLoaded
         onNewAnalysis={vi.fn()}
         onScratchBuilder={onScratchBuilder}
       />,
@@ -82,5 +86,19 @@ describe("HomeActionTiles", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /build from scratch/i }));
     expect(onScratchBuilder).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows placeholders until the profile has loaded", () => {
+    render(
+      <HomeActionTiles
+        quotaNav={getAnalysisQuotaNavigationState(READY_QUOTA, false, false)}
+        isProfileLoaded={false}
+        onNewAnalysis={vi.fn()}
+        onScratchBuilder={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: /check my resume/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /account settings/i })).not.toBeInTheDocument();
   });
 });
