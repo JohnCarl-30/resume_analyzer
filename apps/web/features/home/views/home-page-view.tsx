@@ -7,7 +7,8 @@ import type { ResumeSummary } from "@/features/resumes/model/resume";
 import type { AnalysisQuota } from "@/lib/account-api";
 import type { AnalysisQuotaNavigationState } from "@/lib/analysis-quota-navigation";
 
-import { HomeIdentityBar } from "../components/home-identity-bar";
+import { HomeActionTiles } from "../components/home-action-tiles";
+import { HomeGreeting } from "../components/home-greeting";
 import { SavedChecksPanel } from "../components/saved-checks-panel";
 
 interface HomePageViewProps {
@@ -49,9 +50,9 @@ export function HomePageView({
     <>
       <AppShellHeader active="home" quotaNav={quotaNav} />
       <main id="main-content" className="app-home min-h-screen bg-background text-foreground">
-        <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+        <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
           <div className="app-home-launchpad">
-            <HomeIdentityBar
+            <HomeGreeting
               className="app-surface-enter"
               quota={quota}
               quotaNav={quotaNav}
@@ -60,13 +61,17 @@ export function HomePageView({
               displayName={displayName}
               email={email}
               initials={initials}
+              onQuotaRetry={onQuotaRetry}
+            />
+            <HomeActionTiles
+              className="app-surface-enter"
+              quotaNav={quotaNav}
               onNewAnalysis={onNewAnalysis}
               onScratchBuilder={onScratchBuilder}
-              onQuotaRetry={onQuotaRetry}
             />
             <SavedChecksPanel
               className="app-surface-enter"
-              style={{ "--enter-delay": "70ms" } as CSSProperties}
+              style={{ "--enter-delay": "110ms" } as CSSProperties}
               quotaNav={quotaNav}
               resumes={resumes}
               isLoading={resumesLoading}
