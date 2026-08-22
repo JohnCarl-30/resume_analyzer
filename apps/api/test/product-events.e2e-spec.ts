@@ -86,5 +86,24 @@ describe("Product events (e2e)", () => {
     it("rejects an empty body", async () => {
       await request(app.getHttpServer()).post("/api/events").send({}).expect(400);
     });
+
+    // Express leaves a malformed body as {} rather than throwing, so this has
+    // to come back as a validation failure, not a 500.
+    it("rejects a malformed JSON body", async () => {
+      await request(app.getHttpServer())
+        .post("/api/events")
+        .set("Content-Type", "application/json")
+        .send('{"name":')
+        .expect(400);
+    });
+
+    it("ignores unknown fields rather than rejecting them", async () => {
+      const created = await request(app.getHttpServer())
+        .post("/api/events")
+        .send({ name: "resume_print", somethingElse: "ignored" })
+        .expect(201);
+
+      expect(created.body.data).not.toHaveProperty("somethingElse");
+    });
   });
 });
