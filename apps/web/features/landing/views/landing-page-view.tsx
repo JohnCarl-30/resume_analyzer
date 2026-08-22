@@ -4,7 +4,10 @@ import { ArrowRightIcon } from "@radix-ui/react-icons";
 
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { Button } from "@/components/ui/button";
+import { BulletRewrite } from "@/features/landing/components/bullet-rewrite";
 import { ClosingCta } from "@/features/landing/components/closing-cta";
+import { FaqSection } from "@/features/landing/components/faq-section";
+import { FeatureGrid } from "@/features/landing/components/feature-grid";
 import { HeroAtmosphere } from "@/features/landing/components/hero-atmosphere";
 import { HeroPreview } from "@/features/landing/components/hero-preview";
 import { HowItWorks } from "@/features/landing/components/how-it-works";
@@ -112,6 +115,12 @@ export function LandingPageView() {
 
         <StickyCta />
       </section>
+
+      <BulletRewrite />
+
+      <FeatureGrid />
+
+      <FaqSection />
 
       <ClosingCta />
 
