@@ -10,3 +10,8 @@ dist/
 .env*
 .DS_Store
 NOTES.md
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
