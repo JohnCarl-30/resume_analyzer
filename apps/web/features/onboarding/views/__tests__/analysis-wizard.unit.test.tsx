@@ -163,8 +163,9 @@ const minimalAnalysisResult: ResumeAnalysisResult = {
 // ---------------------------------------------------------------------------
 
 /** Returns true if the step pill text is present in the DOM (at least once). */
-function hasStepPill(text: string): boolean {
-  return screen.getAllByText(text).length > 0;
+/** The progress stepper names the current step as "Step 3 of 5 · Add resume". */
+function isOnStep(position: number): boolean {
+  return screen.getAllByText(new RegExp(`Step ${position} of 5`)).length > 0;
 }
 
 /** Wait until quota loading finishes and wizard content is shown. */
@@ -249,7 +250,7 @@ describe("AnalysisWizard unit tests", () => {
       await advanceToStep3();
 
       // Style step is shown — click "Check my resume"
-      expect(hasStepPill("STEP 4 OF 5")).toBe(true);
+      expect(isOnStep(4)).toBe(true);
       const generateBtn = screen.getByRole("button", { name: /check my resume/i });
       fireEvent.click(generateBtn);
 
@@ -302,7 +303,7 @@ describe("AnalysisWizard unit tests", () => {
 
       // On failure, wizard resets to step 1
       await waitFor(() => {
-        expect(hasStepPill("STEP 1 OF 5")).toBe(true);
+        expect(isOnStep(1)).toBe(true);
       });
     });
 
@@ -334,7 +335,7 @@ describe("AnalysisWizard unit tests", () => {
       await advanceToStep3();
 
       // Confirm we are on template step
-      expect(hasStepPill("STEP 4 OF 5")).toBe(true);
+      expect(isOnStep(4)).toBe(true);
 
       // Click "Check my resume"
       const generateBtn = screen.getByRole("button", { name: /check my resume/i });
@@ -365,7 +366,7 @@ describe("AnalysisWizard unit tests", () => {
 
       // Should remain on template step with an error message
       await waitFor(() => {
-        expect(hasStepPill("STEP 4 OF 5")).toBe(true);
+        expect(isOnStep(4)).toBe(true);
         expect(screen.getByText("Server error")).toBeTruthy();
       });
     });
