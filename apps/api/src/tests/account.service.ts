@@ -27,8 +27,9 @@ async function run() {
   console.log("Account service checks passed.");
 }
 
-// Top-level await is unavailable now the package compiles to CommonJS.
-void run().catch((error: unknown) => {
+try {
+  await run();
+} catch (error) {
   console.error("Account service checks failed.", error);
   process.exitCode = 1;
-});
+}

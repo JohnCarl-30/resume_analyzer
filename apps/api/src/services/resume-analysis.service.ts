@@ -1,4 +1,4 @@
-import { loadAiSdk } from "../ai/ai-sdk.js";
+import { generateObject } from "ai";
 import { z } from "zod";
 
 import { analyzeAtsAlignment } from "../analyzers/ats.analyzer.js";
@@ -279,9 +279,8 @@ async function analyzeWithAi(input: ResumeAnalysisInput): Promise<ResumeAnalysis
       ? `Required skills from JD: ${input.requiredSkills.join(", ")}`
       : "No explicit required skills were extracted — infer must-haves from the job description.";
 
-  const { generateObject } = await loadAiSdk();
   const { object } = await generateObject({
-    model: await aiProvider.getModel(),
+    model: aiProvider.getModel(),
     schema: aiResumeAnalysisSchema,
     temperature: 0.2,
     system: [
