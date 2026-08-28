@@ -18,6 +18,7 @@ import { StepTargetRole } from "../components/step-target-role";
 import { StepJobDescription } from "../components/step-job-description";
 import { StepDocumentUpload } from "../components/step-document-upload";
 import { StepTemplateSelection } from "../components/step-template-selection";
+import { WizardProgress } from "../components/wizard-progress";
 import { WorkspaceSkeleton } from "../../editor/components/workspace/workspace-skeleton";
 import type { ResumeAnalysisResult } from "../../editor/model/resume-analysis";
 import {
@@ -625,7 +626,6 @@ export function AnalysisWizard({ onExit, initialAnalysisId }: AnalysisWizardProp
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className="step-pill hidden sm:inline">{`STEP ${step} OF 5`}</span>
                   <AccountMenu />
                 </div>
               </header>
@@ -636,44 +636,11 @@ export function AnalysisWizard({ onExit, initialAnalysisId }: AnalysisWizardProp
                     <div className="sr-only" aria-live="polite" aria-atomic="true">
                       Step {step} of {stepOverview.length}: {stepOverview[step - 1]?.title}
                     </div>
-                    <div className="mx-auto grid max-w-5xl grid-cols-5 gap-2">
-                      {stepOverview.map((stepItem, index) => {
-                        const stepNum = index + 1;
-                        const isActive = step === stepNum;
-                        const isCompleted = step > stepNum;
-
-                        return (
-                          <div key={stepItem.id} className="min-w-0">
-                            <div
-                              className={`h-1.5 rounded-full transition ${
-                                isCompleted || isActive
-                                  ? "bg-[color:var(--brand)]"
-                                  : "bg-[color:var(--page-line)]"
-                              }`}
-                              role="progressbar"
-                              aria-valuenow={isCompleted ? 100 : isActive ? 50 : 0}
-                              aria-valuemin={0}
-                              aria-valuemax={100}
-                              aria-label={`${stepItem.title}: ${isCompleted ? "completed" : isActive ? "in progress" : "not started"}`}
-                            />
-                            <div className="mt-2 hidden min-w-0 items-center justify-between gap-2 text-xs sm:flex">
-                              <span
-                                className={`truncate font-medium ${
-                                  isActive
-                                    ? "text-[color:var(--brand)]"
-                                    : isCompleted
-                                      ? "text-[color:var(--page-text)]"
-                                      : "text-[color:var(--page-muted)]"
-                                }`}
-                              >
-                                {stepItem.title}
-                              </span>
-                              <span className="shrink-0 text-[color:var(--page-muted)]">{stepNum}</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                    <WizardProgress
+                      className="mx-auto max-w-5xl"
+                      current={step}
+                      steps={stepOverview.map((item) => item.title)}
+                    />
                   </nav>
                 </div>
 
