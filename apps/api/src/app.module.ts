@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 
+import { AccountModule } from "./account/account.module.js";
 import { DatabaseModule } from "./database/database.module.js";
 import { HealthController } from "./health/health.controller.js";
 import { ProductEventsModule } from "./product-events/product-events.module.js";
@@ -21,6 +22,7 @@ import { ProductEventsModule } from "./product-events/product-events.module.js";
       envFilePath: [".env"],
     }),
     DatabaseModule.forRoot(),
+    AccountModule.register(),
     ProductEventsModule.register(),
   ],
   controllers: [HealthController],
