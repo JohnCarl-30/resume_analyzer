@@ -3,6 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 
 import { AccountModule } from "./account/account.module.js";
 import { DatabaseModule } from "./database/database.module.js";
+import { EnhancementModule } from "./enhancement/enhancement.module.js";
 import { HealthController } from "./health/health.controller.js";
 import { JobApplicationsModule } from "./job-applications/job-applications.module.js";
 import { ProductEventsModule } from "./product-events/product-events.module.js";
@@ -24,6 +25,7 @@ import { ProductEventsModule } from "./product-events/product-events.module.js";
     }),
     DatabaseModule.forRoot(),
     AccountModule.register(),
+    EnhancementModule,
     JobApplicationsModule.register(),
     ProductEventsModule.register(),
   ],
