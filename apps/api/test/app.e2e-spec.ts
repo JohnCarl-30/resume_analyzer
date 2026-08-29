@@ -42,7 +42,7 @@ describe("API (e2e)", () => {
     // so an unported route is genuinely absent rather than proxied anywhere.
     // /api/resumes is absent for a different reason -- it was removed as an
     // unauthenticated, unscoped endpoint that nothing called.
-    it.each(["/api/analysis", "/api/enhance", "/api/resumes"])(
+    it.each(["/api/analysis", "/api/uploads/sign", "/api/resumes"])(
       "%s returns 404",
       async (path) => {
         await request(app.getHttpServer()).get(path).expect(404);
