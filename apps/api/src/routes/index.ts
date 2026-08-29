@@ -6,7 +6,6 @@ import { analysisRouter } from "./analysis.routes.js";
 import { enhancementRouter } from "./enhancement.routes.js";
 import { jobApplicationRouter } from "./job-application.routes.js";
 import { productEventsRouter } from "./product-events.routes.js";
-import { resumeRouter } from "./resume.routes.js";
 import { uploadRouter } from "./upload.routes.js";
 
 export const apiRouter = new Hono<AppEnv>();
@@ -14,7 +13,6 @@ export const apiRouter = new Hono<AppEnv>();
 apiRouter.route("/analysis", analysisRouter);
 apiRouter.route("/account", accountRouter);
 apiRouter.route("/uploads", uploadRouter);
-apiRouter.route("/resumes", resumeRouter);
 apiRouter.route("/enhance", enhancementRouter);
 apiRouter.route("/events", productEventsRouter);
 apiRouter.route("/applications", jobApplicationRouter);
