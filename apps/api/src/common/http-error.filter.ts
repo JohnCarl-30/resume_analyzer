@@ -34,8 +34,17 @@ export class HttpErrorFilter implements ExceptionFilter {
       const body = exception.getResponse();
 
       // Validation failures already carry the legacy shape from
-      // ZodValidationPipe, so they are passed through untouched.
-      if (typeof body === "object" && body !== null && "error" in body) {
+      // ZodValidationPipe, so they are passed through untouched. Nest's own
+      // default body ALSO has an "error" field -- holding the status text,
+      // not the message -- so it must not match this branch, or a
+      // BadRequestException("Role is required.") comes out as
+      // {"error":"Bad Request"}.
+      if (
+        typeof body === "object" &&
+        body !== null &&
+        "error" in body &&
+        !("statusCode" in body)
+      ) {
         response.status(status).json(body);
         return;
       }
