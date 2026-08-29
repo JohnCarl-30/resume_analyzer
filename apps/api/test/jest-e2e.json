@@ -16,7 +16,9 @@
     ]
   },
   "moduleNameMapper": {
-    "^(\\.{1,2}/.*)\\.js$": "$1"
+    "^(\\.{1,2}/.*)\\.js$": "$1",
+    "^ai$": "<rootDir>/stubs/ai-sdk.cjs",
+    "^@ai-sdk/openai$": "<rootDir>/stubs/ai-sdk.cjs"
   },
   "setupFiles": [
     "<rootDir>/setup-e2e.ts"
