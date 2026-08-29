@@ -16,12 +16,23 @@ export type OpenAiSdk = typeof import("@ai-sdk/openai", { with: { "resolution-mo
 let aiSdk: Promise<AiSdk> | null = null;
 let openAiSdk: Promise<OpenAiSdk> | null = null;
 
+/**
+ * Jest's CommonJS VM cannot execute a real dynamic import. Its config maps
+ * these package names to stubs, which require() resolves synchronously --
+ * outside Jest the branch is dead and the true ESM import runs.
+ */
+const underJest = process.env.JEST_WORKER_ID !== undefined;
+
 export function loadAiSdk(): Promise<AiSdk> {
-  aiSdk ??= import("ai");
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  aiSdk ??= underJest ? Promise.resolve(require("ai") as AiSdk) : import("ai");
   return aiSdk;
 }
 
 export function loadOpenAiSdk(): Promise<OpenAiSdk> {
-  openAiSdk ??= import("@ai-sdk/openai");
+  openAiSdk ??= underJest
+    ? // eslint-disable-next-line @typescript-eslint/no-require-imports
+      Promise.resolve(require("@ai-sdk/openai") as OpenAiSdk)
+    : import("@ai-sdk/openai");
   return openAiSdk;
 }
