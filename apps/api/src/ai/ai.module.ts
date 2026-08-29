@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 
+import { AiProviderService } from "./ai-provider.service.js";
 import { loadAiSdk, type AiSdk } from "./ai-sdk.js";
 
 /** Injection token carrying the Vercel AI SDK namespace. */
@@ -22,7 +23,8 @@ export const AI_SDK = Symbol("AI_SDK");
       provide: AI_SDK,
       useFactory: (): Promise<AiSdk> => loadAiSdk(),
     },
+    AiProviderService,
   ],
-  exports: [AI_SDK],
+  exports: [AI_SDK, AiProviderService],
 })
 export class AiModule {}
