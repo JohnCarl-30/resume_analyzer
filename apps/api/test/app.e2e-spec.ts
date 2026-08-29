@@ -37,9 +37,11 @@ describe("API (e2e)", () => {
     });
   });
 
-  describe("routes not yet ported", () => {
+  describe("routes that are absent", () => {
     // The port is a single cutover: nothing falls through to the old stack,
     // so an unported route is genuinely absent rather than proxied anywhere.
+    // /api/resumes is absent for a different reason -- it was removed as an
+    // unauthenticated, unscoped endpoint that nothing called.
     it.each(["/api/analysis", "/api/applications", "/api/resumes"])(
       "%s returns 404",
       async (path) => {
