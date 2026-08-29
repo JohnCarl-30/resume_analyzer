@@ -37,7 +37,15 @@ export function ResumeDocumentArt() {
       aria-hidden="true"
       className="auth-document-art mx-auto w-full max-w-[17.5rem] text-foreground"
     >
-      <svg viewBox="0 0 220 280" fill="none" className="h-auto w-full" role="presentation">
+      {/* overflow-visible: the pin labels are anchored at the document's edges
+          and extend past the viewBox, which an SVG clips by default — "Bullets"
+          rendered as "3ullets". The pane has ample margin to absorb them. */}
+      <svg
+        viewBox="0 0 220 280"
+        fill="none"
+        className="h-auto w-full overflow-visible"
+        role="presentation"
+      >
         <rect
           x="34"
           y="16"
