@@ -19,6 +19,11 @@ export class AccountModule {
     const usePostgres = DatabaseModule.isConfigured;
 
     return {
+      // Global so the analysis module can inject AccountService without
+      // re-registering the module -- a second registration would carry its own
+      // in-memory usage store, and the quota spent through one would be
+      // invisible to the other.
+      global: true,
       module: AccountModule,
       imports: usePostgres
         ? [TypeOrmModule.forFeature([AccountAnalysisUsageEntity])]
