@@ -38,11 +38,10 @@ describe("API (e2e)", () => {
   });
 
   describe("routes that are absent", () => {
-    // The port is a single cutover: nothing falls through to the old stack,
-    // so an unported route is genuinely absent rather than proxied anywhere.
-    // /api/resumes is absent for a different reason -- it was removed as an
-    // unauthenticated, unscoped endpoint that nothing called.
-    it.each(["/api/analysis", "/api/uploads/sign", "/api/resumes"])(
+    // Every surviving route is ported now. These two were removed outright:
+    // unauthenticated endpoints that nothing called (an unscoped resume list
+    // and an anonymous R2 presign).
+    it.each(["/api/uploads/sign", "/api/resumes"])(
       "%s returns 404",
       async (path) => {
         await request(app.getHttpServer()).get(path).expect(404);
