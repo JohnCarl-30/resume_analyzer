@@ -7,6 +7,7 @@ import {
   Logger,
 } from "@nestjs/common";
 import type { Response } from "express";
+import { ZodError } from "zod";
 
 import { HttpError } from "../utils/http-error.js";
 
@@ -22,6 +23,17 @@ export class HttpErrorFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const response = host.switchToHttp().getResponse<Response>();
+
+    // Some services parse their own input with Zod rather than taking a
+    // validated body from a pipe -- the analysis pipeline re-validates on
+    // update, for instance. Those errors were 400s under Express and Hono.
+    if (exception instanceof ZodError) {
+      response.status(HttpStatus.BAD_REQUEST).json({
+        error: "Validation failed",
+        details: exception.flatten(),
+      });
+      return;
+    }
 
     // Services throw HttpError directly; it carries its own status.
     if (exception instanceof HttpError) {
