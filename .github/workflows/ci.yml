@@ -34,7 +34,7 @@ jobs:
 
       - name: Build Web
         env:
-          NEXT_PUBLIC_API_BASE_URL: https://resume-analyzer-api.johncarlsantos30.workers.dev
+          NEXT_PUBLIC_API_BASE_URL: https://resumae-api.greenocean-b306295a.malaysiawest.azurecontainerapps.io
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           NEXT_PUBLIC_CLERK_SIGN_IN_URL: /auth/sign-in
@@ -72,7 +72,7 @@ jobs:
       - name: Run browser tests
         working-directory: apps/web
         env:
-          NEXT_PUBLIC_API_BASE_URL: https://resume-analyzer-api.johncarlsantos30.workers.dev
+          NEXT_PUBLIC_API_BASE_URL: https://resumae-api.greenocean-b306295a.malaysiawest.azurecontainerapps.io
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           NEXT_PUBLIC_CLERK_SIGN_IN_URL: /auth/sign-in
