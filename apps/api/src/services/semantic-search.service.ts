@@ -1,5 +1,5 @@
 import { embeddingService } from "./embedding.service.js";
-import type { PersistedResumeAnalysis } from "../repositories/analysis.repository.js";
+import type { PersistedResumeAnalysis } from "../analysis/repositories/analysis.repository.js";
 
 interface SemanticMatch {
   analysisId: string;

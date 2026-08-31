@@ -1,10 +1,6 @@
 import { env } from "../config/env.js";
-import { db } from "../db/client.js";
-import { inMemoryAnalysisRepository } from "../repositories/in-memory-analysis.repository.js";
-import { postgresAnalysisRepository } from "../repositories/postgres-analysis.repository.js";
 import type { ExtractedResumeProfile } from "../types/resume-extraction.js";
 
-const analysisRepository = db.isConfigured ? postgresAnalysisRepository : inMemoryAnalysisRepository;
 
 interface FewShotExample {
   id: string;
