@@ -9,7 +9,8 @@
     "rootDir": "src",
     "types": [
       "node",
-      "jest"
+      "jest",
+      "multer"
     ],
     "isolatedModules": true
   },
