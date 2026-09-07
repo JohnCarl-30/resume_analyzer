@@ -18,18 +18,18 @@ Resume Analyzer is a full-stack monorepo for AI-powered resume creation and anal
 | Layer | Technology |
 | --- | --- |
 | Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS v4 |
-| Backend | Express, TypeScript, ESM |
+| Backend | NestJS 11, TypeScript |
 | AI | OpenAI via Vercel AI SDK |
 | Validation | Zod |
-| Database | Neon, Drizzle ORM (optional) |
-| Storage | Cloudflare R2 (optional, mocked locally) |
+| Database | Neon Postgres, TypeORM (optional — falls back to in-memory) |
+| Hosting | Vercel (web), Azure Container Apps (API) |
 | Workspace | pnpm monorepo |
 
 ## Monorepo Structure
 
 ```text
 apps/
-  api/   Express backend
+  api/   NestJS backend
   web/   Next.js frontend
 infra/   deployment and infrastructure config
 ```
@@ -55,10 +55,10 @@ infra/   deployment and infrastructure config
 | `GET` | `/api/analysis/:id` | Fetch a saved analysis |
 | `PATCH` | `/api/analysis/:id` | Update job description and re-analyze |
 | `POST` | `/api/enhance/bullets` | AI-enhance experience bullet points |
-| `POST` | `/api/uploads/sign` | Create a presigned R2 upload URL |
-| `POST` | `/api/resumes` | Save resume metadata |
-| `GET` | `/api/resumes` | List resumes |
-| `GET` | `/api/resumes/:resumeId` | Get one resume |
+| `POST` | `/api/enhance/tailor-resume` | Tailor a resume draft to a job post |
+| `GET` | `/api/account/analysis-quota` | The account's free-check allowance |
+| `GET/POST` | `/api/applications` | Job application tracker (plus `GET/PATCH/DELETE /:id`) |
+| `POST` | `/api/events` | Product analytics events (plus `GET /summary`) |
 
 ## Getting Started
 
@@ -92,9 +92,8 @@ AI_EXTRACTION_MODEL=gpt-4o-mini
 # Optional: enables database persistence
 DATABASE_URL=postgres://user:password@host/database?sslmode=require
 
-# Optional: enables real R2 uploads (otherwise mocked)
-R2_BUCKET_NAME=resume-analyzer
-R2_PUBLIC_BASE_URL=https://your-bucket.r2.dev
+# Optional: error reporting
+SENTRY_DSN=
 ```
 
 #### Web environment (`apps/web/.env.local`)
@@ -152,27 +151,28 @@ curl -X POST http://localhost:4000/api/enhance/bullets \
 | `corepack pnpm build:api` | Build the API to `dist/` |
 | `corepack pnpm build:web` | Build the Next.js frontend |
 
-> **Note:** `test` and `db:migrate` scripts do not exist yet. Use `corepack pnpm exec tsx src/tests/<script>.ts` to run manual API sanity checks.
+| `corepack pnpm test` | Run every suite: API unit + e2e (Jest), web unit (vitest) |
+| `corepack pnpm --filter @resume-analyzer/web test:e2e` | Browser tests (Playwright) |
+| `corepack pnpm --filter @resume-analyzer/api migration:generate` | Generate a TypeORM migration |
 
 ## Development Notes
 
-- The API is strictly ESM (`"type": "module"`). Always use `.js` extensions in imports, even for TypeScript files.
+- The API compiles to CommonJS (NestJS + ts-jest convention) but keeps explicit `.js` extensions in imports; the web app is ESM.
 - The API uses Zod for environment validation but starts gracefully with defaults (`PORT=4000`, `APP_ORIGIN=http://localhost:3000`).
 - Without `DATABASE_URL`, the API falls back to in-memory storage. Analysis persistence only lasts while the process is running.
 - Without `OPENAI_API_KEY`, AI extraction and analysis fall back to parser-only mode.
-- Uploaded files go directly from the browser to R2 after the API signs the upload request. Without R2 credentials, a mocked public URL is returned.
 - The frontend uses an MVVM-style feature structure: `views/` for UI, `view-models/` for state, and `model/` for types.
 
 ## Backend Walkthrough
 
-The Express backend in `apps/api` is split into small layers:
+The NestJS backend in `apps/api` is organised by feature module:
 
-- `src/server.ts`: starts the HTTP server with graceful shutdown
-- `src/app.ts`: creates the Express app, middleware, and top-level routes
-- `src/routes/*.routes.ts`: maps URLs and HTTP verbs
-- `src/controllers/*.controller.ts`: reads the request and shapes the HTTP response
-- `src/services/*.service.ts`: holds business logic
-- `src/schemas/*.schema.ts`: validates input with Zod
+- `src/main.ts`: bootstrap — CORS, the global error filter, graceful shutdown
+- `src/app.module.ts`: registers every feature module
+- `src/<feature>/`: controller + service + repository per domain (`analysis`, `account`, `job-applications`, `enhancement`, `product-events`), each choosing TypeORM or an in-memory repository at startup
+- `src/services/`: framework-free pipeline stages (parsing, JD extraction, scoring, analyzers)
+- `src/schemas/*.schema.ts`: Zod input validation, applied at the controller boundary
+- `src/database/`: TypeORM entities and the shared data source
 
 ## Troubleshooting
 
@@ -181,16 +181,14 @@ The Express backend in `apps/api` is split into small layers:
 | API fails with `ZodError` on startup | Confirm `apps/api/.env` values match the Zod schema |
 | Frontend cannot connect to API | Confirm `apps/web/.env.local` points to the API base URL |
 | AI extraction returns empty profile | Confirm `OPENAI_API_KEY` is set in `apps/api/.env` |
-| Upload request fails | Confirm R2 credentials and bucket name if using real R2 |
 | Type errors in `apps/web` tests | Tests are excluded from `tsc`; run `npx vitest` from `apps/web/` instead |
 
 ## Deployment
 
-- See [`docs/DEPLOY.md`](docs/DEPLOY.md) for Vercel (web) + Cloudflare (API/R2) + Supabase setup.
+- See [`docs/DEPLOY.md`](docs/DEPLOY.md) for Vercel (web) + Azure Container Apps (API) + Neon setup.
 
 ## Roadmap Ideas
 
-- Authentication and user accounts
 - OCR and image-based text extraction
 - Embeddings and semantic job matching
 - Collaborative editing
