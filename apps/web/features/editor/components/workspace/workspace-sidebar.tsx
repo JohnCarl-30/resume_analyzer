@@ -1,10 +1,13 @@
 import {
   BackpackIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
   CubeIcon,
   FileTextIcon,
   IdCardIcon,
   Pencil1Icon,
   PersonIcon,
+  PlusIcon,
   StarIcon,
 } from "@radix-ui/react-icons";
 import React from "react";
@@ -104,6 +107,14 @@ const workspaceSections = [
  * from them cannot look like one set. These inherit currentColor and sit on
  * the text baseline like the rest of the UI.
  */
+/**
+ * Icon-only controls need a hit area of their own: the glyphs are ~15px, so
+ * an unpadded button is a 15px tap target. 44px is the minimum Apple and
+ * Google both recommend for touch.
+ */
+const iconButtonClass =
+  "inline-flex size-11 items-center justify-center rounded-lg transition sm:size-8";
+
 function sectionIcon(icon: string) {
   const iconMap: Record<string, React.ReactNode> = {
     personal: <PersonIcon aria-hidden="true" />,
@@ -412,9 +423,14 @@ export function WorkspaceSidebar({
                     <button
                       type="button"
                       onClick={() => handleSectionOpen(section.id)}
-                      className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[color:var(--page-muted)] transition hover:bg-[color:var(--brand-soft)] hover:text-[color:var(--brand)]"
+                      aria-label={activeSectionId === section.id ? "Collapse section" : "Expand section"}
+                      className={`${iconButtonClass} rounded-full text-[color:var(--page-muted)] hover:bg-[color:var(--brand-soft)] hover:text-[color:var(--brand)]`}
                     >
-                      {activeSectionId === section.id ? <span>▼</span> : <span>▶</span>}
+                      {activeSectionId === section.id ? (
+                        <ChevronDownIcon aria-hidden="true" />
+                      ) : (
+                        <ChevronRightIcon aria-hidden="true" />
+                      )}
                     </button>
                     <span className="text-[color:var(--page-muted)]">{sectionIcon(section.icon)}</span>
                     <button
@@ -431,7 +447,7 @@ export function WorkspaceSidebar({
                       <button
                         type="button"
                         onClick={() => setActiveSectionId(section.id)}
-                        className="text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)]"
+                        className={`${iconButtonClass} text-[color:var(--brand)] hover:bg-[color:var(--page-bg)] hover:text-[color:var(--brand-strong)]`}
                         aria-label="Edit section"
                       >
                         <Pencil1Icon aria-hidden="true" />
@@ -441,18 +457,18 @@ export function WorkspaceSidebar({
                         <button
                           type="button"
                           onClick={() => handleSectionAdd(section.id)}
-                          className="text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)]"
+                          className={`${iconButtonClass} text-[color:var(--brand)] hover:bg-[color:var(--page-bg)] hover:text-[color:var(--brand-strong)]`}
                           aria-label="Add item"
                         >
-                          <span>➕</span>
+                          <PlusIcon aria-hidden="true" />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleSectionOpen(section.id)}
-                          className="text-[color:var(--page-muted)] transition hover:text-[color:var(--page-text)]"
+                          className={`${iconButtonClass} text-[color:var(--page-muted)] hover:bg-[color:var(--page-bg)] hover:text-[color:var(--page-text)]`}
                           aria-label="Open section"
                         >
-                          <span>▶</span>
+                          <ChevronRightIcon aria-hidden="true" />
                         </button>
                       </>
                     )}
@@ -473,7 +489,7 @@ export function WorkspaceSidebar({
                 onClick={openAddContentModal}
                 className="inline-flex w-full items-center justify-center gap-3 rounded-[14px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] px-4 py-3 text-base font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
               >
-                <span>➕</span>
+                <PlusIcon aria-hidden="true" />
                 Add Section
               </button>
             </div>
@@ -487,7 +503,7 @@ export function WorkspaceSidebar({
               onClick={openAddContentModal}
               className="inline-flex w-full items-center justify-center gap-2 rounded-[12px] border border-[color:var(--page-line)] bg-[color:var(--page-surface)] px-3 py-2.5 text-sm font-medium text-[color:var(--page-text)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
             >
-              <span>➕</span>
+              <PlusIcon aria-hidden="true" />
               Add Section
             </button>
           </div>
