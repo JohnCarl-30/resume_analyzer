@@ -1,3 +1,12 @@
+import {
+  BackpackIcon,
+  CubeIcon,
+  FileTextIcon,
+  IdCardIcon,
+  Pencil1Icon,
+  PersonIcon,
+  StarIcon,
+} from "@radix-ui/react-icons";
 import React from "react";
 import type { ResumeForm } from "../../model/resume-form";
 import type { ResumeAnalysisResult } from "../../model/resume-analysis";
@@ -87,16 +96,24 @@ const workspaceSections = [
   { id: "awards", label: "Awards & Honors", icon: "awards", expanded: false },
 ] as const;
 
+/**
+ * Line icons rather than emoji.
+ *
+ * Emoji render in each platform's own house style -- colour, weight and
+ * baseline all differ from Apple to Windows to Android -- so a sidebar built
+ * from them cannot look like one set. These inherit currentColor and sit on
+ * the text baseline like the rest of the UI.
+ */
 function sectionIcon(icon: string) {
   const iconMap: Record<string, React.ReactNode> = {
-    personal: <span>👤</span>,
-    education: <span>🎓</span>,
-    experience: <span>💼</span>,
-    leadership: <span>👥</span>,
-    awards: <span>🏆</span>,
-    projects: <span>🔧</span>,
+    personal: <PersonIcon aria-hidden="true" />,
+    education: <BackpackIcon aria-hidden="true" />,
+    experience: <IdCardIcon aria-hidden="true" />,
+    leadership: <PersonIcon aria-hidden="true" />,
+    awards: <StarIcon aria-hidden="true" />,
+    projects: <CubeIcon aria-hidden="true" />,
   };
-  return iconMap[icon] ?? <span>✨</span>;
+  return iconMap[icon] ?? <FileTextIcon aria-hidden="true" />;
 }
 
 interface WorkspaceSidebarProps {
@@ -417,7 +434,7 @@ export function WorkspaceSidebar({
                         className="text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)]"
                         aria-label="Edit section"
                       >
-                        <span>✏️</span>
+                        <Pencil1Icon aria-hidden="true" />
                       </button>
                     ) : (
                       <>
