@@ -251,7 +251,10 @@ export function WorkspaceHeader({
             className={`${controlClass} ${createMode ? "sm:inline-flex" : "hidden xl:inline-flex"}`}
           >
             <GridIcon />
-            <span className="max-w-[8rem] truncate text-xs font-medium sm:text-sm">
+            {/* Icon only on phones: this label is the widest optional item in
+                the row, and it was collapsing the document title to one
+                character at 390px. */}
+            <span className="hidden max-w-[8rem] truncate text-xs font-medium sm:inline sm:text-sm">
               {createMode ? selectedTemplateName || "Choose style" : selectedTemplateName || "Style"}
             </span>
           </button>
