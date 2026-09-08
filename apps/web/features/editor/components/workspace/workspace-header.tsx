@@ -204,8 +204,11 @@ export function WorkspaceHeader({
             </div>
           ) : null}
 
+          {/* Create mode already shows the pill above; this would double it. */}
           <div
-            className={`hidden max-w-[7.5rem] items-center gap-1.5 truncate text-xs text-[color:var(--page-muted)] lg:inline-flex ${
+            className={`hidden max-w-[7.5rem] items-center gap-1.5 truncate text-xs text-[color:var(--page-muted)] ${
+              createMode ? "" : "lg:inline-flex"
+            } ${
               draftStatusLabel === "Saved locally" || draftStatusLabel === "Saved"
                 ? "font-medium text-emerald-700"
                 : ""
