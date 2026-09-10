@@ -4,7 +4,11 @@ import {
   Controller,
   Post,
   ServiceUnavailableException,
+  UseGuards,
 } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
+
+import { EnhanceThrottlerGuard } from "../common/enhance-throttler.guard.js";
 
 import { ZodValidationPipe } from "../common/zod-validation.pipe.js";
 import {
@@ -15,13 +19,18 @@ import { BulletEnhancementService } from "./bullet-enhancement.service.js";
 import { ResumeTailoringService } from "./resume-tailoring.service.js";
 
 /**
- * Deliberately unguarded: the scratch builder is public by design ("free, no
- * sign-in") and calls /bullets from the editor, so requiring a session here
- * would break it. That also means these routes spend OpenAI tokens for
- * anonymous callers -- a standing abuse surface, flagged rather than changed
- * by the port.
+ * Deliberately unauthenticated: the scratch builder is public by design
+ * ("free, no sign-in") and calls /bullets from the editor, so requiring a
+ * session would break it.
+ *
+ * Unauthenticated does not mean uncapped. Both routes spend OpenAI tokens, so
+ * they are rate limited per caller: 10 requests a minute is far above what the
+ * editor does in normal use and far below what makes the endpoint worth
+ * abusing.
  */
 @Controller("api/enhance")
+@UseGuards(EnhanceThrottlerGuard)
+@Throttle({ default: { ttl: 60_000, limit: 10 } })
 export class EnhancementController {
   constructor(
     private readonly bulletEnhancement: BulletEnhancementService,
