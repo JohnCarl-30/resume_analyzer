@@ -413,7 +413,7 @@ describe("AnalysisWizard unit tests", () => {
       renderWizard(<AnalysisWizard />);
 
       await waitFor(() => {
-        expect(screen.getByText(/free check already used/i)).toBeInTheDocument();
+        expect(screen.getByRole("heading", { name: /start a blank resume/i })).toBeInTheDocument();
       });
       expect(screen.queryByRole("button", { name: /next: paste job post/i })).not.toBeInTheDocument();
     });
@@ -517,7 +517,7 @@ describe("AnalysisWizard unit tests", () => {
       await waitFor(() => {
         expect(screen.getByTestId("analysis-workspace")).toBeInTheDocument();
       });
-      expect(screen.queryByText(/free check already used/i)).not.toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: /start a blank resume/i })).not.toBeInTheDocument();
     });
 
     it("opens the saved check when analysis fails after quota was already redeemed", async () => {
