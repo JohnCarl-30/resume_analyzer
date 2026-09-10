@@ -35,7 +35,7 @@ export function ResumeDocumentArt() {
   return (
     <figure
       aria-hidden="true"
-      className="auth-document-art mx-auto w-full max-w-[17.5rem] text-foreground"
+      className="auth-document-art mx-auto h-full max-h-[30rem] w-full max-w-[22rem] text-foreground"
     >
       {/* overflow-visible: the pin labels are anchored at the document's edges
           and extend past the viewBox, which an SVG clips by default — "Bullets"
@@ -43,7 +43,7 @@ export function ResumeDocumentArt() {
       <svg
         viewBox="0 0 220 280"
         fill="none"
-        className="h-auto w-full overflow-visible"
+        className="h-full max-h-full w-full overflow-visible"
         role="presentation"
       >
         <rect
