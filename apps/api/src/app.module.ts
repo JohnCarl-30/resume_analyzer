@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { ThrottlerModule } from "@nestjs/throttler";
 
 import { AccountModule } from "./account/account.module.js";
 import { AnalysisModule } from "./analysis/analysis.module.js";
@@ -24,6 +25,10 @@ import { ProductEventsModule } from "./product-events/product-events.module.js";
       // ConfigService reading the same values rather than a second source.
       envFilePath: [".env"],
     }),
+    // Storage is per-instance, so with several replicas the effective limit
+    // is this multiplied by the replica count. That is acceptable for a spend
+    // guard on a scale-to-zero app; a shared store is the fix if it stops being.
+    ThrottlerModule.forRoot([{ name: "default", ttl: 60_000, limit: 120 }]),
     DatabaseModule.forRoot(),
     AccountModule.register(),
     AnalysisModule.register(),
