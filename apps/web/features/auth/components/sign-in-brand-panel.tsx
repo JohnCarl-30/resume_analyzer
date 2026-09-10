@@ -10,7 +10,7 @@ const STAGE_COPY =
 
 export function SignInBrandPanel() {
   return (
-    <aside className="app-auth-stage relative hidden h-full min-h-0 flex-col justify-between gap-10 overflow-y-auto overscroll-y-contain px-8 py-10 lg:flex lg:px-12 lg:py-12">
+    <aside className="app-auth-stage relative hidden h-full min-h-0 flex-col gap-10 overflow-y-auto overscroll-y-contain px-8 py-10 lg:flex lg:px-12 lg:py-12">
       <div className="relative z-10">
         <Link
           href="/"
@@ -36,8 +36,11 @@ export function SignInBrandPanel() {
         </p>
       </div>
 
+      {/* flex-1 with min-h-0: the artwork takes the height the copy leaves,
+          centred in it, rather than sitting in a fixed block above a pool of
+          empty space. pb-2 keeps the lowest pin off the panel edge. */}
       <div
-        className="animate-enter-up-safe relative z-10 flex justify-center pb-1"
+        className="animate-enter-up-safe relative z-10 flex min-h-0 flex-1 items-center justify-center pb-2"
         style={{ "--enter-delay": "160ms" } as CSSProperties}
       >
         <ResumeDocumentArt />
