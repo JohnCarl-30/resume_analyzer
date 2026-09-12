@@ -26,6 +26,17 @@ const envSchema = z.object({
   DATABASE_URL: optionalString,
   AI_EXTRACTION_MODEL: z.string().min(1).default("gpt-4o-mini"),
   OPENAI_API_KEY: optionalString,
+
+  // Azure OpenAI. When these are set they take precedence over OPENAI_API_KEY:
+  // the deployments live on the same Azure subscription as the API, so there is
+  // no second vendor to bill or to lose a key for.
+  AZURE_OPENAI_API_KEY: optionalString,
+  AZURE_OPENAI_RESOURCE_NAME: optionalString,
+  AZURE_OPENAI_DEPLOYMENT: optionalString,
+  // "v1" is Azure's current API surface and what @ai-sdk/azure targets by
+  // default. A dated preview version here is rejected outright with
+  // "API version not supported" -- override only to pin an older surface.
+  AZURE_OPENAI_API_VERSION: z.string().min(1).default("v1"),
   CLERK_SECRET_KEY: optionalString,
   R2_BUCKET_NAME: optionalString,
   R2_PUBLIC_BASE_URL: optionalUrl,
