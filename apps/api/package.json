@@ -16,6 +16,7 @@
     "migration:revert": "pnpm build && pnpm typeorm migration:revert"
   },
   "dependencies": {
+    "@ai-sdk/azure": "^4.0.70",
     "@ai-sdk/openai": "^4.0.15",
     "@clerk/backend": "^3.11.6",
     "@nestjs/common": "^11.1.29",
