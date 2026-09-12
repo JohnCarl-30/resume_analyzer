@@ -12,9 +12,11 @@
  */
 export type AiSdk = typeof import("ai", { with: { "resolution-mode": "import" } });
 export type OpenAiSdk = typeof import("@ai-sdk/openai", { with: { "resolution-mode": "import" } });
+export type AzureSdk = typeof import("@ai-sdk/azure", { with: { "resolution-mode": "import" } });
 
 let aiSdk: Promise<AiSdk> | null = null;
 let openAiSdk: Promise<OpenAiSdk> | null = null;
+let azureSdk: Promise<AzureSdk> | null = null;
 
 /**
  * Jest's CommonJS VM cannot execute a real dynamic import. Its config maps
@@ -35,4 +37,12 @@ export function loadOpenAiSdk(): Promise<OpenAiSdk> {
       Promise.resolve(require("@ai-sdk/openai") as OpenAiSdk)
     : import("@ai-sdk/openai");
   return openAiSdk;
+}
+
+export function loadAzureSdk(): Promise<AzureSdk> {
+  azureSdk ??= underJest
+    ? // eslint-disable-next-line @typescript-eslint/no-require-imports
+      Promise.resolve(require("@ai-sdk/azure") as AzureSdk)
+    : import("@ai-sdk/azure");
+  return azureSdk;
 }
