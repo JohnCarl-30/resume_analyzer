@@ -175,6 +175,32 @@ async function waitForWizardReady() {
   });
 }
 
+/**
+ * Clicks a step's Next button once it is actually enabled, then waits for the
+ * step to change.
+ *
+ * Each step gates its Next button on state set by the field above it. Firing
+ * the click in the same tick as the change means that state may not have
+ * flushed, so the button is still disabled and the click silently does
+ * nothing -- and because every later step does the same, the wizard sits on
+ * step 1 while the test carries on clicking. That is how this suite used to
+ * fail roughly one CI run in six, with a final assertion that looked unrelated
+ * to the real cause.
+ */
+async function clickNext(name: RegExp, expectedStep: number) {
+  const button = await screen.findByRole("button", { name });
+
+  await waitFor(() => {
+    expect(button).toBeEnabled();
+  });
+
+  fireEvent.click(button);
+
+  await waitFor(() => {
+    expect(isOnStep(expectedStep)).toBe(true);
+  });
+}
+
 /** Fill in target role and job description, then advance to upload step. */
 async function advanceToStep2() {
   await waitForWizardReady();
@@ -183,15 +209,13 @@ async function advanceToStep2() {
   fireEvent.change(targetRoleInput, {
     target: { value: "Software Engineer" },
   });
-  const targetRoleNext = screen.getByRole("button", { name: /next: paste job post/i });
-  fireEvent.click(targetRoleNext);
+  await clickNext(/next: paste job post/i, 2);
 
   const textarea = screen.getByRole("textbox");
   fireEvent.change(textarea, {
     target: { value: "We need a senior TypeScript engineer with React experience." },
   });
-  const continueBtn = screen.getByRole("button", { name: /next: add resume/i });
-  fireEvent.click(continueBtn);
+  await clickNext(/next: add resume/i, 3);
 }
 
 /** Upload a PDF file and advance to template step. */
@@ -204,8 +228,7 @@ async function advanceToStep3() {
   Object.defineProperty(fileInput, "files", { value: [pdfFile], configurable: true });
   fireEvent.change(fileInput);
 
-  const continueBtn = screen.getByRole("button", { name: /next: pick layout/i });
-  fireEvent.click(continueBtn);
+  await clickNext(/next: pick layout/i, 4);
 }
 
 // ---------------------------------------------------------------------------
