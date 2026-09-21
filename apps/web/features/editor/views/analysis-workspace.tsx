@@ -953,7 +953,7 @@ export function AnalysisWorkspace({
         </ErrorBoundary>
 
       <section
-          className={`${createMode && mobileCreateView === "editor" ? "hidden xl:flex" : "flex"} min-h-0 flex-1 overflow-hidden bg-[color:var(--page-bg-strong)]`}
+          className={`${createMode && mobileCreateView === "editor" ? "hidden xl:flex" : "flex"} min-h-0 flex-1 overflow-hidden bg-[color:var(--editor-canvas)]`}
         >
           <div className="flex h-full flex-1 gap-0">
             <ErrorBoundary label="document preview">
