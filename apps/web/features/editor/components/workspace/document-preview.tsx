@@ -45,7 +45,7 @@ export function DocumentPreview({
   hasSourcePreviewChoice,
 }: DocumentPreviewProps) {
   const previewCardClassName =
-    "mx-auto w-full max-w-[860px] rounded-lg border border-[color:var(--page-line)] bg-white";
+    "resume-sheet mx-auto w-full max-w-[860px]";
   const previewZoomStyle =
     previewZoom === 100 ? undefined : ({ zoom: previewZoom / 100 } as React.CSSProperties);
 
@@ -119,7 +119,7 @@ export function DocumentPreview({
     }`;
 
   return (
-    <div className="relative min-h-0 flex-1 overflow-hidden bg-[color:var(--page-bg-strong)]">
+    <div className="relative min-h-0 flex-1 overflow-hidden bg-[color:var(--editor-canvas)]">
       <div className="pointer-events-none absolute inset-x-2 top-3 z-20 flex justify-center">
         <div className="pointer-events-auto flex max-w-full items-center gap-1 overflow-x-auto rounded-lg border border-[color:var(--page-line)] bg-white px-2 py-1.5 [scrollbar-width:none] sm:gap-1.5 sm:px-2.5 [&::-webkit-scrollbar]:hidden">
           {hasSourcePreviewChoice ? (
