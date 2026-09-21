@@ -36,7 +36,7 @@ export function WorkspaceSkeleton() {
         </div>
 
         {/* Preview skeleton */}
-        <section className="flex min-h-0 flex-1 overflow-hidden bg-[color:var(--page-bg-strong)]">
+        <section className="flex min-h-0 flex-1 overflow-hidden bg-[color:var(--editor-canvas)]">
           <div className="flex h-full flex-1 items-center justify-center p-8">
             <div className="w-full max-w-[600px] space-y-4">
               <Skeleton className="mx-auto h-8 w-48" />
