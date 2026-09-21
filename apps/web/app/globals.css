@@ -19,6 +19,12 @@
   color-scheme: light;
   --page-bg: oklch(98.6% 0.004 258);
   --page-bg-strong: #f7f9fc;
+  /* The surface the resume sheet sits on. Deliberately a clear step below
+     white so the document reads as paper rather than as more page -- the
+     editor's whole job is "quiet UI, loud document". Separate from
+     --page-bg-strong, which also feeds --muted, --sidebar and hover states. */
+  --editor-canvas: #e7ecf4;
+  --shadow-page: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -10px rgba(15, 23, 42, 0.16);
   --page-surface: oklch(98.6% 0.004 258);
   --page-line: #dfe6f0;
   --page-line-strong: #c7d2e3;
@@ -854,7 +860,22 @@ button:disabled {
   }
 }
 
+.resume-sheet {
+  background: #fff;
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-page);
+}
+
 @media print {
+  /* The preview card is the print target, so its on-screen elevation has to
+     come off or it renders into the exported PDF. */
+  .print-resume,
+  .resume-sheet {
+    box-shadow: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
   body * {
     visibility: hidden;
   }
