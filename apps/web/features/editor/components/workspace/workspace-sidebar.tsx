@@ -1,3 +1,10 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+import { cn } from "@/lib/utils";
+
+import { WorkspaceRail } from "./workspace-rail";
 import {
   BackpackIcon,
   ChevronDownIcon,
@@ -90,6 +97,48 @@ export const leadershipEditorCopy: Record<
     datePlaceholder: "2024 — Present",
   },
 };
+
+/**
+ * localStorage is not guaranteed: Safari private mode, blocked cookies and
+ * storage-quota errors all make it throw or go missing. Reading it unguarded
+ * took the whole sidebar down through the error boundary, so a remembered
+ * layout preference is treated as best-effort -- losing it is not worth
+ * losing the editor.
+ */
+function readStoredPanel(key: string): boolean | null {
+  try {
+    const value = window.localStorage?.getItem?.(key);
+    return value === null || value === undefined ? null : value === "open";
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredPanel(key: string, open: boolean): void {
+  try {
+    window.localStorage?.setItem?.(key, open ? "open" : "closed");
+  } catch {
+    // Preference not remembered; the editor still works.
+  }
+}
+
+/** Shared so the rail's filled-in dots and the list's empty hints agree. */
+export function isSectionEmpty(sectionId: string, form: ResumeForm): boolean {
+  switch (sectionId) {
+    case "education":
+      return form.education.length === 0;
+    case "experience":
+      return form.experience.length === 0;
+    case "leadership":
+      return form.leadership.length === 0;
+    case "awards":
+      return form.awards.length === 0;
+    case "personal":
+      return !form.personalInfo.fullName && !form.personalInfo.email;
+    default:
+      return false;
+  }
+}
 
 const workspaceSections = [
   { id: "personal", label: "Personal Info", icon: "personal", expanded: true },
@@ -398,13 +447,7 @@ export function WorkspaceSidebar({
             </div>
           )}
           {editorSections.map((section, index) => {
-            const isEmpty =
-              section.id === "education" ? formValues.education.length === 0 :
-              section.id === "experience" ? formValues.experience.length === 0 :
-              section.id === "leadership" ? formValues.leadership.length === 0 :
-              section.id === "awards" ? formValues.awards.length === 0 :
-              section.id === "personal" ? (!formValues.personalInfo.fullName && !formValues.personalInfo.email) :
-              false;
+            const isEmpty = isSectionEmpty(section.id, formValues);
             const emptyHints: Record<string, string> = {
               personal: "Add your name, contact, and summary",
               education: "No education yet — add your degree",
@@ -512,17 +555,78 @@ export function WorkspaceSidebar({
     );
   }
 
+  // Focus mode: the panel collapses so the resume gets the width, while the
+  // rail keeps the sections reachable. Persisted, because a collapsed panel
+  // that silently reopens on reload is worse than not collapsing at all.
+  const panelStorageKey = createMode ? "editor:panel:create" : "editor:panel:review";
+  const [panelOpen, setPanelOpen] = useState(true);
+  const [guideActive, setGuideActive] = useState(false);
+
+  useEffect(() => {
+    const stored = readStoredPanel(panelStorageKey);
+    // Building from scratch starts open -- there is nothing to look at yet and
+    // the form is the task. Reviewing starts on whatever was chosen last.
+    setPanelOpen(stored ?? createMode);
+  }, [panelStorageKey, createMode]);
+
+  function updatePanel(open: boolean) {
+    setPanelOpen(open);
+    writeStoredPanel(panelStorageKey, open);
+  }
+
+  function handleRailSection(id: string) {
+    if (panelOpen && !guideActive && activeSectionId === id) {
+      updatePanel(false);
+      return;
+    }
+    setGuideActive(false);
+    setActiveSectionId(id);
+    updatePanel(true);
+  }
+
+  function handleRailGuide() {
+    if (panelOpen && guideActive) {
+      updatePanel(false);
+      return;
+    }
+    setGuideActive(true);
+    updatePanel(true);
+  }
+
   return (
     <aside
-      className={`shrink-0 border-r border-[color:var(--page-line)] bg-white transition-transform duration-300 ease-in-out ${
+      className={`shrink-0 border-r border-[color:var(--page-line)] bg-white transition-[transform,width] duration-200 ease-out ${
         createMode
-          ? `flex w-full border-r-0 xl:flex xl:w-[390px] xl:border-r`
+          ? `flex w-full border-r-0 xl:flex xl:border-r ${panelOpen ? "xl:w-[390px]" : "xl:w-14"}`
           : `fixed inset-y-0 left-0 z-50 w-80 transform ${
               mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
-            } xl:static xl:z-auto xl:w-[360px] xl:transform-none xl:translate-x-0 2xl:w-[400px]`
+            } xl:static xl:z-auto xl:transform-none xl:translate-x-0 ${
+              panelOpen ? "xl:w-[360px] 2xl:w-[400px]" : "xl:w-14"
+            }`
       }`}
     >
-      <div className="flex h-full flex-col">
+      <div className="flex h-full">
+        {/* The rail is a pointer-width affordance: below xl the sidebar is
+            already a full-width sheet or a slide-over, where a 56px strip of
+            icons next to a form would only take space from it. */}
+        <div className="hidden xl:flex">
+          <WorkspaceRail
+            sections={workspaceSections.map((section) => ({
+              id: section.id,
+              label: section.label,
+              icon: section.icon,
+              complete: mounted && !isSectionEmpty(section.id, formValues),
+            }))}
+            activeSectionId={activeSectionId}
+            panelOpen={panelOpen}
+            guideActive={guideActive}
+            onSelectSection={handleRailSection}
+            onToggleGuide={handleRailGuide}
+            onAddSection={openAddContentModal}
+          />
+        </div>
+
+      <div className={cn("flex h-full min-w-0 flex-1 flex-col", !panelOpen && "xl:hidden")}>
         <div className={`${createMode ? "hidden" : "flex"} items-center justify-between border-b border-[color:var(--page-line)] px-4 py-3 xl:hidden`}>
           <span className="font-semibold text-[color:var(--page-text)]">Editor</span>
           <button
@@ -536,6 +640,7 @@ export function WorkspaceSidebar({
         <div className="flex-1 overflow-hidden">
           {renderEditor()}
         </div>
+      </div>
       </div>
     </aside>
   );
