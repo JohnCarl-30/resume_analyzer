@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PlusIcon } from "@radix-ui/react-icons";
 
 import { ScrollReveal } from "@/components/scroll-reveal";
@@ -33,15 +34,25 @@ const FAQS = [
 export function FaqSection() {
   return (
     <section className="border-t border-border bg-background">
-      <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <ScrollReveal as="header" className="pb-8 text-center">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-12 lg:gap-12 lg:px-8">
+        <ScrollReveal as="header" className="lg:col-span-4">
           <p className="app-section-label">Questions</p>
-          <h2 className="display-serif mt-2 text-2xl text-foreground sm:text-3xl">
+          <h2 className="display-serif mt-2 text-3xl text-foreground sm:text-4xl">
             Before you upload anything.
           </h2>
+          <p className="mt-4 max-w-[36ch] text-sm leading-6 text-muted-foreground">
+            Still unsure? The builder needs no account —{" "}
+            <Link
+              href="/create-resume"
+              className="font-medium text-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-foreground"
+            >
+              try it first
+            </Link>
+            .
+          </p>
         </ScrollReveal>
 
-        <div className="divide-y divide-border border-y border-border">
+        <div className="divide-y divide-border border-y border-border lg:col-span-8">
           {FAQS.map((faq, index) => (
             <ScrollReveal key={faq.question} delay={index * 50}>
               {/* A native details element: keyboard and screen-reader behaviour
