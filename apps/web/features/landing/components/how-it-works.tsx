@@ -20,7 +20,7 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section className="border-t border-border bg-background">
+    <section id="how-it-works" className="scroll-mt-16 border-t border-border bg-background">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-12 lg:gap-12 lg:px-8">
         <ScrollReveal as="header" className="lg:col-span-4">
           <div className="lg:sticky lg:top-28">
