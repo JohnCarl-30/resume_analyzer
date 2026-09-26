@@ -5,7 +5,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
-const DEFAULT_WORDS = ["resume", "bullets", "layout", "keywords"] as const;
+// Singular nouns only: the headline reads "See what your ___ needs."
+const DEFAULT_WORDS = ["resume", "summary", "layout", "experience"] as const;
 
 type RotatingWordProps = {
   words?: readonly string[];
@@ -100,6 +101,12 @@ export function RotatingWord({
       </span>
 
       <span aria-hidden="true" className="inline-grid align-baseline">
+        {/* Carries the baseline. The clip box below has overflow hidden, and
+            such a box takes its bottom edge as its baseline, which would lift
+            the word off the line. Zero width, so it never fights the resize. */}
+        <span className="invisible col-start-1 row-start-1 w-0 whitespace-nowrap">
+          {words[activeIndex]}
+        </span>
         {/* Reserves the widest word until measurement lands, so nothing jumps on first paint. */}
         <span
           className={cn("col-start-1 row-start-1 whitespace-nowrap", activeWidth && "hidden")}

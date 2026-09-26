@@ -20,25 +20,36 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section className="border-t border-border bg-background">
-      <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
-        <ScrollReveal as="header" className="max-w-[42ch] pb-10">
-          <p className="app-section-label">How it works</p>
-          <h2 className="display-serif mt-2 text-2xl text-foreground sm:text-3xl">
-            Three steps, about two minutes.
-          </h2>
+    <section id="how-it-works" className="scroll-mt-16 border-t border-border bg-background">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-12 lg:gap-12 lg:px-8">
+        <ScrollReveal as="header" className="lg:col-span-4">
+          <div className="lg:sticky lg:top-28">
+            <p className="app-section-label">How it works</p>
+            <h2 className="display-serif mt-2 text-3xl text-foreground sm:text-4xl">
+              Three steps, about two minutes.
+            </h2>
+          </div>
         </ScrollReveal>
 
-        <ol className="grid gap-8 sm:grid-cols-3 sm:gap-6">
+        <ol className="divide-y divide-border border-y border-border lg:col-span-8">
           {STEPS.map((step, index) => (
-            <ScrollReveal as="li" key={step.number} delay={index * 80}>
-              <span className="step-pill" aria-hidden="true">
+            <ScrollReveal
+              as="li"
+              key={step.number}
+              delay={index * 80}
+              className="grid gap-3 py-7 sm:grid-cols-[5rem_minmax(0,1fr)] sm:gap-6 sm:py-8"
+            >
+              <span className="step-numeral" aria-hidden="true">
                 {step.number}
               </span>
-              <h3 className="mt-4 text-base font-semibold text-foreground">{step.title}</h3>
-              <p className="mt-2 max-w-[38ch] text-sm leading-6 text-muted-foreground">
-                {step.body}
-              </p>
+              <div>
+                <h3 className="text-lg font-semibold tracking-tight text-foreground">
+                  {step.title}
+                </h3>
+                <p className="mt-2 max-w-[52ch] text-base leading-7 text-pretty text-muted-foreground">
+                  {step.body}
+                </p>
+              </div>
             </ScrollReveal>
           ))}
         </ol>
