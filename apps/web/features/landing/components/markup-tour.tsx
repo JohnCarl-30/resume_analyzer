@@ -85,7 +85,7 @@ export function MarkupTour() {
         </figcaption>
       </ScrollReveal>
 
-      <ol className="flex flex-col gap-7">
+      <ol className="flex flex-col gap-7 lg:self-center">
         {MARKUP_CALLOUTS.map((callout, index) => {
           const isActive = isHighlighting && index === activeIndex;
 
