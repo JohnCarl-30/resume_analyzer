@@ -102,7 +102,7 @@ export function LandingPageView() {
 
       <HowItWorks />
 
-      <section className="border-t border-border bg-[var(--landing-band)]">
+      <section id="markup" className="scroll-mt-16 border-t border-border bg-[var(--landing-band)]">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
           <ScrollReveal as="header" className="max-w-[42ch] pb-10 sm:pb-12">
             <p className="app-section-label">The markup</p>
@@ -129,41 +129,71 @@ export function LandingPageView() {
       <ClosingCta />
 
       <footer className="border-t border-border bg-background">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-baseline sm:justify-between">
-            <Link
-              href="/"
-              className="brand-logo inline-flex items-center gap-2 text-base font-semibold tracking-tight text-foreground"
-            >
-              <BrandMark />
-              <span className="font-brand">Resumae</span>
-            </Link>
-            <p className="max-w-[36ch] text-sm text-muted-foreground sm:text-right">
-              Line-by-line notes, tied to the job post you&rsquo;re targeting.
-            </p>
+        <div className="mx-auto max-w-6xl px-4 pt-14 pb-10 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:gap-x-16">
+            <div className="col-span-2 sm:col-span-1">
+              <Link
+                href="/"
+                className="brand-logo inline-flex items-center gap-2 text-base font-semibold tracking-tight text-foreground"
+              >
+                <BrandMark />
+                <span className="font-brand">Resumae</span>
+              </Link>
+              <p className="mt-3 max-w-[32ch] text-sm leading-6 text-muted-foreground">
+                Line-by-line notes, tied to the job post you&rsquo;re targeting.
+              </p>
+            </div>
+
+            <nav aria-label="Product">
+              <p className="app-section-label">Product</p>
+              <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                <li>
+                  <Link href="/create-resume" className="landing-link hover:text-foreground">
+                    Build a resume
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/auth/sign-in?next=%2Fanalysis%2Fnew"
+                    className="landing-link hover:text-foreground"
+                  >
+                    Check a resume
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/auth/sign-in?next=%2Fhome"
+                    className="landing-link hover:text-foreground"
+                  >
+                    Saved checks
+                  </Link>
+                </li>
+              </ul>
+            </nav>
+
+            <nav aria-label="On this page">
+              <p className="app-section-label">On this page</p>
+              <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                <li>
+                  <a href="#how-it-works" className="landing-link hover:text-foreground">
+                    How it works
+                  </a>
+                </li>
+                <li>
+                  <a href="#features" className="landing-link hover:text-foreground">
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a href="#faq" className="landing-link hover:text-foreground">
+                    FAQ
+                  </a>
+                </li>
+              </ul>
+            </nav>
           </div>
 
-          <nav
-            aria-label="Footer navigation"
-            className="mt-6 flex flex-wrap items-center gap-x-2 gap-y-2 text-sm text-muted-foreground"
-          >
-            <Link href="/create-resume" className="landing-link hover:text-foreground">
-              Build a resume
-            </Link>
-            <span aria-hidden="true">·</span>
-            <Link
-              href="/auth/sign-in?next=%2Fanalysis%2Fnew"
-              className="landing-link hover:text-foreground"
-            >
-              Check a resume
-            </Link>
-            <span aria-hidden="true">·</span>
-            <Link href="/auth/sign-in?next=%2Fhome" className="landing-link hover:text-foreground">
-              Saved checks
-            </Link>
-          </nav>
-
-          <div className="mt-10 flex flex-col gap-2 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-12 flex flex-col gap-2 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
             <p>
               Sign in to run one AI check per account. Drafts stay in your browser until you save
               one.
